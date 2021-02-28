@@ -6,6 +6,12 @@ MinimumVisualStudioVersion = 10.0.40219.1
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SI.Software.Databases.SQL", "Singers\SI.Software.Databases.SQL\SI.Software.Databases.SQL.csproj", "{78456EBC-F1BE-411B-BDF7-CE016092D38F}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Singers", "Singers", "{620B5DEB-AFE3-4762-BFED-2C2D311766B8}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\Backups\iDrive\Git\Repos\DBScripter\.git = ..\..\..\Backups\iDrive\Git\Repos\DBScripter\.git
+		..\..\..\Backups\iDrive\Git\Repos\DBScripter\.gitattributes = ..\..\..\Backups\iDrive\Git\Repos\DBScripter\.gitattributes
+		..\..\..\Backups\iDrive\Git\Repos\DBScripter\.gitignore = ..\..\..\Backups\iDrive\Git\Repos\DBScripter\.gitignore
+		..\..\..\Backups\iDrive\Git\Repos\DBScripter\.vs = ..\..\..\Backups\iDrive\Git\Repos\DBScripter\.vs
+	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SI.Common.ExtendedUtilities", "Singers\SI.Common.ExtendedUtilities\SI.Common.ExtendedUtilities.csproj", "{1706FAC9-B1C0-4DD7-93DF-509021987ED6}"
 EndProject
