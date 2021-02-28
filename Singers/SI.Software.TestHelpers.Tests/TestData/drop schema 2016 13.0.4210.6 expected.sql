@@ -1,0 +1,1 @@
+-- drop schema 2016 13.0.4210.6 expected.sql
