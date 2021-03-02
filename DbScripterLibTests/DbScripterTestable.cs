@@ -16,6 +16,11 @@ namespace RSS.Test
       { 
       }
 
+      public new void Init( Params? p, bool append = false)
+      {
+         base.Init(p, append);
+      }
+
       public new string HandleExportFilePath(string exportFilePath, bool addTimestamp)
       {
          return base.HandleExportFilePath(exportFilePath, addTimestamp);
@@ -67,5 +72,21 @@ namespace RSS.Test
          P.IsExprtngTTys   = st;
          P.IsExprtngVws    = st;
       }
+
+      public new static SqlTypeEnum MapTypeToSqlType(SqlSmoObject smo)
+      {
+         return DbScripter.MapTypeToSqlType(smo);
+      }
+
+      public new void InitScriptingOptions()
+      {
+         base.InitScriptingOptions();
+      }
+
+      public new ScriptingOptions InitTableExport()
+      { 
+         return base.InitTableExport();
+      }
+
    }
 }

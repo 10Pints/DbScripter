@@ -1,4 +1,4 @@
-﻿namespace RSS
+﻿namespace RSS.Common
 {
     /// <summary>
     /// Enumeration of log types.

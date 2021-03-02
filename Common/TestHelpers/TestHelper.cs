@@ -8,12 +8,8 @@ using System.IO;
 using System.Linq;
 using System.Reflection;
 using System.Text;
-using static RSS.Logger;
-//using SI.Common.Extensions;
-//using SI.Logging.LogUtilities;
-//using SI.Software.Databases.SQL;
-
-
+using RSS.Common;
+using static RSS.Common.Logger;
 
 namespace RSS.Test
 {
@@ -43,6 +39,21 @@ namespace RSS.Test
       public static string ScriptDir
       {
          get { return ".\\Scripts"; }
+      }
+
+      /// <summary>
+      /// Relative location of the script files
+      /// N.B DbHelper uses the same location
+      /// </summary>
+      public static string ResultsDir
+      {
+         get
+         {
+            var resultsDir = @"..\..\..\TestResults";
+            resultsDir = Path.GetFullPath(resultsDir);
+            Utils.Assertion(Directory.Exists(resultsDir));
+            return resultsDir;
+         }
       }
 
       #region Public methods

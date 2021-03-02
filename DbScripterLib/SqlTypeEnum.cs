@@ -1,9 +1,9 @@
-﻿using RSS;
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using RSS.Common;
 
 namespace DbScripterLib
 {
@@ -11,15 +11,12 @@ namespace DbScripterLib
    {
       [EnumAlias("Undefined")]
       Undefined = 0,
- 
-      [EnumAlias("Data")]
-      Data,       // Exporting static or dynamic data
 
       [EnumAlias("Database")]
       Database,
 
-      [EnumAlias("FKey")]
-      FKey,
+ //     [EnumAlias("FKey")]
+ //     FKey,
 
       [EnumAlias("Function")]
       Function,

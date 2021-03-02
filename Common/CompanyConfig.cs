@@ -1,4 +1,4 @@
-﻿namespace RSS
+﻿namespace RSS.Common
 {
     /// <summary>
     /// Provides common information on the company.

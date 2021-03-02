@@ -4,12 +4,12 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace RSS
+namespace RSS.Common
 {
-    /// <summary>
+    /*// <summary>
     /// Used to cache the essential logging information before the logger is initialised
     /// </summary>
-    internal class LogInfo
+    public class LogInfo
     {
         public LogInfo(string fileName, int lineNumber, LogMode logMode, string clsName, string method, LogType logType, string msg)
         {
@@ -44,4 +44,5 @@ namespace RSS
             return $"{filePart}\t{methodPart}\t{padding}{msgPart}";
         }
     }
+    */
 }

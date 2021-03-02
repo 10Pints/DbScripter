@@ -8,7 +8,8 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-using static RSS.Logger;
+using RSS.Common;
+using static RSS.Common.Logger;
 
 //using SI.Common;
 //using SI.Logging;
@@ -122,9 +123,9 @@ namespace RSS.Test
       /// </summary>
       protected UnitTestBase()
       {
-         LogS($"Derived type: {GetType().FullName}");
+         //LogS($"Derived type: {GetType().FullName}");
          Initialise();
-         LogL();
+         //LogL();
       }
 
       #endregion Constructors
@@ -147,8 +148,7 @@ namespace RSS.Test
          }
          catch(Exception e)
          {
-            var msgs = e.GetAllMessages();
-            Logger.Log(msgs);
+            LogException(e);
 
             if(filePath != null)
                Process.Start("notepad++.exe", filePath);
@@ -163,6 +163,73 @@ namespace RSS.Test
 
          return true;
       }
+      
+      /// <summary>
+      /// Compares exp against act based on their Equals() method
+      /// 
+      /// if error:
+      ///   writes exp and act to files {resultsDir}\exp.txt, {resultsDir}\act.txt
+      ///   using their ToString()
+      ///   displays a beyond compare of both exp, act files
+      /// </summary>
+      /// <param name="exp"></param>
+      /// <param name="act"></param>
+      protected void ChkEquals(object? exp, object? act, string testName)
+      {
+         LogS($"checking test: {testName}");
+         string msg;
+
+         if((exp == null) && (act == null))
+            return;
+
+         if((exp != null) && (act == null))
+         {
+            msg = $"exp is not null but act is null\r\nexp\r\n{exp.ToString()}";
+            LogE(msg);
+            Assert.Fail(msg);
+         }
+
+         if((exp == null) && (act != null))
+         {
+            msg = $"exp is null but act is not null \r\nact\r\n{act.ToString()}";
+            LogE(msg);
+            Assert.Fail(msg);
+         }
+
+         //--------------------------------------------------
+         // ASSERTION: both exp and act are not null
+         //--------------------------------------------------
+
+         if(!exp?.Equals(act)?? false)
+         { 
+            //--------------------------------------------------
+            // ASSERTION: exp does not equal act
+            //--------------------------------------------------
+            
+            // save the result to the Results dir
+            var resultsDir = TestHelper.ResultsDir;
+            var exp_file   = @$"{resultsDir}\{testName}_exp.txt";
+            var act_file   = @$"{resultsDir}\{testName}_act.txt";
+            LogE($"test: {testName}: failed\r\nexp:");
+            File.WriteAllText(exp_file, exp?.ToString());  
+            File.WriteAllText(act_file, act?.ToString());  
+            Log(exp?.ToString() ?? "");
+            Log("\r\nact:");
+#pragma warning disable CS8604 // Possible null reference argument.
+            Log(act?.ToString());
+#pragma warning restore CS8604 // Possible null reference argument.
+
+            // display a BeyondCompare sessoin for exp/act with unique file names
+            Process.Start( "BCompare.exe", $"{act_file} {exp_file}");
+
+            // Display the log file
+            Process.Start( "Notepad++.exe", Logger.LogFile);
+            Assert.Fail("exp != act");
+         }
+
+         LogL($"test: {testName}: Pass");
+      }
+
 
       #endregion Protected Methods
       #region    Private Methods
@@ -175,18 +242,19 @@ namespace RSS.Test
       {
          // Derived type
          var className = GetType().Name;
-         LogS($"class: {className} registering ILogProvider and Log4NetLogProvider Assembly");
+         //LogS($"class: {className} registering ILogProvider and Log4NetLogProvider Assembly");
          ServiceLocator.Instance.Register(typeof(ILogProvider).Assembly);
          ServiceLocator.Instance.Register(typeof(Log4NetLogProvider).Assembly);
          LogProvider = ServiceLocator.Instance.ResolveByType<ILogProvider>();
          DisplayMessages = false;
 
-         if(!IsInitialised)
-            InitLogger();
+         //if(!IsInitialised)
+         InitLogger();
 
          // If supplied will setup the Test class element
          SetTestConfig(className);
-         LogL(className);
+         var fileName = Logger.LogFile;
+         LogDirect($"Test class: {className}");
       }
 
       /// <summary>
@@ -195,14 +263,13 @@ namespace RSS.Test
       /// <param name="className">optional - if supplied will configure the test element</param>
       private void SetTestConfig( string className )
       {
-
-         LogS($"setting config for test class: {className}");
+         //LogS($"setting config for test class: {className}", LogType.Debug);
 
          if(!string.IsNullOrEmpty(className))
             CurrentTestClassElement = TestConfigurationSection.GetConfig()?.TestClasses?[className];
 
          var msg = (CurrentTestClassElement != null) ? "Found test config" : "Did not find any config for this test class so setting <null> test config";
-         LogL($" {msg} for {className}");
+         LogDirect($"{msg} for {className}", LogType.Debug);
       }
 
       #endregion private methods
@@ -315,14 +382,14 @@ namespace RSS.Test
       [TestInitialize]
       public virtual void TestSetup()
       {
-         LogS();
+         LogLine();
          CurrentTestMethodName = TestContext?.TestName ?? "not specified";
-         LogS($"Test about to be run: {CurrentTestMethodName}");
+         LogDirect($"\r\nstarting test: {CurrentTestMethodName}");
          Assert.IsNotNull(CurrentTestMethodName);                    // POST 1
                                                                      // Set by constructor
-         //Assert.IsNotNull(CurrentTestClassElement);                  // PRE 1
+         //Assert.IsNotNull(CurrentTestClassElement);                // PRE 1
          //Assert.IsNotNull(CurrentTestTestMethodElement, $"Test {CurrentTestMethodName}: the current method element is not configured");
-         LogL($"CurrentTestMethodName = {CurrentTestMethodName}");
+         //LogL($"CurrentTestMethodName = {CurrentTestMethodName}");
       }
 
       /// <summary>
@@ -332,20 +399,21 @@ namespace RSS.Test
       [TestCleanup]
       public virtual void TestCleanup()
       {
-         LogS();
-         LogL();
+         LogLine();
       }
 
       [ClassInitialize]
       public static void ClassSetup( TestContext ctx )
       {
-         LogS();
          InitLogger();
+         LogS();
          var className = ctx.FullyQualifiedTestClassName.Split('.').Last();
          var testClasses = TestConfigurationSection.GetConfig()?.TestClasses;
          var testClassElement = testClasses?[className];
-         Assert.IsNotNull(testClassElement);
-         AddTestClassElement(testClassElement);
+         //Assert.IsNotNull(testClassElement);
+         if(testClassElement != null)
+            AddTestClassElement(testClassElement);
+
          LogL();
       }
 
@@ -355,10 +423,11 @@ namespace RSS.Test
       /// <param name="testClassName"></param>
       public static void ClassCleanup( string testClassName )
       {
-         LogS();
+         LogLine();
          RemoveTestClassElement(testClassName);
-         LogL();
-      }
+         //MyClassCleanup();
+         Logger.FlushLogger();
+     }
 
       #endregion Test Setup
       #endregion Methods

@@ -1,15 +1,15 @@
 ﻿/*
  This file contains the DbOpTypeEnum enumeration used by the SqlTrackingProvider
- */
+*/
 
-using RSS;
+using RSS.Common;
 
 namespace DbScripterLib
 {
     /// <summary>
     ///  script is used by the SqlTrackingProvider to determine the type of script to run
     /// </summary>
-    public enum DbOpTypeEnum
+    public enum DbOpEnum
     {
         [EnumAlias("Undefined")]
         Undefined = 0,
@@ -63,3 +63,4 @@ namespace DbScripterLib
         Count
     }
 }
+

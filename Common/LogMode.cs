@@ -1,6 +1,6 @@
-﻿namespace RSS
+﻿namespace RSS.Common
 {
-   /// <summary>
+   /*// <summary>
    /// Log message standard message indicator (to minimize typing in client code 
    /// </summary>
    public enum LogMode
@@ -18,4 +18,5 @@
          /// </summary>
          Message,
       };
+   */
 }

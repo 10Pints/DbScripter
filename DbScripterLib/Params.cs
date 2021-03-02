@@ -8,7 +8,8 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
-using static RSS.Utils;
+using static RSS.Common.Utils;
+using static RSS.Common.Logger;
 
 namespace DbScripterLib
 {
@@ -131,13 +132,6 @@ namespace DbScripterLib
          set => _requiredTypes = value ?? (new());
       }
 
-      private DbOpTypeEnum? _dbOpType = null;
-      public DbOpTypeEnum? DbOpType
-      {
-         get => _dbOpType;
-         set => _dbOpType = value;
-      }
-
       private SqlTypeEnum? _sqlType = null;
       public SqlTypeEnum? SqlType
       {
@@ -165,6 +159,105 @@ namespace DbScripterLib
          set => _addTimestamp = value;
       }
 
+
+      /// <summary>
+      /// Checks the general criteria first like: server, instance, create type, sql type
+      /// Returns true if the necessary state is set to do the required Export, false otherewise
+      ///
+      /// PRECONDITIONS:
+      ///
+      /// POSTCONDITIONS: Returns true if the necessary state is set to do the required Export, false otherewise
+      /// POST 1: server   name specified
+      /// POST 2: instance name specified
+      /// POST 3: database name specified
+      /// POST 4: create type   specified
+      /// POST 5: sql type      specified
+      /// POST 6: if exporting tables dont specify alter - or the Microsoft scripter will silently fail to emit the script
+      /// 
+      /// </summary>
+      /// <returns></returns>
+      public bool IsValid(out string? msg)
+      {
+         msg = null;
+         bool ret = false;
+
+         // -------------------------
+         // Validate preconditions
+         // -------------------------
+ 
+         // -----------------------------------------
+         // ASSERTION: postconditions validated
+         // -----------------------------------------
+
+         do
+         {
+            // POST 1: server   name specified
+            if(string.IsNullOrEmpty(ServerName))
+            {
+               msg = "Server Name";
+               break;
+            }
+
+            // POST 2: instance name specified
+            if(string.IsNullOrEmpty(InstanceName))
+            {
+               msg = "Instance Name";
+               break;
+            }
+
+            // POST 3: database name specified
+            if(string.IsNullOrEmpty(DatabaseName))
+            {
+               msg = "Database Name";
+               break;
+            }
+
+            // POST 4: create type   specified
+            if(CreateMode?.Equals(CreateModeEnum.Undefined) ?? false)
+            {
+               msg = "Create Mode";
+               break;
+            }
+
+            // POST 5: sql type      specified
+            if(SqlType?.Equals(SqlTypeEnum.Undefined) ?? false)
+            {
+               msg = "Sql Type";
+               break;
+            }
+
+            // POST 6: if exporting tables dont specify alter - or the Microsoft scripter will silently fail to emit the script
+            if((SqlType == SqlTypeEnum.Table && CreateMode == CreateModeEnum.Alter))
+            {
+               msg = "if exporting tables dont specify alter";//  POST 1: 
+               break;
+            }
+
+            // ASSERTION:     conditions validated
+            ret = true;
+         } while(false);
+
+         // -------------------------
+         // Validate postconditions
+         // -------------------------
+         // POST 1: server   name specified
+         Postcondition((ret == false) || (!string.IsNullOrEmpty(ServerName)));
+         // POST 2: instance name specified
+         Postcondition((ret == false) || (!string.IsNullOrEmpty(InstanceName)));
+         // POST 3: database name specified
+         Postcondition((ret == false) || (!string.IsNullOrEmpty(DatabaseName)));
+         // POST 4: create   type specified
+         Postcondition((ret == false) || (!(CreateMode?.Equals(CreateModeEnum.Undefined) ?? true)));
+         // POST 5: sql      type specified
+         Postcondition((ret == false) || (!(SqlType   ?.Equals(SqlTypeEnum.Undefined   ) ?? true)));
+
+         // -----------------------------------------
+         // ASSERTION: postconditions validated
+         // -----------------------------------------
+
+         return ret;
+      }
+
       public override bool Equals( object obj )
       {
          Params? b = obj as Params;
@@ -173,11 +266,11 @@ namespace DbScripterLib
 
          do
          {
-            if(ServerName != b.ServerName) { msg = $"a ServerName      :{ServerName      } b servername      :{b.ServerName      }"; break; }
-            if(InstanceName != b.InstanceName) { msg = $"a InstanceName    :{InstanceName    } b InstanceName    :{b.InstanceName    }"; break; }
-            if(DatabaseName != b.DatabaseName) { msg = $"a DatabaseName    :{DatabaseName    } b DatabaseName    :{b.DatabaseName    }"; break; }
-            if(ExportScriptPath != b.ExportScriptPath) { msg = $"a ExportScriptPath:{ExportScriptPath} b ExportScriptPath:{b.ExportScriptPath}"; break; }
-            if(NewSchemaName != b.NewSchemaName) { msg = $"a NewSchemaName   :{NewSchemaName   } b NewSchemaName   :{b.NewSchemaName   }"; break; }
+            if(ServerName        != b.ServerName      ) { msg = $"a ServerName      :{ServerName      } b servername      :{b.ServerName      }"; break; }
+            if(InstanceName      != b.InstanceName    ) { msg = $"a InstanceName    :{InstanceName    } b InstanceName    :{b.InstanceName    }"; break; }
+            if(DatabaseName      != b.DatabaseName    ) { msg = $"a DatabaseName    :{DatabaseName    } b DatabaseName    :{b.DatabaseName    }"; break; }
+            if(ExportScriptPath  != b.ExportScriptPath) { msg = $"a ExportScriptPath:{ExportScriptPath} b ExportScriptPath:{b.ExportScriptPath}"; break; }
+            if(NewSchemaName     != b.NewSchemaName   ) { msg = $"a NewSchemaName   :{NewSchemaName   } b NewSchemaName   :{b.NewSchemaName   }"; break; }
 
             if((RequiredSchemas == null) && (b.RequiredSchemas != null) ||
                (RequiredSchemas != null) && (b.RequiredSchemas == null)) { msg = $"a RequiredSchemas :{RequiredSchemas   } b RequiredSchemas   :{b.RequiredSchemas   }"; break; }
@@ -208,7 +301,6 @@ namespace DbScripterLib
                   if(!b.RequiredTypes.Contains(item)) { msg = $"a RequiredTypes   :{RequiredTypes   } b RequiredTypes   :{b.RequiredTypes   }"; break; }
             }
 
-            if(DbOpType     != b.DbOpType)    { msg = $"a DbOpType     :{DbOpType     } b DbOpType     :{b.DbOpType    }"; break; }
             if(SqlType      != b.SqlType)     { msg = $"a SqlType      :{SqlType      } b SqlType      :{b.SqlType     }"; break; }
             if(CreateMode   != b.CreateMode)  { msg = $"a CreateMode   :{CreateMode   } b CreateMode   :{b.CreateMode  }"; break; }
             if(ScriptUseDb  != b.ScriptUseDb) { msg = $"a ScriptUseDb  :{ScriptUseDb  } b ScriptUseDb  :{b.ScriptUseDb }"; break; }
@@ -218,7 +310,7 @@ namespace DbScripterLib
             return true;
          } while(false);
 
-         Console.WriteLine($"Params Equals failed: { msg}");
+         Log($"Params Equals failed: { msg}");
          //Assertion if here then a check failed
          return false;
       }
@@ -230,6 +322,7 @@ namespace DbScripterLib
 
          s.Append("\r\n");
          s.Append(Line);
+         s.Append($" Type            : {GetType().Name   } \r\n");
          s.Append($" Name            : {Name             } \r\n");
          s.Append(Line);
          s.Append($" ServerName      : {ServerName       } \r\n");
@@ -239,7 +332,6 @@ namespace DbScripterLib
          s.Append($" NewSchemaName   : {NewSchemaName    } \r\n");
          s.Append($" RequiredSchemas : {RequiredSchemas  } \r\n");
          s.Append($" RequiredTypes   : {RequiredTypes    } \r\n");
-         s.Append($" DbOpType        : {DbOpType         } \r\n");
          s.Append($" SqlType         : {SqlType          } \r\n");
          s.Append($" CreateMode      : {CreateMode       } \r\n");
          s.Append($" ScriptUseDb     : {ScriptUseDb      } \r\n");
@@ -265,7 +357,6 @@ namespace DbScripterLib
          return base.GetHashCode();
       }
 
-
       public Params
       (
           string           name            = ""
@@ -277,9 +368,8 @@ namespace DbScripterLib
          ,string?          newSchemaName   = null 
          ,string?          requiredSchemas = null 
          ,string?          requiredTypes   = null 
-         ,DbOpTypeEnum?    dbOpType        = null
-         ,SqlTypeEnum?     sqlType         = null
-         ,CreateModeEnum?  createMode      = null
+         ,SqlTypeEnum?     sqlType         = SqlTypeEnum    .Undefined
+         ,CreateModeEnum?  createMode      = CreateModeEnum .Undefined
          ,bool?            scriptUseDb     = null
          ,bool?            addTimestamp    = null
          ,bool?            isExprtngData   = null
@@ -294,6 +384,7 @@ namespace DbScripterLib
       )
       {
          Name = name;
+         
          // if prms specified then start with prms state
          if(prms != null)
             CopyFrom(prms);   // force copy
@@ -301,27 +392,26 @@ namespace DbScripterLib
          // Only append if specified not null
          PopFrom
          (
-             serverName:         serverName
-            ,instanceName:       instanceName
-            ,databaseName:       databaseName
-            ,exportScriptPath:   exportScriptPath
-            ,newSchemaName:      newSchemaName
-            ,requiredSchemas:    requiredSchemas
-            ,requiredTypes:      requiredTypes
-            ,dbOpType:           dbOpType
-            ,sqlType:            sqlType
-            ,createMode:         createMode
-            ,scriptUseDb:        scriptUseDb
-            ,addTimestamp:       addTimestamp
-            ,isExprtngData   :   isExprtngData  
-            ,isExprtngDb     :   isExprtngDb    
-            ,isExprtngFKeys  :   isExprtngFKeys 
-            ,isExprtngFns    :   isExprtngFns   
-            ,isExprtngProcs  :   isExprtngProcs 
-            ,isExprtngSchema :   isExprtngSchema
-            ,isExprtngTbls   :   isExprtngTbls  
-            ,isExprtngTTys   :   isExprtngTTys  
-            ,isExprtngViews  :   isExprtngViews 
+             serverName       : serverName
+            ,instanceName     : instanceName
+            ,databaseName     : databaseName
+            ,exportScriptPath : exportScriptPath
+            ,newSchemaName    : newSchemaName
+            ,requiredSchemas  : requiredSchemas
+            ,requiredTypes    : requiredTypes
+            ,sqlType          : sqlType
+            ,createMode       : createMode
+            ,scriptUseDb      : scriptUseDb
+            ,addTimestamp     : addTimestamp
+            ,isExprtngData    : isExprtngData
+            ,isExprtngDb      : isExprtngDb
+            ,isExprtngFKeys   : isExprtngFKeys
+            ,isExprtngFns     : isExprtngFns
+            ,isExprtngProcs   : isExprtngProcs
+            ,isExprtngSchema  : isExprtngSchema
+            ,isExprtngTbls    : isExprtngTbls
+            ,isExprtngTTys    : isExprtngTTys
+            ,isExprtngViews   : isExprtngViews
          );
       }
 
@@ -335,9 +425,8 @@ namespace DbScripterLib
          NewSchemaName     = null;
          RequiredSchemas   = null;
          RequiredTypes     = null;
-         DbOpType          = DbOpTypeEnum.Undefined;
-         SqlType           = SqlTypeEnum.Undefined;
-         CreateMode        = CreateModeEnum.Undefined;
+         SqlType           = SqlTypeEnum     .Undefined;
+         CreateMode        = CreateModeEnum  .Undefined;
          ScriptUseDb       = false;
          AddTimestamp      = false;
          IsExprtngData     = false;
@@ -387,7 +476,7 @@ namespace DbScripterLib
          // get the types, chk if valid
          foreach (var item in reqTypes)
          {
-            ndx = validTypes.IndexOf(item);//.FirstOrDefault((x)=>x==item);
+            ndx = validTypes.IndexOf(item);
             switch(ndx)
             {
             case 0: list.Add(SqlTypeEnum.Function) ; break;
@@ -434,8 +523,8 @@ namespace DbScripterLib
       /// <returns>string array of the unwrapped schemas in rs</returns>
       public List<string>? ParseRequiredSchemas( string? rs )
       {
-         Precondition(!string.IsNullOrEmpty(ServerName  ), "Server must be specified");
-         Precondition(!string.IsNullOrEmpty(InstanceName), "instance must be specified");
+         Precondition<ArgumentException>(!string.IsNullOrEmpty(ServerName  ), "Server must be specified");
+         Precondition<ArgumentException>(!string.IsNullOrEmpty(InstanceName), "instance must be specified");
 
          //   POST 1: returns null if rs is null, empty
          if(string.IsNullOrEmpty(rs))
@@ -512,9 +601,8 @@ namespace DbScripterLib
             ,string?          newSchemaName     = null
             ,string?          requiredSchemas   = null
             ,string?          requiredTypes     = null
-            ,DbOpTypeEnum?    dbOpType          = null
-            ,SqlTypeEnum?     sqlType           = null
-            ,CreateModeEnum?  createMode        = null
+            ,SqlTypeEnum?     sqlType           = SqlTypeEnum     .Undefined
+            ,CreateModeEnum?  createMode        = CreateModeEnum  .Undefined
             ,bool?            scriptUseDb       = null
             ,bool?            addTimestamp      = null
             ,bool?            isExprtngData     = null
@@ -539,7 +627,6 @@ namespace DbScripterLib
             ,newSchemaName:   newSchemaName
             ,requiredSchemas: requiredSchemas
             ,requiredTypes:   requiredTypes
-            ,dbOpType:        dbOpType
             ,sqlType:         sqlType
             ,createMode:      createMode
             ,scriptUseDb:     scriptUseDb
@@ -562,28 +649,27 @@ namespace DbScripterLib
 
       public void PopFrom
           (
-              Params?            prms              = null // Use this state to start with and update with the subsequent parameters
-             ,string?            serverName        = null
-             ,string?            instanceName      = null
-             ,string?            databaseName      = null
-             ,string?            exportScriptPath  = null
-             ,string?            newSchemaName     = null
-             ,string?            requiredSchemas   = null
-             ,string?            requiredTypes     = null
-             ,DbOpTypeEnum?      dbOpType          = null
-             ,SqlTypeEnum?       sqlType           = null
-             ,CreateModeEnum?    createMode        = null
-             ,bool?              scriptUseDb       = null
-             ,bool?              addTimestamp      = null
-             ,bool?              isExprtngData     = null
-             ,bool?              isExprtngDb       = null
-             ,bool?              isExprtngFKeys    = null
-             ,bool?              isExprtngFns      = null
-             ,bool?              isExprtngProcs    = null
-             ,bool?              isExprtngSchema   = null
-             ,bool?              isExprtngTbls     = null
-             ,bool?              isExprtngTTys     = null
-             ,bool?              isExprtngViews    = null
+              Params?         prms              = null // Use this state to start with and update with the subsequent parameters
+             ,string?         serverName        = null
+             ,string?         instanceName      = null
+             ,string?         databaseName      = null
+             ,string?         exportScriptPath  = null
+             ,string?         newSchemaName     = null
+             ,string?         requiredSchemas   = null
+             ,string?         requiredTypes     = null
+            ,SqlTypeEnum?     sqlType           = null // must be null to avoid overwriting prms if set
+            ,CreateModeEnum?  createMode        = null // must be null to avoid overwriting prms if set
+             ,bool?           scriptUseDb       = null
+             ,bool?           addTimestamp      = null
+             ,bool?           isExprtngData     = null
+             ,bool?           isExprtngDb       = null
+             ,bool?           isExprtngFKeys    = null
+             ,bool?           isExprtngFns      = null
+             ,bool?           isExprtngProcs    = null
+             ,bool?           isExprtngSchema   = null
+             ,bool?           isExprtngTbls     = null
+             ,bool?           isExprtngTTys     = null
+             ,bool?           isExprtngViews    = null
           )
       {
          // overwite 
@@ -601,7 +687,6 @@ namespace DbScripterLib
          UpdatePropertyIfNeccessary("NewSchemaName",   newSchemaName);
          //UpdatePropertyIfNeccessary("RequiredSchemas", requiredSchemas);
          //UpdatePropertyIfNeccessary("RequiredTypes",   requiredTypes);
-         UpdatePropertyIfNeccessary("DbOpType",        dbOpType);    
          UpdatePropertyIfNeccessary("SqlType",         sqlType); 
          UpdatePropertyIfNeccessary("CreateMode",      createMode);
          UpdatePropertyIfNeccessary("ScriptUseDb",     scriptUseDb); 
@@ -670,7 +755,6 @@ namespace DbScripterLib
          NewSchemaName     = p.NewSchemaName;
          RequiredSchemas   = p.RequiredSchemas;
          RequiredTypes     = p.RequiredTypes;
-         DbOpType          = p.DbOpType;
          SqlType           = p.SqlType;
          CreateMode        = p.CreateMode;
          ScriptUseDb       = p.ScriptUseDb;

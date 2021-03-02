@@ -7,8 +7,7 @@ using DbScripterLib;
 using System.IO;
 using System.Diagnostics;
 using RSS;
-using static RSS.Utils;
-using System.Collections.Generic;
+using static RSS.Common.Utils;
 
 namespace DbScriptr
 {
@@ -35,7 +34,9 @@ namespace DbScriptr
             ParseArgs(args, out Params p);
 
             DbScripter scripter = new DbScripter();
-            scripter.ExportRoutines(p);
+            throw new NotImplementedException();
+            // scripter.ExportRoutines(p);
+            /*
 
             if(!File.Exists(p.ExportScriptPath))
                throw new Exception($"Failed to create export file: {p.ExportScriptPath}");
@@ -43,7 +44,7 @@ namespace DbScriptr
             Console.WriteLine( $"Successfully exported to {p.ExportScriptPath}");
 
             // Launch notepadd++
-            Process.Start("notepad++.exe", p.ExportScriptPath);
+            Process.Start("notepad++.exe", p.ExportScriptPath);*/
          }
          catch
          {

@@ -2,21 +2,18 @@
 #nullable enable
 #pragma warning disable CS8602
 
-using Microsoft.SqlServer.Management.Common;
-using Microsoft.SqlServer.Management.Sdk.Sfc;
 using Microsoft.SqlServer.Management.Smo;
 using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Configuration;
-using System.Data.SqlClient;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
 using RSS;
-using static RSS.Utils;
-using static RSS.Logger;
+using static RSS.Common.Utils;
+using static RSS.Common.Logger;
 using System.Collections.Specialized;
 
 namespace DbScripterLib
@@ -43,11 +40,76 @@ namespace DbScripterLib
    /// </summary>
    public class DbScripter : IDbScripter
    {
-      #region private fields
+      #region IDbScripter Impl
+      /// <summary>
+      /// Description: Main Export entry point
+      /// 
+      /// PRE: the following export parameters must be defined:
+      /// PRE 1: the params struct must not be null
+      /// PRE 2: Sql Type
+      /// PRE 3: Create   Mode
+      /// PRE 4: Server   Name
+      /// PRE 5: Instance Name
+      /// 
+      /// POST: Export completed
+      /// 
+      /// </summary>
+      /// <param name="databaseName"></param>
+      /// <param name="opType"></param>
+      /// <param name="writerFilePath"></param>
+      /// <param name="staticDataTables">can configure the static data tables now</param>
+      /// <returns></returns>
+      public string? Export( Params p)
+      {
+         LogS();
+         // hndl in init Precondition<ArgumentException>((p.SqlType ?? SqlTypeEnum.Undefined) != SqlTypeEnum.Undefined,"the main export SqlType must be defined");
 
-      private const string GO = "GO";
+         string? script = null;
+         Init(p);
 
-      #endregion private fields
+         try
+         {
+            // switch on the top level export type
+            // exporting schema will NOT also export its children
+            // All export routines must check the validity of the parmaeter state first
+            switch(p.SqlType)
+            {
+            case SqlTypeEnum.Schema    : script = ExportSchemas();   break;
+            case SqlTypeEnum.Database  : script = ExportDatabase();  break;
+          //case SqlTypeEnum.Function  : script = ExportFunctions(); break;
+          //case SqlTypeEnum.Procedure : script = ExportProcedures();break;
+            case SqlTypeEnum.Table     : script = ExportTables();    break;
+          //case SqlTypeEnum.TableType : script = ExportTableTypes();break;
+          //case SqlTypeEnum.View      : script = Views();           break;
+            case SqlTypeEnum.Undefined: AssertFail<ArgumentException>("SqlType must be defined")  ; break;
+            default: AssertFail<NotImplementedException>($"{p.SqlType.GetAlias()} notimplemented"); break;
+            }
+         }
+         catch(Exception e)
+         {
+            LogException(e);
+            throw;
+         }
+         finally
+         {
+            Writer?.Close();
+         }
+
+         LogL();
+         return script;
+      }
+
+      public virtual string GetTimestamp()
+      { 
+         return DateTime.Now.ToString("yyMMdd-HHmm");
+      }
+
+      public DbScripter(Params? p = null)
+      {
+         Init(p);
+      }
+
+      #endregion IDbScripter Impl
       #region    properties
       #region    primary properties
       // Primary properties
@@ -79,41 +141,28 @@ namespace DbScripterLib
       #region    public methods
 
       /// <summary>
-      /// Main constructor
-      /// If params are specified then initialises state with params
-      /// Test: DbScriptorTests.DbScriptorTest
-      /// 
-      /// PRECONDITIONS: none
-      /// 
-      /// POSTCONDITIONS:
-      /// ServerName     = serverName
-      /// InstanceName   = instanceName
-      /// DatabaseName   = databaseName
-      /// WriterFilePath = writerFilePath
-      /// DbOpType       = opType
-      /// 
-      /// </summary>
-      public DbScripter(Params? p = null)
-      {
-         if(p != null)
-            Init(p);
-      }
-
-      /// <summary>
       /// Initialize state, deletes the writerFilePath file if it exists
       /// Only completes the initialisation if the parameters are all specified
       /// 
       /// PRECONDITIONS: none
-      ///   P.ServerName   specified
-      ///   P.InstanceName specified
-      ///   P.OpType       specified
+      ///   1: p              specified
+      ///   2: P.ServerName   specified
+      ///   3: P.InstanceName specified
+      ///   4: P.CreateMode   specified
       ///   
       /// POSTCONDITIONS:
-      ///   1: Initialises the initial state
-      ///   2: server and makes a connection, throws exception otherwise
-      ///   3: database connected
-      ///   4: sets the scripter options configuration based on optype
-      ///   5: sets the IsInitialised flag
+      ///   1: EITHER:
+      ///   (
+      ///      1.1: Initialises the initial state
+      ///      1.2: server and makes a connection, throws exception otherwise
+      ///      1.3: database connected
+      ///      1.4: sets the scripter options configuration based on optype
+      ///      1.5. sets the IsInitialised flag
+      ///      1.6: writer open
+      ///      1.7: if exporting tables dont specify alter - or the Microsoft scripter will silently fail to emit the script
+      ///   )
+      ///   OR
+      ///   2: clears the IsInitialised flag
       ///   
       /// </summary>
       /// <param name="serverName">DESKTOP-UAULS0U\SQLEXPRESS</param>
@@ -121,85 +170,127 @@ namespace DbScripterLib
       /// <param name="databaseName"></param>
       /// <param name="opType"></param>
       /// <param name="writerFilePath">like C:\tmp\Covid_T1_export.sql</param>
-      public void Init( Params? p, bool append = false)
+      protected void Init( Params? p, bool append = false)
       {
-         LogS(p?.ToString() ?? "");
-         var specMsg = "must be specified";
-         Precondition<ArgumentException>(p != null, $"Params arg {specMsg}");
-         Precondition<ArgumentException>((!string.IsNullOrEmpty(P.ServerName  ))||(!string.IsNullOrEmpty(p.ServerName  )), $"server {specMsg}");
-         Precondition<ArgumentException>((!string.IsNullOrEmpty(P.InstanceName))||(!string.IsNullOrEmpty(p.InstanceName)), $"instance {specMsg}");
-         Precondition<ArgumentException>(p.DbOpType != null, $"Op type {specMsg}");
+         LogS(p?.ToString() ?? "Params not defined");
+         string? msg = "";
 
-         // First clear all
-         if(!append)
-            ClearState();
+         if(p != null)
+         { 
+            // ---------------------------------------------------------------
+            // Validate preconditions
+            // ---------------------------------------------------------------
+            // PRE: the following export parameters must be defined:
+            // PRE 1: the params struct must not be null
+            // PRE 2: Sql Type
+            // PRE 3: Create   Mode
+            // PRE 4: Server   Name
+            // PRE 5: Instance Name
+            var defMsg = "must be specified";
+            Precondition<ArgumentException>(p != null, $"Params arg {defMsg}");                                                              // PRE 1
+            Precondition<ArgumentException>((p.SqlType    ?? SqlTypeEnum   .Undefined) != SqlTypeEnum   .Undefined, $"SqlType {defMsg}");    // PRE 2
+            Precondition<ArgumentException>((p.CreateMode ?? CreateModeEnum.Undefined) != CreateModeEnum.Undefined, $"CreateMode {defMsg}"); // PRE 3
+            Precondition<ArgumentException>(!string.IsNullOrEmpty(p.ServerName  ), $"server {defMsg}");                                      // PRE 4
+            Precondition<ArgumentException>(!string.IsNullOrEmpty(p.InstanceName), $"instance {defMsg}");                                    // PRE 5
 
-         P.PopFrom(p);      // 1: Initialise the initial state
+            // -----------------------------------------
+            // ASSERTION: preconditions va;idated
+            // -----------------------------------------
 
-         //   2: server and makes a connection, throws exception otherwise
-         InitServer(P.ServerName, P.InstanceName);
-         InitDatabase(P.DatabaseName);
+            // First clear all
+            if(!append)
+               ClearState();
 
-         // PRE: P pop
-         InitScriptingOptions();
+            P.PopFrom(p);      // 1: Initialise the initial state
 
-         // InitWriter calls IsValid() - returns the Validation status - 
-         // NOTE: can continue if not all initialised so long as the final init is performed before any write op
-         // PRE:  P pop with export path
-         // POST: Writer open
-         InitWriter();
+            //   2: server and makes a connection, throws exception otherwise
+            InitServer(P.ServerName, P.InstanceName);
+            InitDatabase(P.DatabaseName);
+            InitScriptingOptions();
 
-         /// POSTCONDITION CHECKS:
-         ///   1: Initialises the initial state
-         ///   2: server and makes a connection, throws exception otherwise
-         ///   3: database connected
-         ///   4: sets the scripter options configuration based on optype
-         Postcondition(Server != null,             "Server not initialised");
-         Postcondition(Server.Databases.Count > 0, "Server not initialised");
-         Postcondition(Database != null,           "Database not not initialised");
-         Postcondition(Database.Schemas.Count > 0, "Database not not initialised");
-         IsInitialised = true;
+            // InitWriter calls IsValid() - returns the Validation status - 
+            // NOTE: can continue if not all initialised so long as the final init is performed before any write op
+            // PRE:  P pop with export path
+            // POST: Writer open
+            InitWriter();
+            IsInitialised = true;
+         }
+
+         // POSTCONDITION CHECKS:
+         // 1: EITHER: 
+         // ( 
+         //    IsInitialised is true 
+         //    AND (
+         //       1.1: Initialises the initial state
+         //       1.2: server and makes a connection, throws exception otherwise
+         //       1.3: database connected
+         //       1.4: sets the scripter options configuration based on optype
+         //       1.5. sets the IsInitialised flag
+         //       1.6: writer open
+         //       1.7: if exporting tables dont specify alter - or the Microsoft scripter will silently fail to emit the script
+         //    )
+         // )
+         // OR
+         // 2: IsInitialised is false
+         Postcondition((IsInitialised==false) || P.IsValid(out msg) , msg);
+         // OR 2: clears the IsInitialised flag
+
          LogL();
       }
 
       /// <summary>
-      /// Initializes server connectio - default database: databaseName
+      /// Initializes server connection - default database: databaseName.
+      /// This will fail if the server is not online or cannot be connected to.
       /// 
       /// PRECONDITIONS:
+      ///   serverName not null
+      ///   instanceName not null
       ///   
       /// POSTCONDITIONS:
-      ///  Server created and connected or serverName is null
+      ///  POST 1: Server smo object created and connected
+      ///  POST 2: the server is online
+      ///  
       /// </summary>
-      /// <param name="databaseName"></param>
+      /// <param name="serverName"></param>
+      /// <param name="instanceName"></param>
       protected void InitServer( string? serverName, string? instanceName)
       {
          LogS();
 
          try
          {
-            if(serverName == null)
-            {
-               Server   = null;
-               Database = null;
-               return;
-            }
+            // -------------------------
+            // Validate preconditions
+            // -------------------------
 
             Precondition<ArgumentException>(!string.IsNullOrEmpty(serverName)  , "Server not specified");
-            Assertion(!string.IsNullOrEmpty(instanceName), "Instance not specified");
+            Precondition<ArgumentException>(!string.IsNullOrEmpty(instanceName), "Instance not specified");
 
-            // ASSERTION: serverName, serverName, instance are all specified
+            // -----------------------------------------
+            // ASSERTION: preconditions validated
+            // -----------------------------------------
 
-            Server = CreateAndOpenServer( serverName, instanceName);//, databaseName );
+            Server  = CreateAndOpenServer( serverName, instanceName);
             var ver = Server.Information.Version;
 
             // Set the default loaded fields to include IsSystemObject
-            Server.SetDefaultInitFields(typeof(Table),              "IsSystemObject" /*",CreateDate"*/);
-	         Server.SetDefaultInitFields(typeof(StoredProcedure),    "IsSystemObject" /*",CreateDate"*/);
-	         Server.SetDefaultInitFields(typeof(UserDefinedFunction),"IsSystemObject" /*",CreateDate#"*/,"FunctionType");
-	         Server.SetDefaultInitFields(typeof(View),               "IsSystemObject" /*",CreateDate"*/);
+            Server.SetDefaultInitFields(typeof(Table),              "IsSystemObject");
+	         Server.SetDefaultInitFields(typeof(StoredProcedure),    "IsSystemObject");
+	         Server.SetDefaultInitFields(typeof(UserDefinedFunction),"IsSystemObject","FunctionType");
+	         Server.SetDefaultInitFields(typeof(View),               "IsSystemObject");
 
-            // Post condition chk
-            Postcondition(((Server != null) || (serverName == null)),   "Could not create Server object");
+            // -------------------------
+            // Validate postconditions
+            // -------------------------
+
+            //  POST 1: Server smo object created
+            //  POST 2: the server is online and connected
+            Postcondition(Server != null,                         "Could not create Server smo object");
+            Postcondition(Server.Status == ServerStatus.Online,   "Could not connect to Server");
+
+            // -----------------------------------------
+            // ASSERTION: postconditions validated
+            // -----------------------------------------
          }
          catch(Exception e)
          { 
@@ -211,9 +302,15 @@ namespace DbScripterLib
       }
 
       /// <summary>
-      /// PRE:  server       instantiated
-      /// PRE:  databaseName specified
-      /// POST: Database     instantiated and connected
+      /// PRECONDITIONS:
+      /// PRE 1:  server        instantiated
+      /// PRE 2:  database name specified
+      ///
+      ///
+      /// POSTCONDITIONS:
+      /// POST 1: database smo is instantiated and connected
+      /// POST 2: database state is normal
+      /// POST 3: schemas exist in database smo
       /// </summary>
       /// <param name="databaseName"></param>
       protected void InitDatabase(string? databaseName)
@@ -222,12 +319,19 @@ namespace DbScripterLib
 
          try
          {
-            Precondition<ArgumentException>(Server != null , "Server not instantiated");
-            Precondition<ArgumentException>(!string.IsNullOrEmpty(databaseName), "databaseName not specified");
+            // -------------------------
+            // Validate preconditions
+            // -------------------------
+
+            Precondition<ArgumentException>(Server != null                     , "server not instantiated");      // PRE 1
+            Precondition<ArgumentException>(!string.IsNullOrEmpty(databaseName), "database name not specified");  // PRE 2
+
+            // -----------------------------------------
+            // ASSERTION: preconditions validated
+            // -----------------------------------------
 
             var databases = Server.Databases;
 
-            //FeedbackComponentProvider.Append(this, "Init", $"Getting the SMO database object for  object for the database name: [{databaseName}].");
             if(!databases.Contains(databaseName))
                Server.Refresh();
 
@@ -238,10 +342,19 @@ namespace DbScripterLib
             else
                Database = new Database(Server, databaseName);
 
-            // Post condition chks
-            Assertion<ConfigurationException>(Database != null, $"database {databaseName} not found");
-            Assertion<ConfigurationException>(Database.Schemas.Count > 0, $"database {databaseName} not found");
-         }
+            // -------------------------
+            // Validate postconditions
+            // -------------------------
+
+            /// POST: Database     instantiated and connected
+            Postcondition(Database        != null                 , $"database {databaseName} smo object not created"); // POST 1
+            Postcondition(Database.Status == DatabaseStatus.Normal, $"database {databaseName} state is not normal");    // POST 2
+            Assertion<ConfigurationException>(Database.Schemas.Count > 0, $"database {databaseName} smo object not connected or no schemas exist"); // POST 3
+ 
+            // -----------------------------------------
+            // ASSERTION: postconditions validated
+            // -----------------------------------------
+        }
          catch(Exception e)
          { 
             LogException(e);
@@ -252,135 +365,83 @@ namespace DbScripterLib
      }
 
 
-
       /// <summary>
-      /// Encapsulates the scripter options and OPType setup
+      /// Sets up the general scripter options
       /// 
       /// PRECONDITIONS:
-      ///   P configured
+      ///   PRE 1: P is valid
+      ///   
       /// POSTCONDITIONS:
+      ///  general: Scripter.Options state initialised with general settings
+      ///  specific:
+      ///  POST 1: if exporting tables dont specify alter - or the Microsoft scripter will silently fail to emit the script
       ///  
+      /// TESTS:
+      ///   DbScriptorTests.InitScriptingOptionsTest()
+      ///   
       /// </summary>
       /// <param name="dbOpType"></param>
-      private bool InitScriptingOptions()
+      protected void InitScriptingOptions()
       {
          LogS();
+         // -------------------------
+         // Validate preconditions
+         // -------------------------
+         Precondition<ArgumentException>(P.IsValid(out string? msg), msg); // PRE 1
 
-         // Bow out quick if default
-         if(P.DbOpType != DbOpTypeEnum.Undefined)
+         // -----------------------------------------
+         // ASSERTION: preconditions validated
+         // -----------------------------------------
+
+         Scripter = new Scripter(Server);
+
+         var noGoflag = (P.CreateMode == CreateModeEnum.Create) || (P.CreateMode == CreateModeEnum.Alter);
+
+         ScriptOptions = new ScriptingOptions()
          {
-            // set SqlType
-            // Map the dbOpType to the corresponding sql obect type that the dbOpType works on
-            // 
-            // POSTCONDITIONS:
-            // 1: dbOpType is successfully mapped and returned
-            // </summary>
-            // <param name="dbOpType"></param>
-            // <returns></returns>
-            P.SqlType = GetSqlTypeFromDbOpType(P.DbOpType ?? DbOpTypeEnum.Undefined);
+            AllowSystemObjects      = false,
+            AnsiFile                = true,
+            AnsiPadding             = false,
+            AppendToFile            = true,     // needed if we use script builder repetitively
+            Bindings                = false,
+            ContinueScriptingOnError= false,
+            ConvertUserDefinedDataTypesToBaseType = false,
+            DriAll                  = true,
+            ExtendedProperties      = true,
+            IncludeDatabaseContext  = P?.ScriptUseDb ?? false, // only if required
+            IncludeHeaders          = false,
+            IncludeIfNotExists      = false,
+            Indexes                 = true,
+            NoCollation             = true,
+            NoCommandTerminator     = noGoflag, // true means don't emit GO statements after every SQLstatement
+            NoIdentities            = true,
+            NonClusteredIndexes     = true,
+            Permissions             = false,
+            SchemaQualify           = true,     //  e.g. [dbo].sp_bla
+            SchemaQualifyForeignKeysReferences = true,
+            ScriptBatchTerminator   = false,
+            ScriptData              = P.IsExprtngData    ?? false,
+            ScriptDrops             = (P.CreateMode == CreateModeEnum.Drop),
+            ScriptForAlter          = (P.CreateMode == CreateModeEnum.Alter),
+            ScriptSchema            = P.IsExprtngSchema  ?? false,
+            WithDependencies        = false,    // issue here: dont set true: Smo.FailedOperationException true, Unable to cast object of type 'System.DBNull' to type 'System.String'.
+            ClusteredIndexes        = true,
+            FullTextIndexes         = true,
+            EnforceScriptingOptions = true,
+         };
 
-            // SqlType known
+         Scripter.Options = ScriptOptions;
 
-            Scripter = new Scripter(Server);
+         // -------------------------
+         // Validate postconditions
+         // -------------------------
+         Postcondition((P.SqlType == SqlTypeEnum.Table && P.CreateMode != CreateModeEnum.Alter) || ((P.SqlType != SqlTypeEnum.Table)), "if exporting tables dont specify alter");//  POST 1: 
+ 
+         // -----------------------------------------
+         // ASSERTION: postconditions validated
+         // -----------------------------------------
 
-            var noGoflag = (P.DbOpType == DbOpTypeEnum.CreateStaticData);
-
-            ScriptOptions = new ScriptingOptions()
-            {
-               IncludeDatabaseContext  = P?.ScriptUseDb ?? false, // Do not Script the USE Database line
-               AllowSystemObjects      = false,
-               AnsiPadding             = false,
-               AppendToFile            = true,  // needed if we use script builder repetitively
-               IncludeIfNotExists      = false,
-               ContinueScriptingOnError= false,
-               ConvertUserDefinedDataTypesToBaseType = false,
-               ScriptForAlter          = (P.CreateMode == CreateModeEnum.Alter),
-               WithDependencies        = false, //= true Smo.FailedOperationException true, Unable to cast object of type 'System.DBNull' to type 'System.String'.
-               IncludeHeaders          = false, // true,
-
-               // Include Scripting Parameters Header: False
-               // Include system constraint names: False
-               // Include unsupported statements: False
-               Bindings                = false, // Script Bindings: False
-               NoCollation             = true,  // Script Collation: False
-               DriDefaults             = true,  // Script Defaults: True
-                                                // Script DROP and CREATE: Script CREATE
-               ExtendedProperties      = true,  // Script Extended Properties: True
-                                                // FileName                                = scripterFilePath, redundant now we know how to get around the bug in populate the script with GO statements
-               NoIdentities            = true,  // From SQL Man,Studio/Tools/Options/SQL Server Object Explorer/Scripting
-                                                // Script for Server Version: SQL Server 2017
-                                                // Script for the database engine edition: Microsoft SQL Server Standard Edition
-                                                // Script for the database engine type: Stand - alone instance
-                                                // Script LogUtils.LogIns: False
-                                                // Script Object - Level Permissions: False
-                                                // Script Owner: False
-                                                // Script Statistics: Do not script statistics
-                                                // Script USE DATABASE: True
-                                                // Types of data to script: Schema only
-
-               // Table / View Options
-               // Script Change Tracking: False
-               // Script Check Constraints: True
-               // Script Data Compression Options: False
-               // Script Foreign Keys: True
-
-               SchemaQualifyForeignKeysReferences = true, // 
-                                                  // Script Full - Text Indexes: False
-
-               DriIndexes              = true,  // Script Indexes: True
-               DriPrimaryKey           = true,  // Script Primary Keys: True
-                                                // Script Triggers: False
-               DriUniqueKeys           = true,  // Script Unique Keys: True
-
-               ScriptBatchTerminator   = false,
-               // Exclude GOs after every line
-
-               NoCommandTerminator     = noGoflag, // false means should emit GO statements - don't emit GO statements after every SQL insert statement for static data
-               Indexes                 = true,
-               DriForeignKeys          = false, // We script FKs later after all tables so that dependencies work
-               DriAll                  = false,
-               DriAllKeys              = false,
-               Permissions             = false,
-               DriAllConstraints       = true,  // include referential constraints in the script
-               SchemaQualify           = true,  // Schema qualify object names.: True e.g. [dbo]
-               AnsiFile                = true,
-               //SchemaQualifyForeignKeysReferences= true;
-               //Indexes                           = true,
-               //DriIndexes                        = true,
-               DriClustered            = true,
-               DriNonClustered         = true,
-               NonClusteredIndexes     = true,
-               ClusteredIndexes        = true,
-               FullTextIndexes         = true,
-               EnforceScriptingOptions = true,
-            };
-
-            //FeedbackComponentProvider.Append(this, "Init", "Created ScriptingOptions object.");
-            // Modified per op Type
-            ScriptOptions.ScriptData   = P.DbOpType == DbOpTypeEnum.CreateStaticData; // More needed here to filter the static data only - now done in Export Tables
-            ScriptOptions.ScriptSchema = P.DbOpType != DbOpTypeEnum.CreateStaticData;
-
-            ScriptOptions.ScriptDrops  =  (P.DbOpType == DbOpTypeEnum.DropDatabase) 
-                                       || (P.DbOpType == DbOpTypeEnum.DropSchema) 
-                                       || (P.DbOpType == DbOpTypeEnum.DropTables) 
-                                       || (P.DbOpType == DbOpTypeEnum.DropProcedures) 
-                                       || (P.DbOpType == DbOpTypeEnum.DropStaticData)
-                                       || (P.DbOpType == DbOpTypeEnum.DropViews)
-                                       ;
-
-            Scripter.Options = ScriptOptions;
-
-            // Make the flags and the ops consistent
-            // Set required types specifically 
-            switch(P.DbOpType)
-            {
-               case DbOpTypeEnum.CreateSchema: ExportSchemaScriptInit(); break;
-               case DbOpTypeEnum.DropSchema:   ExportSchemaScriptInit(); break;
-            }
-         }
-
-         LogL($" {(P.DbOpType == DbOpTypeEnum.Undefined ? "not ": "")} initialised");
-         return true;
+         LogL(Scripter.Options.ToString());
       }
 
       /// <summary>
@@ -442,7 +503,7 @@ namespace DbScripterLib
 
       protected void ClearState()
       {
-         LogS();
+         //LogS();
          // primary properties
          P.ClearState();
 
@@ -458,15 +519,15 @@ namespace DbScripterLib
          ExportedProcedures.Clear();
          ExportedTables    .Clear();
          ExportedViews     .Clear();
-         LogL();
+         //LogL();
       }
 
-      /// <summary>
+      /*// <summary>
       /// Exports all stored procedures and functions
       /// Initialises the major scripting elements
       /// </summary>
       /// <returns>Serialisation of all the user functions and user stored procedures as a set of SQL statements</returns>
-      public string ExportRoutines( Params? p)
+      protected string ExportRoutines( Params? p)
       {
          LogS();
          var sb = new StringBuilder();
@@ -510,9 +571,9 @@ namespace DbScripterLib
          LogL();
          return sb.ToString();
       }
+*/
 
-
-      /// <summary>
+      /*// <summary>
       /// Exports all stored procedures and functions
       /// Initialises the major scripting elements
       /// 
@@ -520,7 +581,7 @@ namespace DbScripterLib
       /// POST: Sps and fns exported for the given schema
       /// </summary>
       /// <returns>Serialisation of all the user functions and user stored procedures as a set of SQL statements</returns>
-      public string ExportRoutines( string? currentSchemaName, StringBuilder sb)
+      protected string ExportRoutines( string? currentSchemaName, StringBuilder sb)
       {
          LogS($"currentSchemaName: {currentSchemaName}");
          StringBuilder sb_ = new ();
@@ -540,47 +601,7 @@ namespace DbScripterLib
 
          return sb_.ToString();
       }
-
-      /// <summary>
-      /// if 
-      /// </summary>
-      /// <param name="addTimestamp"></param>
-      /// <returns></returns>
-      protected string HandleExportFilePath( string? exportFilePath, bool addTimestamp )
-      {
-         // Add the file path as a comment in the first line in the script
-         // D:\Dev\Db\Ut\Tests\ut_{dbo,test}_FP_210214-0709_export.sql
-         string? modifiedExportFilePath = null;
-         var lastFolderPos = exportFilePath.LastIndexOf('\\');
-         var dirs = exportFilePath.Substring(0, lastFolderPos);
-         var pos2 = exportFilePath.LastIndexOf('\\');
-
-         var secondPart = exportFilePath.Substring(lastFolderPos + 1);
-         var extPos = secondPart.LastIndexOf('.');
-         var len = secondPart.Length;
-         var ext = secondPart.Substring(extPos+1, len-(extPos+1));
-         var fileName = secondPart.Substring(0, extPos);
-         // if timestamp is already specified then fileName is like this: ut_{dbo,test}_FP_210214-0709_export
-         var parts = exportFilePath.Split(new []{'_'});
-
-         if(parts.Length >= 5)
-         {
-            // file name is fully specified including timestamp so dont change
-            modifiedExportFilePath = exportFilePath;
-         }
-         else
-         {
-            // file name is not fully specified so append timestamp
-            modifiedExportFilePath = $@"{ dirs}\{fileName}_{GetTimestamp()}.{ext}";
-         }
-
-         return modifiedExportFilePath;
-      }
-
-      public virtual string GetTimestamp()
-      { 
-         return DateTime.Now.ToString("yyMMdd-HHmm");
-      }
+*/
 
       #endregion public methods
       #region private methods
@@ -591,38 +612,46 @@ namespace DbScripterLib
       ///   P config pop
       /// </summary>
       /// <returns></returns>
-      private bool IsValid()
+      protected bool IsValid(out string? msg)
       {
-         var isValid = false;
+        msg = null;
+        var ret = false;
 
          do
          {
-            if(P.DbOpType == DbOpTypeEnum.Undefined)
-               break;
+            if(!P.IsValid(out msg))
+              break;
 
-            if(Writer == null)
+            string x = (((FileStream)Writer.BaseStream)?.Name ?? "not defined");
+
+            // ((FileStream)(Writer.BaseStream)).Name.Equals(P.ExportScriptPath, StringComparison.OrdinalIgnoreCase)	D:\Dev\Repos\DbScripter\DbScripterLib\DbScripter.cs	493	37	DbScripterLib	Read	InitWriter	DbScripter	
+            if(!x.Equals(P?.ExportScriptPath ?? "xxx", StringComparison.OrdinalIgnoreCase))
+            {
+               msg = "Writer not initialised properly";
                break;
+            }
 
             // Lastly if here then all checks have passed
-            isValid = true;
+            ret = true;
          } while(false);
 
-         return isValid;
+         return ret;
       }
 
-      /// <summary>
+      /*// <summary>
       /// Maps the dbOpType to the corresponding sql obect type
       /// that the dbOpType works on
       /// 
       /// POSTCONDITIONS:
       /// 1: dbOpType is successfully mapped and returned
+      /// 2: can return SqlTypeEnum.Undefined
       /// </summary>
       /// <param name="dbOpType"></param>
       /// <returns></returns>
-      SqlTypeEnum GetSqlTypeFromDbOpType( DbOpTypeEnum dbOpType )
+      SqlTypeEnum MapDbOpTypeToSqlType( DbOpTypeEnum dbOpType )
       {
-         if(dbOpType == DbOpTypeEnum.Undefined)
-            Assertion(dbOpType != DbOpTypeEnum.Undefined, $"Unhandled optype: {dbOpType}");
+         //if(dbOpType == DbOpTypeEnum.Undefined)
+         //   Assertion(dbOpType != DbOpTypeEnum.Undefined, $"Unhandled optype: {dbOpType}");
  
          SqlTypeEnum sqlType =
          dbOpType == DbOpTypeEnum.CreateDatabase   ? SqlTypeEnum.Database  :
@@ -639,65 +668,84 @@ namespace DbScripterLib
          dbOpType == DbOpTypeEnum.ExportDynamicData? SqlTypeEnum.Data      :
          dbOpType == DbOpTypeEnum.ExportStaticData ? SqlTypeEnum.Data      : SqlTypeEnum.Undefined;
 
-         if(sqlType == SqlTypeEnum.Undefined)
-            Assertion(sqlType != SqlTypeEnum.Undefined, $"Unhandled optype: {dbOpType}");
+         //if(sqlType == SqlTypeEnum.Undefined)
+         //   Assertion(sqlType != SqlTypeEnum.Undefined, $"Unhandled optype: {dbOpType}");
 
          return sqlType;
       }
+      */
+
 
       /// <summary>
-      /// PRE: none
-      /// Main Export entry point
+      /// determines the type of the smo object
+      /// 
+      /// PRE smo != null
+      /// 
+      /// POST return != SqlTypeEnum.Undefined
+      /// maps the objerct type to the equivalent SqlTypeEnum
+      /// 
       /// </summary>
-      /// <param name="databaseName"></param>
-      /// <param name="opType"></param>
-      /// <param name="writerFilePath"></param>
-      /// <param name="staticDataTables">can configure the static data tables now</param>
+      /// <param name="smo"></param>
       /// <returns></returns>
-      public string? Export( Params p)
-      {
-         LogS();
-         string? script = null;
-
-         try
-         {
-            switch(p.DbOpType)
-            {
-            case DbOpTypeEnum.CreateDatabase:   script = ExportCreateDbScript(p);      break;
-            case DbOpTypeEnum.CreateSchema:     script = ExportSchemas(p);             break;
-            case DbOpTypeEnum.CreateProcedures: script = ExportProcedures(p);          break;
-            case DbOpTypeEnum.DropDatabase:     script = ExportDropDatabaseScript(p);  break;
-            case DbOpTypeEnum.DropProcedures:   script = ExportDropProceduresScript(p);break;
-            case DbOpTypeEnum.CreateTables:     script = ExportTables(p);              break;
-            case DbOpTypeEnum.DropTables:       script = ExportTables(p);              break;
-            case DbOpTypeEnum.DropSchema:       script = ExportDropSchemaScript(p);    break; 
-
-            case DbOpTypeEnum.CreateStaticData: throw new NotImplementedException("Unhandled request type: .DropStaticData");
-            case DbOpTypeEnum.ExportStaticData: throw new NotImplementedException("Unhandled request type: .ExportStaticData");
-            case DbOpTypeEnum.ExportDynamicData:throw new NotImplementedException("Unhandled request type: .ExportDynamicData");
-            case DbOpTypeEnum.DropStaticData:   throw new NotImplementedException("Unhandled request type: .DropStaticData");
-
-            default:
-               script = "";
-               Assertion(false, $"SQL Export Scriptor error: unhandled script export case: {P.DbOpType.GetAlias()}");
-               break;
-            }
-         }
-         catch(Exception e)
-         {
-            LogException(e);
-            throw;
-         }
-         finally
-         {
-            Writer?.Close();
-         }
-
-         LogL();
-         return script;
+      protected static SqlTypeEnum MapTypeToSqlType(SqlSmoObject smo)
+      { 
+         Precondition(smo != null, $"MapTypeToSqlType: smo parameter must be defined");
+         return MapTypeToSqlType(smo.GetType().Name);
       }
 
-      /// <summary>
+      protected  static SqlTypeEnum MapTypeToSqlType(string typeName)
+      { 
+         SqlTypeEnum sty;
+
+         switch(typeName)
+         {
+            case "Database"            : sty = SqlTypeEnum.Database;  break;
+            case "UserDefinedFunction" : sty = SqlTypeEnum.Function;  break;
+            case "StoredProcedure"     : sty = SqlTypeEnum.Procedure; break;
+            case "Schema"              : sty = SqlTypeEnum.Schema;    break;
+            case "Table"               : sty = SqlTypeEnum.Table;     break;
+            case "View"                : sty = SqlTypeEnum.View;      break;
+            case "UserDefinedTableType": sty = SqlTypeEnum.TableType; break;
+
+            default                    : sty = SqlTypeEnum.Undefined; break;
+         }
+
+         if(sty == SqlTypeEnum.Undefined) Postcondition<ArgumentException>(sty != SqlTypeEnum.Undefined, $"MapTypeToSqlType failed for {typeName}");
+
+         return sty;
+      }
+
+
+      /*public static CreateModeEnum MapTypeToCreateMode(DbOpTypeEnum dbOptype)
+      { 
+         CreateModeEnum e;
+
+         switch(dbOptype)
+         {
+            case DbOpTypeEnum.DropDatabase:        e = CreateModeEnum.Drop;      break;
+            case DbOpTypeEnum.DropSchema:          e = CreateModeEnum.Drop;      break;
+            case DbOpTypeEnum.DropFunctions:       e = CreateModeEnum.Drop;      break;
+            case DbOpTypeEnum.DropProcedures:      e = CreateModeEnum.Drop;      break;
+            case DbOpTypeEnum.DropTables:          e = CreateModeEnum.Drop;      break;
+            case DbOpTypeEnum.DropViews:           e = CreateModeEnum.Drop;      break;
+            case DbOpTypeEnum.DropStaticData:      e = CreateModeEnum.Drop;      break;
+            case DbOpTypeEnum.CreateDatabase:      e = CreateModeEnum.Create;    break;
+            case DbOpTypeEnum.CreateSchema:        e = CreateModeEnum.Create;    break;
+            case DbOpTypeEnum.CreateTables:        e = CreateModeEnum.Create;    break;
+            case DbOpTypeEnum.CreateFunctions:     e = CreateModeEnum.Create;    break;
+            case DbOpTypeEnum.CreateProcedures:    e = CreateModeEnum.Create;    break;
+            case DbOpTypeEnum.CreateStaticData:    e = CreateModeEnum.Create;    break;
+            case DbOpTypeEnum.ExportStaticData:    e = CreateModeEnum.Create;    break;
+            case DbOpTypeEnum.ExportDynamicData:   e = CreateModeEnum.Create;    break;
+            case DbOpTypeEnum.Undefined:           e = CreateModeEnum.Undefined; break;
+            default:                               e = CreateModeEnum.Undefined; break;
+         }
+
+         if(e == CreateModeEnum.Undefined) Postcondition<ArgumentException>(e != CreateModeEnum.Undefined, $"MapTypeToSqlType failed for DbOpType {dbOptype.GetAlias()}");
+
+         return e;
+      }*/
+      /*// <summary>
       /// PRE: InitEnsuringDatabaseExists called with DbOpTypeEnum.ExportCreateDatabaseScript
       /// </summary>
       protected string ExportCreateDbScript( Params p )
@@ -735,7 +783,7 @@ namespace DbScripterLib
 
          LogL();
          return sb.ToString();
-      }
+      }*/
 
       /// <summary>
       /// Use this when we dont need to look for the CREATE RTN statement 
@@ -769,14 +817,15 @@ namespace DbScripterLib
 
       /// <summary>
       /// If scripting drops where the transactions are 1 or 2 lines then dont want a blank line
+      /// PRE: Init called
       /// </summary>
       /// <returns></returns>
-      private bool WantBlankLineBetweenTransactions( DbOpTypeEnum dbOpType = DbOpTypeEnum.Undefined )
+      private bool WantBlankLineBetweenTransactions()
       {
-         return !IsDropOperation(dbOpType);
+         return (P.CreateMode != CreateModeEnum.Drop);//!IsDropOperation(dbOpType);
       }
 
-      /// <summary>
+      /*// <summary>
       /// Determines if db operation is a drop type
       /// </summary>
       /// <param name="dbOpType">defalt: use the OpType property</param>
@@ -792,7 +841,7 @@ namespace DbScripterLib
                 dbOpType == DbOpTypeEnum.DropStaticData  ? true :
                 dbOpType == DbOpTypeEnum.DropTables      ? true :
                 dbOpType == DbOpTypeEnum.DropViews       ? true : false;
-      }
+      }*/
 
       /// <summary>
       /// Drop Scripts are handled differently.
@@ -800,16 +849,18 @@ namespace DbScripterLib
       /// each transaction emitted from the scripter.
       /// However if the is a drop operation then we DO want a blank line at the end of the
       /// Script part
+      /// 
+      /// PRE: Init called
+      /// 
+      /// POST: 
+      /// 
       /// </summary>
       /// <param name="sb"></param>
       /// <param name="dbOpType"></param>
-      private void CloseScript( StringBuilder sb, DbOpTypeEnum dbOpType = DbOpTypeEnum.Undefined )
+      private void CloseScript( StringBuilder sb)
       {
-         if(dbOpType == DbOpTypeEnum.Undefined)
-            dbOpType = P.DbOpType ?? DbOpTypeEnum.Undefined;
-
          // If a drop operation then add a blank line
-         if(!WantBlankLineBetweenTransactions(dbOpType))
+         if(!WantBlankLineBetweenTransactions())
             ScriptBlankLine(sb);
       }
 
@@ -824,7 +875,7 @@ namespace DbScripterLib
 
       /// <summary>
       /// PRE:  NONE
-      /// POST: all UNDEFIEND flags set true
+      /// POST: all UNDEFINED flags set true
       /// </summary>
       protected void SetUndefinedExportSchemaFlags()
       {
@@ -838,16 +889,22 @@ namespace DbScripterLib
 
       /// <summary>
       /// This will script all required schemas
+      /// 
+      /// PRE: Init called
+      /// 
+      /// POST: 
+      /// 
       /// </summary>
-      public string ExportSchemas(Params p)
+      public string ExportSchemas()
       {
          LogS();
          var sb = new StringBuilder(); 
 
          try
          {
-            Init(p);
-            // specialise the Options config for this op
+            //if((p.DbOpType ?? DbOpTypeEnum.Undefined) != DbOpTypeEnum.CreateSchema)            //   p.DbOpType = DbOpTypeEnum.CreateSchema;            //Init(p);
+
+            // Specialise the Options config for this op
             ExportSchemaScriptInit();
 
             foreach(var schemaName in P.RequiredSchemas)
@@ -865,42 +922,30 @@ namespace DbScripterLib
 
 
       /// <summary>
-      /// This will script the given schema in create mode
-      /// and will export all child types: Tables, views, sps, fns ...
+      /// This will script the given schema in the specified create mode
+      /// N.B.: Does NOTl export the child types: Tables, views, sps, fns ...
+      /// 
       /// Pre: all initialisation done
+      /// 
+      /// PRE: Init called
+      ///      P.IsExprtngSchema is true
+      ///      
+      /// POST: single line like CREATE Schema [schema name]; emiited
+      /// 
       /// </summary>
       public string ExportSchema(Schema schema, StringBuilder sb)
       {
-         LogS();
+         LogS($"schema: {schema.Name}");
+         Precondition<ArgumentException>((P.IsExprtngSchema ?? false) == true, "Inconsistent state P.IsExprtngSchema is not true");
          var sb_ = new StringBuilder(); 
 
          try
          {
-            // Create the scripts
-            Assertion<ArgumentException>(schema !=null);
-
-            // Finally drop the schema itself
-            if(P.IsExprtngSchema ?? false)
-               ScriptSchemaCreateLine(schema, sb_);
-
-            // Export tables and checks but not FKs as they may depend on tables not defined yet
-            if(P.IsExprtngTbls ?? false)
-               ExportTables( schema, sb_);
-
-            if(P.IsExprtngFKeys ?? false)
-               ExportForeignKeys(schema.Name, sb_);
-
-            if(P.IsExprtngTTys ?? false)
-               ExportTableTypes(schema.Name, sb_);
-
-            if(P.IsExprtngFns ?? false)
-               ExportFunctions(schema.Name, sb_);
-
-            if(P.IsExprtngProcs ?? false)
-               ExportProcedures(schema.Name, sb_);
-
-            if(P.IsExprtngVws ?? false)
-               ExportViews(schema.Name, sb_);
+            ScriptingOptions so = new ScriptingOptions();
+            so.ScriptDrops = (P.CreateMode == CreateModeEnum.Drop);
+            var coll = schema.Script();
+            SerialiseScript(coll, sb_);
+            sb.Append(sb_);
          }
          catch(Exception e)
          { 
@@ -908,7 +953,7 @@ namespace DbScripterLib
             throw;
          }
 
-         sb.Append(sb_);
+         LogL();
          return sb_.ToString();
       }
 
@@ -926,6 +971,7 @@ namespace DbScripterLib
             P.RequiredTypes.Add(sqlType);
       }
 
+
       /// <summary>
       /// Pre:  P.RequiredTypes not null
       ///       Init() called, P DbOpType configured
@@ -938,6 +984,7 @@ namespace DbScripterLib
       private void ExportSchemaScriptInit()
       {
          LogS();
+         Precondition(ScriptOptions != null, "ScriptOptions undefined");
          SetUndefinedExportSchemaFlags();
 
          EnsureRequiredTypesContainsType(SqlTypeEnum.Schema);
@@ -946,7 +993,7 @@ namespace DbScripterLib
          EnsureRequiredTypesContainsType(SqlTypeEnum.Procedure);
          EnsureRequiredTypesContainsType(SqlTypeEnum.Function);
          EnsureRequiredTypesContainsType(SqlTypeEnum.TableType);
-         EnsureRequiredTypesContainsType(SqlTypeEnum.FKey);
+//       EnsureRequiredTypesContainsType(SqlTypeEnum.FKey);
          EnsureRequiredTypesContainsType(SqlTypeEnum.TableType);
 
          P.IsExprtngFKeys  = true;
@@ -979,109 +1026,6 @@ namespace DbScripterLib
          LogL();
       }
 
-      /// <summary>
-      /// Main entry point for Exporting the Drop Schema Script
-      /// This will script the create or drop schema
-      /// Done in reverse order to create (dependencies first)
-      /// PRE the schema to drop is in the required schemas
-      /// PRE: there is only 1 schema in the required schemas list
-      ///
-      ///  Rules:
-      ///   R01: 1 and only 1 schema can be dropped at a time 
-      ///   R02: schema name must not be null and have at least 1 character
-      ///   R03: Schema {tgtSchemaName} does not exist in the database {Database.Name}
-      /// </summary>
-      protected string ExportDropSchemaScript(Params p)
-      {
-         var sb = new StringBuilder();
-         LogS();
-
-         try
-         { 
-            Init(p);
-            Precondition<ArgumentException>(P.RequiredSchemas.Count==1, "R01: 1 and only 1 schema can be dropped at a time");
-            
-            // specialise the Options config for this op
-            ExportSchemaScriptInit();
-
-            Assertion(ScriptOptions.ScriptDrops == true);
-            Assertion((P.DbOpType == DbOpTypeEnum.DropSchema) || (P.DbOpType == DbOpTypeEnum.DropDatabase));
-
-            // get the target schema  to drop
-            foreach(var shemaName in P.RequiredSchemas)
-            { 
-               var schemaName = P.RequiredSchemas.First();
-               Precondition<ArgumentException>((!string.IsNullOrEmpty(schemaName)) && (schemaName.Length>1), 
-                  "R02: schema name must not be null and have at least 1 character");
-
-               Schema tgtSchema  = Database.Schemas[schemaName];
-               Assertion<ArgumentException>(tgtSchema!= null, $"R03: Schema {schemaName} does not exist in the database {Database.Name}");
-
-               // Export types:
-               ScriptUseDatabaseStatement(sb);
-
-               if(P.IsExprtngVws ?? false)
-                  ExportViews(shemaName, sb);
-
-               // Once one export is written then do not keep scripting 'use database' lines
-               if(ScriptOptions.IncludeDatabaseContext)
-                  ScriptOptions.IncludeDatabaseContext = false;
-
-               // Drop stored procedures while all functions, tables and types defined
-               if(P.IsExprtngProcs ?? false)
-                  ExportProcedures(shemaName, sb);
-
-               // Drop functions while all tables and types defined
-               if(P.IsExprtngFns ?? false)
-                  ExportFunctions(shemaName, sb);
-
-               if(P.IsExprtngTTys ?? false)
-                  ExportTableTypes(shemaName, sb);
-
-               // Drop FKs while all tables defined
-               if(P.IsExprtngTbls ?? false)
-               {
-                  ExportForeignKeys(shemaName, sb);
-#pragma warning disable CS8604 // Possible null reference argument.
-                  ExportTables     (tgtSchema, sb);
-#pragma warning restore CS8604 // Possible null reference argument.
-               }
-
-               // finally drop the schema itself
-               if(P.IsExprtngSchema ?? false)
-                  ExportDropSchema(schemaName, sb);
-            }
-         }
-         catch(Exception e)
-         {
-            var msgs = e.GetAllMessages();
-            Log(msgs);
-            throw;
-         }
-
-         LogL();
-         return sb.ToString();
-      }
-
-      /// <summary>
-      /// PRE: script options already set to drop or create
-      /// <param name="exportFilePath">file to export to</param>
-      /// </summary>
-      public string ExportDropSchema( string schemaName, StringBuilder sb_ )
-      {
-         LogS();
-         StringBuilder sb = new StringBuilder();
-         Precondition<ArgumentException>((!string.IsNullOrEmpty(schemaName)) && (schemaName.Length>1), 
-            "R02: schema name must not be null and have at least 1 character");
-
-         Schema schema  = Database.Schemas[schemaName];
-         Assertion<ArgumentException>(schema!= null, $"R03: Schema {schemaName} does not exist in the database {Database.Name}");
-         var transactions = schema.Script(); // this.ScriptOptions
-         SerialiseScript(transactions, sb);
-         sb_.Append(sb);
-         LogL();
-         return sb.ToString();
-      }
 
       /// <summary>
       /// To script tables in dependency order (avoiding the issue of a newly created table having a FK referencing 
@@ -1127,7 +1071,7 @@ namespace DbScripterLib
       {
          LogS();
          var sb = new StringBuilder();
-         string script = null;
+         string? script = null;
 
          try
          { 
@@ -1217,7 +1161,7 @@ namespace DbScripterLib
          ScriptLine(GO, sb);
       }
 
-      /// <summary>
+      /*// <summary>
       /// Main entry point to create the "Drop Database Script"
       /// Produces a SQL script to drop the given database, kicking off any users
       /// </summary>
@@ -1232,18 +1176,55 @@ namespace DbScripterLib
          ExportDropDatabaseScript( sb);
          LogL();
          return sb.ToString();
-      }
+      }*/
 
-      public string ExportDropDatabaseScript( StringBuilder sb)
+      /// <summary>
+      /// Main entry point
+      /// Just does the Create or Drop database SQL line
+      /// 
+      /// PRE: Init called
+      ///   database must be instantiated
+      ///   
+      /// POST:
+      /// script returned 
+      /// 
+      /// </summary>
+      /// <returns></returns>
+      public string ExportDatabase( )
       {
-         // PRE: P init
-         Precondition<Exception>(IsInitialised, "scripter must be initialised before use");
-         var script = $"Drop database [{P.DatabaseName}];";
-         ScriptLine(script, sb);
-         return script;
+         LogS();
+         Precondition(Database != null, "database must be instantiated");
+         StringBuilder sb = new StringBuilder();
+         
+         return ExportDatabase( Database, sb);
       }
 
       /// <summary>
+      /// Just does the Create or Drop database SQL line
+      /// 
+      /// PRE: Init called
+      ///   database must be instantiated
+      ///   
+      /// POST:
+      /// script returned 
+      /// 
+     /// </summary>
+      /// <param name="db"></param>
+      /// <param name="sb"></param>
+      /// <returns></returns>
+      public string ExportDatabase( Database db, StringBuilder sb)
+      {
+         LogS();
+         // PRE: P init
+         StringBuilder sb_ = new StringBuilder();
+         Precondition<Exception>(IsInitialised, "scripter must be initialised before use");
+         var script = db.Script(ScriptOptions);
+         SerialiseScript(script, sb_);
+         sb.Append(sb_);
+         return sb_.ToString();
+      }
+
+      /*// <summary>
       /// Main entry point to create the "Create Database Script"
       /// PRE:   p specified
       /// POST:  p.DbOpType unchanged
@@ -1279,8 +1260,9 @@ namespace DbScripterLib
          LogL();
          return sb.ToString();
       }
+      */
 
-      /// <summary>
+      /*// <summary>
       /// Main entry point to create the "Create Schema Script"
       /// 
       /// </summary>
@@ -1295,7 +1277,7 @@ namespace DbScripterLib
          SerialiseScript(coll, sb_);
          sb.Append(sb_);
          return sb_.ToString();
-      }
+      }*/
 
       /// <summary>
       /// Main entry point to create the "Export Static Data Script"
@@ -1319,7 +1301,7 @@ namespace DbScripterLib
             throw;
          }
 
-         LogL();
+         //LogL();
       }
 
       /// <summary>
@@ -1420,28 +1402,33 @@ namespace DbScripterLib
      }
 
 
-
       /// <summary>
       /// Main entry point for exporting tables
       /// Exports all required tables for each required schema
       /// PRE:
+      ///   Initialised
       /// 
       /// POST:
       ///    init called
       ///    
       /// </summary>
       /// <param name="sb"></param>
-      public string? ExportTables( Params? p )
+      public string? ExportTables()
       {
          LogS();
-         StringBuilder sb = new StringBuilder();
+         Precondition(IsValid(out string? msg), msg);
+         StringBuilder     sb = new StringBuilder();
+         ScriptingOptions? so = ShallowClone(ScriptOptions);
+
+         // Make sure ScriptForAlter is false
+         so.ScriptForAlter          = false;
+         so.ScriptForCreateOrAlter  = false;
+         //Scripter.Options           = so;
 
          try
          {
-            Init(p);
-
             foreach(var schemaName in P.RequiredSchemas)
-               ExportTables( Database.Schemas[schemaName], sb );
+               ExportTables( Database.Schemas[schemaName], so, sb );
          }
          catch(Exception e)
          { 
@@ -1453,19 +1440,69 @@ namespace DbScripterLib
          return sb.ToString();
       }
 
+
+      /// <summary>
+      /// Call this before exporting any tables to get the correct 
+      /// ScriptOptions config.
+      /// It takes the current ScriptOptions config mamkes acopy
+      /// and modifies the copy to be ok to export tables
+      /// PRE:
+      ///  PRE 1: Scriptor Initialised
+      ///  
+      /// POST:
+      ///  POST 1: returned config so will support table export 
+      ///          and its script for alter flags are cleared
+      ///  POST 2: the original config is not changed
+      /// </summary>
+      /// <returns>so </returns>
+      protected ScriptingOptions InitTableExport()
+      { 
+         // -------------------------
+         // Validate preconditions
+         // -------------------------
+         //  PRE 1: Scriptor Initialised
+         Precondition(IsValid(out string? msg), "Scriptor must be initised first" + msg);
+
+         // -----------------------------------------
+         // ASSERTION: preconditions validated
+         // -----------------------------------------
+
+         var so   = ShallowClone(ScriptOptions);
+         var orig = ShallowClone(ScriptOptions);
+
+         // -------------------------
+         // Validate postconditions
+         // -------------------------
+         // POST 1: returned config so will support table export 
+         //          and its script for alter flags are cleared
+         Postcondition(!(so.ScriptForAlter || so.ScriptForCreateOrAlter), "POST 1 failed");
+         //  POST 2: the original config is not changed
+
+         if(!ScriptOptions.Equals(orig))
+         {
+            Log("was\r\n",     orig.ToString());
+            Log("\r\nnow\r\n", ScriptOptions.ToString());
+            Postcondition(ScriptOptions.Equals(orig));
+         }
+ 
+         // -----------------------------------------
+         // ASSERTION: postconditions validated
+         // -----------------------------------------
+         return so;
+      }
+
       /// <summary>
       /// PRE:
       ///   init called
-      ///   
+      ///   so set up foir table export 
+      ///   esp ScriptForAlter. ScriptForCreateOrAlter: false, 
       /// POST:
       /// 
       /// </summary>
       /// <param name="sb"></param>
-      public void ExportTables( Schema schema, StringBuilder sb )
+      public void ExportTables( Schema? schema, ScriptingOptions so, StringBuilder sb )
       {
          LogS(schema.Name);
-         // Save the previous state
-         var orig = ShallowClone(Scripter.Options);
 
          try
          { 
@@ -1500,7 +1537,7 @@ namespace DbScripterLib
                // Check if the table is not a system table
                if(IsWanted(schema.Name, table))
                { 
-                  ExportTable(table, sb);
+                  ExportTable(table, so, sb);
 
                   if(firstTime)
                   {
@@ -1519,11 +1556,6 @@ namespace DbScripterLib
             LogException(e);
             throw;
          }
-         finally
-         {
-            // reset state
-            Scripter.Options = ShallowClone(Scripter.Options);
-         }
 
          LogL();
       }
@@ -1541,10 +1573,11 @@ namespace DbScripterLib
          try
          {
             Init(p);
+            ScriptingOptions? so = ShallowClone(ScriptOptions);
 
             var table = Database.Tables[tableName];
             Assertion(table != null, $"Attempting to Export non existent table: [{tableName}]");
-            ExportTable(table, sb);
+            ExportTable(table, so, sb);
          }
          catch(Exception e)
          { 
@@ -1558,17 +1591,26 @@ namespace DbScripterLib
 
       /// <summary>
       /// Scripts a single table
+      /// 
+      /// PRECONDITIONS: 
+      /// PRE 1: table exists
+      /// PRE 2: this.IsValid() == true
+      /// PRE 3: so initalised correctly
       /// </summary>
       /// <param name="table"></param>
       /// <param name="sb"></param>
-      public void ExportTable( Table? table, StringBuilder sb )
+      public void ExportTable( Table? table, ScriptingOptions so, StringBuilder sb )
       {
          LogS();
+         // PRE 1: table exists
+         Precondition(table != null);
+         // PRE 2: this.IsValid() == true
+         Precondition(IsValid(out string? msg), msg);
          StringCollection transactions;
 
          try
          { 
-            transactions = table.Script(Scripter.Options);
+            transactions = table.Script(so);
 
             if(transactions.Count>0)
                SerialiseScript(transactions, sb);
@@ -1618,7 +1660,7 @@ namespace DbScripterLib
          }
       }
 
-      /// <summary>
+      /*// <summary>
       /// This is the main entry point for exports Stored procedures and functions without a use statementy
       /// </summary>
       /// <returns>Serialisation of all the user stored procedures as a set of SQL statements</returns>
@@ -1644,9 +1686,9 @@ namespace DbScripterLib
             ScriptOptions.IncludeDatabaseContext = false;
 
          return sb.ToString();
-      }
+      }*/
 
-      /// <summary>
+      /*// <summary>
       /// PRE: Init called
       /// Database database, Scripter scriptor, StreamWriter writer
       /// PRECONDITION: 
@@ -1827,7 +1869,7 @@ namespace DbScripterLib
          }
 
          LogL();
-     }
+     }*/
 
       /// <summary>
       /// Scripts the line USE database
@@ -2109,47 +2151,100 @@ namespace DbScripterLib
          return ret;
       }
 
-
       /// <summary>
-      /// determines the type of the smo object
-      /// 
-      /// PRE smo != null
-      /// 
-      /// POST return != SqlTypeEnum.Undefined
-      /// maps the objerct type to the equivalent SqlTypeEnum
-      /// 
+      /// if 
       /// </summary>
-      /// <param name="smo"></param>
+      /// <param name="addTimestamp"></param>
       /// <returns></returns>
-      public static SqlTypeEnum MapTypeToSqlType(SqlSmoObject smo)
-      { 
-         Precondition(smo != null, $"MapTypeToSqlType: smo parameter must be defined");
-         return MapTypeToSqlType(smo.GetType().Name);
-      }
+      protected string HandleExportFilePath( string? exportFilePath, bool addTimestamp )
+      {
+         // Add the file path as a comment in the first line in the script
+         // D:\Dev\Db\Ut\Tests\ut_{dbo,test}_FP_210214-0709_export.sql
+         string? modifiedExportFilePath = null;
+         var lastFolderPos = exportFilePath.LastIndexOf('\\');
+         var dirs = exportFilePath.Substring(0, lastFolderPos);
+         var pos2 = exportFilePath.LastIndexOf('\\');
 
-      public static SqlTypeEnum MapTypeToSqlType(string typeName)
-      { 
-         SqlTypeEnum sty;
+         var secondPart = exportFilePath.Substring(lastFolderPos + 1);
+         var extPos = secondPart.LastIndexOf('.');
+         var len = secondPart.Length;
+         var ext = secondPart.Substring(extPos+1, len-(extPos+1));
+         var fileName = secondPart.Substring(0, extPos);
+         // if timestamp is already specified then fileName is like this: ut_{dbo,test}_FP_210214-0709_export
+         var parts = exportFilePath.Split(new []{'_'});
 
-         switch(typeName)
+         if(parts.Length >= 5)
          {
-            case "Database"            : sty = SqlTypeEnum.Database;  break;
-            case "ForeignKey"          : sty = SqlTypeEnum.FKey;      break;
-            case "UserDefinedFunction" : sty = SqlTypeEnum.Function;  break;
-            case "StoredProcedure"     : sty = SqlTypeEnum.Procedure; break;
-            case "Schema"              : sty = SqlTypeEnum.Schema;    break;
-            case "Table"               : sty = SqlTypeEnum.Table;     break;
-            case "View"                : sty = SqlTypeEnum.View;      break;
-            case "UserDefinedTableType": sty = SqlTypeEnum.TableType; break;
-
-            default                    : sty = SqlTypeEnum.Undefined; break;
+            // file name is fully specified including timestamp so dont change
+            modifiedExportFilePath = exportFilePath;
+         }
+         else
+         {
+            // file name is not fully specified so append timestamp
+            modifiedExportFilePath = $@"{ dirs}\{fileName}_{GetTimestamp()}.{ext}";
          }
 
-         if(sty == SqlTypeEnum.Undefined) Postcondition<ArgumentException>(sty != SqlTypeEnum.Undefined, $"MapTypeToSqlType failed for {typeName}");
-
-         return sty;
+         return modifiedExportFilePath;
       }
 
-      #endregion private methods
+      #endregion protected methods
+      #region private fields
+
+      private const string GO = "GO";
+
+      #endregion private fields
    }
 }
+
+      /*// <summary>
+      /// PRE: none
+      /// Main Export entry point
+      /// </summary>
+      /// <param name="databaseName"></param>
+      /// <param name="opType"></param>
+      /// <param name="writerFilePath"></param>
+      /// <param name="staticDataTables">can configure the static data tables now</param>
+      /// <returns></returns>
+      public string? Export( Params p)
+      {
+         LogS();
+         string? script = null;
+
+         try
+         {
+            switch(p.DbOpType)
+            {
+            case DbOpTypeEnum.CreateDatabase:   script = ExportCreateDbScript(p);      break;
+            case DbOpTypeEnum.CreateSchema:     script = ExportSchemas(p);             break;
+            case DbOpTypeEnum.CreateProcedures: script = ExportProcedures(p);          break;
+            case DbOpTypeEnum.DropDatabase:     script = ExportDropDatabaseScript(p);  break;
+            case DbOpTypeEnum.DropProcedures:   script = ExportDropProceduresScript(p);break;
+            case DbOpTypeEnum.CreateTables:     script = ExportTables(p);              break;
+            case DbOpTypeEnum.DropTables:       script = ExportTables(p);              break;
+            case DbOpTypeEnum.DropSchema:       script = ExportDropSchemaScript(p);    break; 
+
+            case DbOpTypeEnum.CreateStaticData: throw new NotImplementedException("Unhandled request type: .DropStaticData");
+            case DbOpTypeEnum.ExportStaticData: throw new NotImplementedException("Unhandled request type: .ExportStaticData");
+            case DbOpTypeEnum.ExportDynamicData:throw new NotImplementedException("Unhandled request type: .ExportDynamicData");
+            case DbOpTypeEnum.DropStaticData:   throw new NotImplementedException("Unhandled request type: .DropStaticData");
+
+            default:
+               script = "";
+               Assertion(false, $"SQL Export Scriptor error: unhandled script export case: {P.DbOpType.GetAlias()}");
+               break;
+            }
+         }
+         catch(Exception e)
+         {
+            LogException(e);
+            throw;
+         }
+         finally
+         {
+            Writer?.Close();
+         }
+
+         LogL();
+         return script;
+      }
+*/

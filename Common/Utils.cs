@@ -12,7 +12,7 @@ using System.Reflection;
 using System.Runtime.CompilerServices;
 using System.Runtime.Serialization.Formatters.Binary;
 
-namespace RSS
+namespace RSS.Common
 {
    /// <summary>
    /// Provides common utilities.
@@ -39,32 +39,80 @@ namespace RSS
       }
 
       /// <summary>
+      /// Fails by throwing an exception of type T 
+      /// </summary>
+      /// <returns>The predicate for convenience.</returns>
+      /// <param name="predicate">Is the predicate to check.</param>
+      /// <param name="msg">An optional message to log.</param>
+      [MethodImpl(MethodImplOptions.NoInlining)]
+      public static void AssertFail( string? msg = "" )
+      {
+         Throw<Exception>("Assertion Failed", msg);
+      }
+
+      /// <summary>
+      /// Fails by throwing an exception of type T 
+      /// </summary>
+      /// <returns>The predicate for convenience.</returns>
+      /// <param name="predicate">Is the predicate to check.</param>
+      /// <param name="msg">An optional message to log.</param>
+      [MethodImpl(MethodImplOptions.NoInlining)]
+      public static void AssertFail<T>( string? msg = "" ) where T : Exception, new()
+      {
+         Throw<T>("Assertion Failed", msg);
+      }
+
+      /// <summary>
       /// Precondition is used to validate the method preconditions - by logging an error message.
       /// </summary>
       /// <returns>The predicate for convenience.</returns>
       /// <param name="predicate">Is the predicate to check.</param>
       /// <param name="msg">An optional message to log.</param>
       [MethodImpl(MethodImplOptions.NoInlining)]
-      public static void Assertion<T>( bool predicate, string msg = "" ) where T : Exception, new()
+      public static void Assertion<T>( bool predicate, string? msg = "" ) where T : Exception, new()
       {
          if(!predicate)
             Throw<T>("Assertion", msg);
       }
 
       /// <summary>
-      /// Precondition is used to validate the method preconditions - by logging an error message.
+      /// Precondition is used to validate preconditions
+      /// logs an exception error message.
+      /// throws Exception of type Exception
       /// </summary>
-      /// <returns>the predicate for convenience.</returns>
       /// <param name="predicate">is the predicate to check.</param>
       /// <param name="msg"> optional message to log.</param>
       /// <returns>true if predicate is true, false if predicate is false but _throw is false.</returns>
       [MethodImpl(MethodImplOptions.NoInlining)]
-      public static void Assertion( bool predicate, string msg = "" )
+      public static void Assertion( bool predicate, string? msg = "" )
       {
          Assertion<Exception>(predicate, msg);
       }
 
-      public static void AssertThrows<T>( Action action, string expectedMessage ) where T : Exception, new()
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="obj"></param>
+      /// <param name="msg"></param>
+      [MethodImpl(MethodImplOptions.NoInlining)]
+      public static void AssertNotNull( object ? obj, string? msg = "" )
+      {
+         Assertion<Exception>(obj != null, msg);
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <typeparam name="T"></typeparam>
+      /// <param name="obj"></param>
+      /// <param name="msg"></param>
+      [MethodImpl(MethodImplOptions.NoInlining)] 
+      public static void AssertNotNull<T>( object ? obj, string? msg = "" )where T : Exception, new()
+      {
+         Assertion<T>(obj != null, msg);
+      }
+
+      public static void AssertThrows<T>( Action action, string? expectedMessage ) where T : Exception, new()
       {
          try
          {
@@ -72,7 +120,9 @@ namespace RSS
          }
          catch (T exc)
          {
-            Assertion(expectedMessage.Equals( exc.Message));
+            if(expectedMessage != null)
+               Assertion(expectedMessage.Equals( exc.Message));
+
             throw;
          }
 
@@ -87,7 +137,7 @@ namespace RSS
       /// <param name="msg">An optional message.</param>
       /// <returns>The predicate for convenience.</returns>
       [MethodImpl(MethodImplOptions.NoInlining)]
-      public static void Precondition( bool predicate, string msg = "Precondition violation" )
+      public static void Precondition( bool predicate, string? msg = "Precondition violation" )
       {
          if(!predicate)
            Throw<ArgumentException>("Precondition", msg);
@@ -100,7 +150,7 @@ namespace RSS
       /// <param name="msg">An optional message.</param>
       /// <returns>The predicate for convenience.</returns>
       [MethodImpl(MethodImplOptions.NoInlining)]
-      public static void Precondition<T>( bool predicate, string msg = "" ) where T : Exception, new()
+      public static void Precondition<T>( bool predicate, string? msg = "" ) where T : Exception, new()
       {
          if(!predicate)
             Throw<T>("Precondition", msg);
@@ -113,7 +163,7 @@ namespace RSS
       /// <param name="predicate">is the predicate to check</param>
       /// <param name="msg"> optional message</param>
       [MethodImpl(MethodImplOptions.NoInlining)]
-      public static void Postcondition( bool predicate, string msg = "" )
+      public static void Postcondition( bool predicate, string? msg = "" )
       {
          if(!predicate)
             Throw<Exception>("Postcondition", msg);
@@ -126,7 +176,7 @@ namespace RSS
       /// <param name="predicate">is the predicate to check</param>
       /// <param name="msg"> optional message</param>
       [MethodImpl(MethodImplOptions.NoInlining)]
-      public static void Postcondition<T>( bool predicate, string msg = "" ) where T: Exception, new()
+      public static void Postcondition<T>( bool predicate, string? msg = "" ) where T: Exception, new()
       {
          if(!predicate)
             Throw<T>("Postcondition", msg);
@@ -138,7 +188,7 @@ namespace RSS
       /// <param name="predicate">The predicate to check.</param>
       /// <param name="msg">An optional message.</param>
       /// <returns>The predicate for convenience.</returns>
-      private static void Throw<T>( string rule = "", string msg = "" ) where T : Exception, new()
+      private static void Throw<T>( string rule = "", string? msg = "" ) where T : Exception, new()
       {
          var sf         = new StackFrame(3, true);
          var fileName   = sf.GetFileName();
@@ -453,13 +503,16 @@ namespace RSS
       /// <typeparam name="T"></typeparam>
       /// <param name="obj"></param>
       /// <returns></returns>
-      public static T ShallowClone<T>(T obj) where T: new()
+      public static T? ShallowClone<T>(T? obj) where T: new()
       {
+         if(obj == null)
+            return default(T);
+
          T copy = new T();
          var properties = obj?.GetType().GetProperties();
          int cnt = properties?.Length ?? 0;
 
-         for(int i = 0; i<cnt; i++) //(Property in )
+         for(int i = 0; i<cnt; i++)
          {
             var property = properties?[i];
             Assertion(property != null);

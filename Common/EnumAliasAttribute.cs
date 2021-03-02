@@ -1,6 +1,6 @@
 ﻿using System;
 
-namespace RSS
+namespace RSS.Common
 {
     /// <summary>
     /// Provides extension functionality for adding Alias to enumerations.

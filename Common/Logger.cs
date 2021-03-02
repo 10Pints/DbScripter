@@ -1,4 +1,7 @@
-﻿using log4net;
+﻿
+#nullable enable
+
+using log4net;
 using log4net.Config;
 using log4net.Repository.Hierarchy;
 using System;
@@ -12,7 +15,7 @@ using System.Runtime.CompilerServices;
 using System.Text;
 using System.Windows;
 
-namespace RSS
+namespace RSS.Common
 {
    /// <summary>
    /// This static class implements the logging extension methods
@@ -85,10 +88,7 @@ namespace RSS
       /// <summary>
       /// LogLineCache is used to hold the log lines before the logger is initialised
       /// </summary>
-      private static List<LogInfo> LogLineCache { get; } = new List<LogInfo>();
-//      private static System.IO.StreamWriter writer = new System.IO.StreamWriter(@"D:\Logs\test.txt", true);
-
-
+      private static List<string> LogLineCache { get; } = new List<string>();
 
       #endregion private proerties
       #region public properties
@@ -98,11 +98,28 @@ namespace RSS
       /// Turn off for Unit testing
       /// </summary>
       public static bool DisplayMessages { get; set; } = true;
+      public static bool LogMethodInfo { get; set; } = true;
 
       /// <summary>
       /// If true then log output is also sent to console
       /// </summary>
       public static bool ConsoleEnabled { get; set; } = true;
+
+      public static string? LogFile
+      { 
+         get
+         {
+            return  _logProvider?.LogFile;
+         }
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      public static void DisplayLog()
+      { 
+         Process.Start($"Notepad++.exe", LogFile);
+      }
 
       /// <summary>
       /// Sets the log provider
@@ -110,9 +127,9 @@ namespace RSS
       /// if the logger is not set then the log messages are cached in log cache instead of being logged immediately
       /// Once the logger is set then the log cache is dumped to the log and cleaned.
       /// </summary>
-      private static ILogProvider _logProvider = null;
+      private static ILogProvider? _logProvider = null;
       //private static Log4NetLogProvider _log4NetLogProvider = null;
-      public static ILogProvider LogProvider
+      public static ILogProvider? LogProvider
       {
          get => _logProvider;
 
@@ -139,10 +156,10 @@ namespace RSS
         /// </summary>
         /// <param name="msg">Optional message</param>
         [MethodImpl(MethodImplOptions.NoInlining)]
-        public static void LogD(string msg = null)
+        public static void LogD(string? msg = null)
         {
             if (_minimumLoggingLevel <= LogType.Debug)
-                Log_(LogMode.Message, LogType.Debug, msg, 2);
+                Log_(LogType.Debug, msg, 2);
         }
 
       // Write the string to a file.append mode is enabled so that the log
@@ -152,14 +169,15 @@ namespace RSS
       //   writer.Flush();
       //}
 
-      public static void Log( params object[] args )
+      public static void Log( params object[]? args )
       {
          StringBuilder sb = new();
 
-         foreach(var arg in args)
-            sb.AppendLine(arg.ToString());
+         if(args != null)
+            foreach(var arg in args)
+               sb.AppendLine(arg.ToString());
 
-         Log_(LogMode.Message, LogType.Info, sb.ToString(), 2);
+            Log_(LogType.Info, sb.ToString(), 2);
       }
 
       /// <summary>
@@ -167,10 +185,10 @@ namespace RSS
       /// </summary>
       /// <param name="msg">Optional message</param>
       [MethodImpl(MethodImplOptions.NoInlining)]
-      public static void LogI( string msg = null )
+      public static void LogI( string? msg = null )
       {
          if(_minimumLoggingLevel <= LogType.Info)
-            Log_(LogMode.Message, LogType.Info, msg, 2);
+            Log_(LogType.Info, msg, 2);
       }
 
       /// <summary>
@@ -183,7 +201,7 @@ namespace RSS
       public static void LogW( string msg, int skipFrames = 2 )
       {
          if(_minimumLoggingLevel <= LogType.Warning)
-            Log_(LogMode.Message, LogType.Warning, msg, skipFrames);
+            Log_(LogType.Warning, msg, skipFrames);
       }
 
       /// <summary>
@@ -198,9 +216,9 @@ namespace RSS
       [MethodImpl(MethodImplOptions.NoInlining)]
       public static bool LogE( string msg, int skipFrames = 2 )
       {
-         LogProvider.Log("");
-         Log_(LogMode.Message, LogType.Error, msg, skipFrames);
-         LogProvider.Log("");
+         LogProvider?.Log("");
+         Log_(LogType.Error, msg, skipFrames);
+         LogProvider?.Log("");
          return false;
       }
 
@@ -212,10 +230,10 @@ namespace RSS
       /// <param name="frame">Optional stack frame offset - normally this will log the calling function name and file, but if used in another logging method then 
       /// will need to modify this to get the correct calling method</param>
       [MethodImpl(MethodImplOptions.NoInlining)]
-      public static void LogS( string msg = null, LogType logType = LogType.Debug, int frame = 2 )
+      public static void LogS( string? msg = null, LogType logType = LogType.Debug, int frame = 2 )
       {
          if(_minimumLoggingLevel <= logType)
-            Log_(LogMode.Starting, logType, msg, frame);
+            Log_(logType, msg, frame);
       }
 /*
       /// <summary>
@@ -238,10 +256,10 @@ namespace RSS
       /// <param name="frame">Optional stack frame offset - normally this will log the calling function name and file, but if used in another logging method then 
       /// will need to modify this to get the correct calling method</param>
       [MethodImpl(MethodImplOptions.NoInlining)]
-      public static void LogL( string msg = null, LogType logType = LogType.Debug, int frame = 2 ) // 1: calling method
+      public static void LogL( string? msg = null, LogType logType = LogType.Debug, int frame = 2 ) // 1: calling method
       {
          if(_minimumLoggingLevel <= LogType.Debug)
-            Log_(LogMode.Leaving, LogType.Debug, msg, frame);
+            Log_(LogType.Debug, msg, frame);
       }
 /*
       /// <summary>
@@ -266,36 +284,27 @@ namespace RSS
       /// <param name="path">The path to log all data to - if null use the configured value.</param>
       public static void InitLogger() // string path = null 
       {
-         LogS($"Configuring the Logger, App.config name: {ConfigurationManager.AppSettings["Config Name"]} ");
-
-         if(LogProvider != null)
-         {
-            LogW("Logger already configured - ignoring this call");
-            return;
-         }
-
          // ASSERTION: LogProvider not initialised
          LogProvider = new Log4NetLogProvider();
 
          XmlConfigurator.Configure();
          DisplayMessages = false;
+         LogLine();
          LogCached();
-         LogL();
+         LogDirect($"App.config name: {ConfigurationManager.AppSettings["Config Name"]} ");
+         LogDirect($"Log file: {LogFile}");
+         LogLine();
       }
 
-      /// <summary>
-      /// 1 off close to write any out standing
-      /// log messages andclose the log file
+      /*// <summary>
+      /// flush log messages and close the log file
       /// </summary>
       /// <param name="path"></param>
       public static void CloseLogger( string path = null )
       {
-         LogS($"closing the Logger"); //, App.config name: {ConfigurationManager.AppSettings["Config Name"]} log path: [{path}]");
-         Log4NetLogProvider log4NetLogProvider = LogProvider as Log4NetLogProvider;
-         log4net.LogManager.GetRepository().Shutdown();
-         // log4net.ILog log = log4net.LogManager.GetLogger(loggerName);
-         LogProvider = null;
-      }
+         //LogS($"closing the Logger");
+         LogManager.Flush(3000);
+      }*/
 
       /// <summary>
       /// Logs the message and raises a message box
@@ -303,7 +312,7 @@ namespace RSS
       /// </summary>
       /// <param name="userMsg">the message to display to the user</param>
       /// <param name="detailedLogMsg">optional more detailed log message to log</param>
-      public static void LogAndMsg( string userMsg, string detailedLogMsg = null )
+      public static void LogAndMsg( string userMsg, string? detailedLogMsg = null )
       {
          LogAndMsg(LogType.Info, detailedLogMsg);
       }
@@ -315,12 +324,12 @@ namespace RSS
       /// <param name="logType">Debug, info warning or error</param>
       /// <param name="userMsg">the message to display to the user</param>
       /// <param name="detailedLogMsg">optional more detailed log message to log</param>
-      public static void LogAndMsg( LogType logType, string userMsg, string detailedLogMsg = null )
+      public static void LogAndMsg( LogType logType, string? userMsg, string? detailedLogMsg = null )
       {
          if(userMsg == null)
             userMsg = string.Empty;
 
-         Log_(LogMode.Message, logType, $"{userMsg} {detailedLogMsg ?? "no detailed message"}", 2);
+         Log_(logType, $"{userMsg} {detailedLogMsg}", 2);
 
          if(DisplayMessages)
             MessageBox.Show(userMsg);
@@ -334,14 +343,15 @@ namespace RSS
       /// <param name="detailedLogMsg">optional more detailed log message to log</param>
       /// <param name="skipFrames">optional number of stack frames to skip - so if calling this from an intermediary function 
       /// then increment this value by 1 to reference the correct parent method stack frame</param>
-      public static string LogException( Exception e, string userMsg = null, string detailedLogMsg = null, int skipFrames = 2 )
+      public static string LogException( Exception e, string? userMsg = null, string? detailedLogMsg = null, int skipFrames = 2 )
       {
          if(userMsg == null)
             userMsg = string.Empty;
 
          Type type = e.GetType();
          var allMessages = e.GetAllMessages();
-         LogE($"{type.FullName} thrown: {userMsg }  \nDetailed message: {detailedLogMsg ?? "none"}  \nException detail: {allMessages}", skipFrames + 1);
+         detailedLogMsg = "\r\n" + detailedLogMsg;
+         LogE($"{type.FullName} thrown: {userMsg }{detailedLogMsg}  \r\nException detail: {allMessages}", skipFrames + 1);
 
          if(DisplayMessages)
             MessageBox.Show(userMsg);
@@ -356,7 +366,7 @@ namespace RSS
       /// <param name="e">instance of Exception T</param>
       /// <param name="userMsg">the message to show the user</param>
       /// <param name="detailedMsg">the message to log for diagnostic purposes</param>
-      public static void LogExceptionAndThrow<T>( T e, string userMsg, string detailedMsg = null ) where T : Exception//, new()
+      public static void LogExceptionAndThrow<T>( T e, string userMsg, string? detailedMsg = null ) where T : Exception//, new()
       {
          LogException(e, userMsg, detailedMsg, 3);
          throw (T)Activator.CreateInstance(typeof(T), $"User message: {userMsg}");
@@ -372,47 +382,91 @@ namespace RSS
       /// <param name="msg"></param>
       /// <param name="frameNum"></param>
       [MethodImpl(MethodImplOptions.NoInlining)]
-      private static void Log_( LogMode logMode, LogType logType, string msg = null, int frameNum = 1 ) // frameNum = 1: means calling Method
+      private static void Log_( LogType logType, string? msg = null, int frameNum = 1 ) // frameNum = 1: means calling Method
       {
          // Don't waste time if configuration logging filter excludes this log level
          if(_minimumLoggingLevel <= logType)
          {
-            var sf = new StackFrame(frameNum, true);
-            var fileName = sf.GetFileName();
-            fileName = Path.GetFileName(fileName);
-            var method = sf.GetMethod();
-            var clsName = method.ReflectedType?.Name;
-            var lineNumber = sf.GetFileLineNumber();
+            string?  fileName   = null;
+            string?  methodName = null;
+            string?  className  = null;
+            int?     lnNm       = null;
+
+            if(LogMethodInfo)
+            {
+               var sf      = new StackFrame(frameNum, true);
+               var method  = sf.GetMethod();
+               fileName    = sf.GetFileName();
+               fileName    = Path.GetFileName(fileName);
+               methodName  = method?.Name; 
+               className   = method?.ReflectedType?.Name;
+               lnNm        = sf.GetFileLineNumber();
+            }
 
             // If logger not initialised yet then 
             // - add the log to the cache, 
             // - later when logging is initialised can log the cache lines
             if(LogProvider == null)
             {
-               var logInfo = new LogInfo(fileName, lineNumber, logMode, clsName, method.Name, logType, msg);
-               LogLineCache.Add(logInfo);
+               //var logInfo = new LogInfo(fileName, lnNm, logMode, clsName, method.Name, logType, msg);
+               var line = FormatLine( msg, fileName, lnNm, className, methodName);
+               LogLineCache.Add(line);
 #if DEBUG
-               Debug.WriteLine(logInfo); // Dump now - dont want the suspense of waiting till logger fully initialised!
+               Debug.WriteLine(line); // Dump now - dont want the suspense of waiting till logger fully initialised!
 #endif
             }
             else
             {
-               LogLine(new LogInfo(fileName, lineNumber, logMode, clsName, method.Name, logType, msg));
+               LogProvider.Log(FormatLine( msg, fileName, lnNm, className, methodName));
             }
          }
+      }
+
+      private static string FormatLine( string? msg
+                                       ,string? fileName
+                                       ,int?    lineNumber
+                                       ,string? className
+                                       ,string? methodName)
+      { 
+         var filePart   = (!string.IsNullOrEmpty(fileName)) ? $"{fileName}({lineNumber})"    : "";
+         var methodPart = (!string.IsNullOrEmpty(className))? $"\t{className}.{methodName}()": "";
+         var msgPart    = (!string.IsNullOrEmpty(msg))      ? $"\t{msg}"                     : "";
+         return $"{filePart}{methodPart}{msgPart}";
+      }
+         //var strLogType = (LogMode == LogMode.Message)  ? "Message"  :
+         //                  (LogMode == LogMode.Starting) ? "Starting" :
+         //                  (LogMode == LogMode.Leaving)  ? "Leaving"  : "???";
+
+
+      /// <summary>
+      /// Directly logs to logger - no buffering
+      /// </summary>
+      public static void LogLine( LogType logType = LogType.Debug )
+      {
+         var line = new string('-', 120);
+         LogDirect(line, logType);
       }
 
       /// <summary>
       /// Directly logs to logger - no buffering
       /// </summary>
-      private static void LogLine( LogInfo logInfo, LogType logType = LogType.Debug )
+      public static void LogDirect( string msg, LogType logType = LogType.Debug )
       {
-         LogProvider.Log(logInfo.ToString(), logType);
-         //Console.WriteLine(logInfo);
-/*#if DEBUG
-         Debug.WriteLine(line);
-#endif*/
+         LogProvider?.LogDirect(msg, logType);
       }
+
+      public static void FlushLogger()
+      {
+         LogProvider?.Flush();
+      }
+
+      /// <summary>
+      /// low level access to the Log4Net Logger wrapper
+      /// </summary>
+      //private static void Log_( string msg, LogType logType = LogType.Debug )
+      //{
+      //   LogProvider.Log(msg, logType);
+      //}
 
       /// <summary>
       /// Allows logging before logger is initialised
@@ -421,8 +475,8 @@ namespace RSS
       /// </summary>
       private static void LogCached()
       {
-         foreach(var item in LogLineCache.Where(item => _minimumLoggingLevel <= item.LogType))
-            LogLine(new LogInfo(item.FileName, item.LineNumber, item.LogMode, item.ClsName, item.Method, item.LogType, item.Msg));
+         foreach(var line in LogLineCache)//.Where(item => _minimumLoggingLevel <= item.LogType))
+            LogProvider?.Log(line);
 
          LogLineCache.Clear();
       }
