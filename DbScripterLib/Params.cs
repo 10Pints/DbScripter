@@ -136,7 +136,12 @@ namespace DbScripterLib
       public SqlTypeEnum? SqlType
       {
          get => _sqlType;
-         set => _sqlType = value;
+
+         set
+         {
+            _sqlType = value;
+            SetExportFlagsFromSqlType();
+         }
       }
 
       private CreateModeEnum? _createMode =null;
@@ -322,32 +327,41 @@ namespace DbScripterLib
 
          s.Append("\r\n");
          s.Append(Line);
-         s.Append($" Type            : {GetType().Name   } \r\n");
-         s.Append($" Name            : {Name             } \r\n");
-         s.Append(Line);
-         s.Append($" ServerName      : {ServerName       } \r\n");
-         s.Append($" InstanceName    : {InstanceName     } \r\n");
-         s.Append($" DatabaseName    : {DatabaseName     } \r\n");
-         s.Append($" ExportScriptPath: {ExportScriptPath } \r\n");
-         s.Append($" NewSchemaName   : {NewSchemaName    } \r\n");
-         s.Append($" RequiredSchemas : {RequiredSchemas  } \r\n");
-         s.Append($" RequiredTypes   : {RequiredTypes    } \r\n");
-         s.Append($" SqlType         : {SqlType          } \r\n");
-         s.Append($" CreateMode      : {CreateMode       } \r\n");
-         s.Append($" ScriptUseDb     : {ScriptUseDb      } \r\n");
-         s.Append($" AddTimestamp    : {AddTimestamp     } \r\n");
-         s.Append($" IsExprtngData   : {IsExprtngData    } \r\n");
-         s.Append($" IsExprtngDb     : {IsExprtngDb      } \r\n");
-         s.Append($" IsExprtngFKeys  : {IsExprtngFKeys   } \r\n");
-         s.Append($" IsExprtngFns    : {IsExprtngFns     } \r\n");
-         s.Append($" IsExprtngProcs  : {IsExprtngProcs   } \r\n");
-         s.Append($" IsExprtngSchema : {IsExprtngSchema  } \r\n");
-         s.Append($" IsExprtngTbls   : {IsExprtngTbls    } \r\n");
-         s.Append($" IsExprtngTTys   : {IsExprtngTTys    } \r\n");
-         s.Append($" IsExprtngVws    : {IsExprtngVws     } \r\n");
-         s.Append(Line);
-         return s.ToString();
+         s.AppendLine($" Type            : {GetType().Name   }");
+         s.AppendLine($" Name            : {Name             }");
+         s.AppendLine(Line);
+         s.AppendLine($" ServerName      : {ServerName       }");
+         s.AppendLine($" InstanceName    : {InstanceName     }");
+         s.AppendLine($" DatabaseName    : {DatabaseName     }");
+         s.AppendLine($" ExportScriptPath: {ExportScriptPath }");
+         s.AppendLine();
+         s.AppendLine($" RequiredSchemas :");
 
+         foreach(var item in RequiredSchemas)
+            s.AppendLine($"\t{item}"); 
+
+         s.AppendLine();
+         s.AppendLine($" RequiredTypes : ");
+         foreach(var item in RequiredTypes)
+            s.AppendLine($"\t{item}"); 
+
+         s.AppendLine();
+         s.AppendLine($" SqlType         : {SqlType          }");
+         s.AppendLine($" CreateMode      : {CreateMode       }");
+         s.AppendLine($" ScriptUseDb     : {ScriptUseDb      }");
+         s.AppendLine($" AddTimestamp    : {AddTimestamp     }");
+         s.AppendLine($" IsExprtngData   : {IsExprtngData    }");
+         s.AppendLine($" IsExprtngDb     : {IsExprtngDb      }");
+         s.AppendLine($" IsExprtngFKeys  : {IsExprtngFKeys   }");
+         s.AppendLine($" IsExprtngFns    : {IsExprtngFns     }");
+         s.AppendLine($" IsExprtngProcs  : {IsExprtngProcs   }");
+         s.AppendLine($" IsExprtngSchema : {IsExprtngSchema  }");
+         s.AppendLine($" IsExprtngTbls   : {IsExprtngTbls    }");
+         s.AppendLine($" IsExprtngTTys   : {IsExprtngTTys    }");
+         s.AppendLine($" IsExprtngVws    : {IsExprtngVws     }");
+         s.AppendLine($" NewSchemaName   : {NewSchemaName    }");
+         s.AppendLine(Line);
+         return s.ToString();
       }
 
       // Warning	CS0659	'Params' overrides Object.Equals(object o) but does not override Object.GetHashCode()	DbScripterLib	D:\Dev\Db\Ut\DbScriptExporter\DbScripterLib\Params.cs	11	Active
@@ -709,6 +723,7 @@ namespace DbScripterLib
          if(!string.IsNullOrEmpty(requiredTypes))
             RequiredTypes   = ParseRequiredTypes  (requiredTypes)   ?? null;
 
+         SetExportFlagsFromSqlType();
       }
 
       /// <summary>
@@ -767,7 +782,40 @@ namespace DbScripterLib
          IsExprtngSchema   = p.IsExprtngSchema;
          IsExprtngTbls     = p.IsExprtngTbls;
          IsExprtngTTys     = p.IsExprtngTTys;
-         IsExprtngVws    = p.IsExprtngVws;
+         IsExprtngVws      = p.IsExprtngVws;
+
+         SetExportFlagsFromSqlType();
      }
+
+      /// <summary>
+      /// Configures teh IsExporting flags basedon the SQL Expoty type
+      /// </summary>
+      protected void SetExportFlagsFromSqlType()
+      {
+         // set the is exporting flags based on the type
+         if(SqlType == SqlTypeEnum.Database)  IsExprtngDb     = true;
+         if(SqlType == SqlTypeEnum.Schema)    IsExprtngSchema = true;
+         if(SqlType == SqlTypeEnum.Function)  IsExprtngFns    = true;
+         if(SqlType == SqlTypeEnum.Procedure) IsExprtngProcs  = true;
+         if(SqlType == SqlTypeEnum.Table)    {IsExprtngTbls   = true; IsExprtngTTys   = true;}
+         if(SqlType == SqlTypeEnum.TableType) IsExprtngTTys   = true;
+         if(SqlType == SqlTypeEnum.View)      IsExprtngVws    = true;
+      }
+
+      /// <summary>
+      /// Configures the IsExporting flags basedon the SQL Expoty type
+      /// </summary>
+      protected void SetExportFlagState(bool? st = null)
+      {
+         // set the is exporting flags based on the type
+         IsExprtngDb     = st;
+         IsExprtngSchema = st;
+         IsExprtngFns    = st;
+         IsExprtngProcs  = st;
+         IsExprtngTbls   = st;
+         IsExprtngTTys   = st;
+         IsExprtngVws    = st;
+         IsExprtngData   = st;
+      }
    }
 }

@@ -43,7 +43,7 @@
       <HintPath>..\packages\log4net.2.0.12\lib\net45\log4net.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Data.SqlClient, Version=2.0.20168.4, Culture=neutral, PublicKeyToken=23ec7fc2d6eaa4a5, processorArchitecture=MSIL">
-      <HintPath>..\packages\Microsoft.Data.SqlClient.2.1.1\lib\net46\Microsoft.Data.SqlClient.dll</HintPath>
+      <HintPath>..\packages\Microsoft.Data.SqlClient.2.1.2\lib\net46\Microsoft.Data.SqlClient.dll</HintPath>
     </Reference>
     <Reference Include="Microsoft.Data.Tools.Sql.BatchParser, Version=16.200.0.0, Culture=neutral, PublicKeyToken=89845dcd8080cc91, processorArchitecture=MSIL">
       <HintPath>..\packages\Microsoft.SqlServer.SqlManagementObjects.161.46041.41\lib\net462\Microsoft.Data.Tools.Sql.BatchParser.dll</HintPath>
@@ -183,18 +183,22 @@
     <Compile Include="SqlTypeEnum.cs" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\Common\Common.csproj">
-      <Project>{f533f7a2-cdd4-48d1-a24e-a4e43766d246}</Project>
+    <None Include="app.config" />
+    <None Include="packages.config" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\..\Common\Common\Common.csproj">
+      <Project>{050cf1b9-c938-449c-80f8-b11038a44da4}</Project>
       <Name>Common</Name>
     </ProjectReference>
-    <ProjectReference Include="..\Common\TestHelpers\TestHelpers.csproj">
+    <ProjectReference Include="..\..\Common\TestHelpers\TestHelpers.csproj">
       <Project>{15c1f53e-a143-47a9-b447-93716dd83404}</Project>
       <Name>TestHelpers</Name>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="app.config" />
-    <None Include="packages.config" />
+    <ProjectReference Include="..\..\Common\Utils\Utils.csproj">
+      <Project>{624c6a7f-569f-4e78-96e5-d56d2bfd7261}</Project>
+      <Name>Utils</Name>
+    </ProjectReference>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <Import Project="..\packages\Microsoft.Data.SqlClient.SNI.2.1.1\build\net46\Microsoft.Data.SqlClient.SNI.targets" Condition="Exists('..\packages\Microsoft.Data.SqlClient.SNI.2.1.1\build\net46\Microsoft.Data.SqlClient.SNI.targets')" />

@@ -15,6 +15,8 @@ using RSS;
 using static RSS.Common.Utils;
 using static RSS.Common.Logger;
 using System.Collections.Specialized;
+using RSS.Test;
+using RSS.Common;
 
 namespace DbScripterLib
 {
@@ -76,8 +78,8 @@ namespace DbScripterLib
             {
             case SqlTypeEnum.Schema    : script = ExportSchemas();   break;
             case SqlTypeEnum.Database  : script = ExportDatabase();  break;
-          //case SqlTypeEnum.Function  : script = ExportFunctions(); break;
-          //case SqlTypeEnum.Procedure : script = ExportProcedures();break;
+            case SqlTypeEnum.Function  : script = ExportFunctions(); break;
+            case SqlTypeEnum.Procedure : script = ExportProcedures();break;
             case SqlTypeEnum.Table     : script = ExportTables();    break;
           //case SqlTypeEnum.TableType : script = ExportTableTypes();break;
           //case SqlTypeEnum.View      : script = Views();           break;
@@ -375,6 +377,7 @@ namespace DbScripterLib
       ///  general: Scripter.Options state initialised with general settings
       ///  specific:
       ///  POST 1: if exporting tables dont specify alter - or the Microsoft scripter will silently fail to emit the script
+      ///  POST 2: ensure either emit schema or data, if not specified then emit schema else scripter will error
       ///  
       /// TESTS:
       ///   DbScriptorTests.InitScriptingOptionsTest()
@@ -430,18 +433,24 @@ namespace DbScripterLib
             EnforceScriptingOptions = true,
          };
 
-         Scripter.Options = ScriptOptions;
+
+         // Ensure either emit schema or data, if not specified then emit schema
+         if((!ScriptOptions.ScriptSchema) && (!ScriptOptions.ScriptData))
+            ScriptOptions.ScriptSchema = true;
 
          // -------------------------
          // Validate postconditions
          // -------------------------
          Postcondition((P.SqlType == SqlTypeEnum.Table && P.CreateMode != CreateModeEnum.Alter) || ((P.SqlType != SqlTypeEnum.Table)), "if exporting tables dont specify alter");//  POST 1: 
- 
+         //  POST 2: ensure either emit schema or data, if not specified then emit schema
+         Postcondition((ScriptOptions.ScriptSchema || ScriptOptions.ScriptData));
+
          // -----------------------------------------
          // ASSERTION: postconditions validated
          // -----------------------------------------
+         Scripter.Options = ScriptOptions;
 
-         LogL(Scripter.Options.ToString());
+         LogL( OptionsToString(Scripter.Options));
       }
 
       /// <summary>
@@ -1418,12 +1427,7 @@ namespace DbScripterLib
          LogS();
          Precondition(IsValid(out string? msg), msg);
          StringBuilder     sb = new StringBuilder();
-         ScriptingOptions? so = ShallowClone(ScriptOptions);
-
-         // Make sure ScriptForAlter is false
-         so.ScriptForAlter          = false;
-         so.ScriptForCreateOrAlter  = false;
-         //Scripter.Options           = so;
+         ScriptingOptions? so = InitTableExport();
 
          try
          {
@@ -1469,6 +1473,8 @@ namespace DbScripterLib
 
          var so   = ShallowClone(ScriptOptions);
          var orig = ShallowClone(ScriptOptions);
+         so.ScriptForAlter          = false;
+         so.ScriptForCreateOrAlter  = false;
 
          // -------------------------
          // Validate postconditions
@@ -1476,15 +1482,23 @@ namespace DbScripterLib
          // POST 1: returned config so will support table export 
          //          and its script for alter flags are cleared
          Postcondition(!(so.ScriptForAlter || so.ScriptForCreateOrAlter), "POST 1 failed");
-         //  POST 2: the original config is not changed
 
-         if(!ScriptOptions.Equals(orig))
+         //  POST 2: the original config is not changed
+         if(!OptionEquals(ScriptOptions, orig, out msg))
          {
-            Log("was\r\n",     orig.ToString());
-            Log("\r\nnow\r\n", ScriptOptions.ToString());
-            Postcondition(ScriptOptions.Equals(orig));
+            Log("was\r\n",     OptionsToString(orig));
+            Log("\r\nnow\r\n", OptionsToString(ScriptOptions));
+            var resultsDir = TestHelper.ResultsDir;
+            var exp_file   = @$"{resultsDir}\InitTableExport_exp.txt";
+            var act_file   = @$"{resultsDir}\InitTableExport_act.txt";
+            File.WriteAllText(exp_file, OptionsToString(orig));  
+            File.WriteAllText(act_file, $"{OptionsToString(ScriptOptions)}\r\nfirst diff field : {msg}");
+            // display a BeyondCompare session for exp/act with unique file names
+            Process.Start( "BCompare.exe", $"{act_file} {exp_file}");
+
+            // Fail the op
          }
- 
+
          // -----------------------------------------
          // ASSERTION: postconditions validated
          // -----------------------------------------
@@ -1660,35 +1674,51 @@ namespace DbScripterLib
          }
       }
 
-      /*// <summary>
-      /// This is the main entry point for exports Stored procedures and functions without a use statementy
+      /// <summary>
+      /// exports all procedures from all required schemas
+      /// PRECONDITION: 
+      /// Is valid
+      /// 
+      /// POSTCONDITIONS:
+      ///  POST 1: all procedures from all required schemas exported
+      /// 
+      /// CALLED BY: Export()
       /// </summary>
-      /// <returns>Serialisation of all the user stored procedures as a set of SQL statements</returns>
-      protected string ExportDropProceduresScript(Params p)
-      {
-         Init(p); 
+      protected string ExportProcedures()
+      { 
+         Precondition(IsValid(out string? msg), msg);// PRE: Init called
          var sb = new StringBuilder();
-         // Set temporary state
-         var oldDrops = ScriptOptions.ScriptDrops;
-         ScriptOptions.ScriptDrops = true;
 
-         foreach(var schemaName in P.RequiredSchemas)
-         {
-            //ExportFunctions (schemaName, sb);
+         foreach(string schemaName in P.RequiredSchemas)
             ExportProcedures(schemaName, sb);
-         }
-
-         // Reset state
-         ScriptOptions.ScriptDrops = oldDrops;
-
-         // Do not keep scripting use database lines unless necessary
-         if(ScriptOptions.IncludeDatabaseContext)
-            ScriptOptions.IncludeDatabaseContext = false;
 
          return sb.ToString();
-      }*/
+      }
 
-      /*// <summary>
+
+      /// <summary>
+      /// exports all functions from all required schemas
+      /// PRECONDITION: 
+      /// Is valid
+      /// 
+      /// POSTCONDITIONS:
+      ///  POST 1: all functions from all required schemas exported
+      /// 
+      /// CALLED BY: Export()
+      /// </summary>
+      protected string ExportFunctions()
+      {
+         Precondition(IsValid(out string? msg), msg);// PRE: Init called
+         var sb = new StringBuilder();
+
+         foreach(string schemaName in P.RequiredSchemas)
+            ExportFunctions(schemaName, sb);
+
+         return sb.ToString();
+      }
+
+
+      /// <summary>
       /// PRE: Init called
       /// Database database, Scripter scriptor, StreamWriter writer
       /// PRECONDITION: 
@@ -1699,11 +1729,7 @@ namespace DbScripterLib
       {
          try
          { 
-            Precondition(ScriptOptions != null, "ExportFunctions() PRECONDION: Options != null");
-
-            Precondition(P.CreateMode  != CreateModeEnum.Undefined   || 
-                         P.DbOpType    == DbOpTypeEnum.DropSchema    || 
-                         P.DbOpType    == DbOpTypeEnum.DropFunctions, "CreateMode must be defined");
+            Precondition(IsValid(out string? msg), $"{msg}");
 
             // Save state
             P.SqlType = SqlTypeEnum.Function;
@@ -1742,6 +1768,34 @@ namespace DbScripterLib
             throw;
          }
       }
+
+      /*// <summary>
+      /// This is the main entry point for exports Stored procedures and functions without a use statementy
+      /// </summary>
+      /// <returns>Serialisation of all the user stored procedures as a set of SQL statements</returns>
+      protected string ExportDropProceduresScript(Params p)
+      {
+         Init(p); 
+         var sb = new StringBuilder();
+         // Set temporary state
+         var oldDrops = ScriptOptions.ScriptDrops;
+         ScriptOptions.ScriptDrops = true;
+
+         foreach(var schemaName in P.RequiredSchemas)
+         {
+            //ExportFunctions (schemaName, sb);
+            ExportProcedures(schemaName, sb);
+         }
+
+         // Reset state
+         ScriptOptions.ScriptDrops = oldDrops;
+
+         // Do not keep scripting use database lines unless necessary
+         if(ScriptOptions.IncludeDatabaseContext)
+            ScriptOptions.IncludeDatabaseContext = false;
+
+         return sb.ToString();
+      }*/
 
       /// <summary>
       /// Main entry point for exporting procedures
@@ -1869,7 +1923,7 @@ namespace DbScripterLib
          }
 
          LogL();
-     }*/
+     }
 
       /// <summary>
       /// Scripts the line USE database
@@ -2063,6 +2117,111 @@ namespace DbScripterLib
          sb.AppendLine($"XmlIndexes                            {o.XmlIndexes                           }");
 
          return sb.ToString();
+      }
+
+
+      /// <summary>
+      /// Used to check parameters
+      /// </summary>
+      /// <param name="o"></param>
+      /// <returns></returns>
+      private bool OptionEquals( ScriptingOptions a, ScriptingOptions b, out string msg)
+      {
+         var sb = new StringBuilder();
+         bool ret = false;
+
+         do
+         { 
+            if(a.AgentAlertJob                         != b.AgentAlertJob                        ){ msg = "AgentAlertJob";                        break;}
+            if(a.AgentJobId                            != b.AgentJobId                           ){ msg = "AgentJobId";                           break;}
+            if(a.AgentNotify                           != b.AgentNotify                          ){ msg = "AgentNotify";                          break;}
+            if(a.AllowSystemObjects                    != b.AllowSystemObjects                   ){ msg = "AllowSystemObjects";                   break;}
+            if(a.AnsiFile                              != b.AnsiFile                             ){ msg = "AnsiFile";                             break;}
+            if(a.AnsiPadding                           != b.AnsiPadding                          ){ msg = "AnsiPadding";                          break;}
+            if(a.AppendToFile                          != b.AppendToFile                         ){ msg = "AppendToFile";                         break;}
+            if(a.ChangeTracking                        != b.ChangeTracking                       ){ msg = "ChangeTracking";                       break;}
+            if(a.BatchSize                             != b.BatchSize                            ){ msg = "BatchSize";                            break;}
+            if(a.Bindings                              != b.Bindings                             ){ msg = "Bindings";                             break;}
+            if(a.ClusteredIndexes                      != b.ClusteredIndexes                     ){ msg = "ClusteredIndexes";                     break;}
+            if(a.ColumnStoreIndexes                    != b.ColumnStoreIndexes                   ){ msg = "ColumnStoreIndexes";                   break;}
+            if(a.ContinueScriptingOnError              != b.ContinueScriptingOnError             ){ msg = "ContinueScriptingOnError";             break;}
+            if(a.ConvertUserDefinedDataTypesToBaseType != b.ConvertUserDefinedDataTypesToBaseType){ msg = "ConvertUserDefinedDataTypesToBaseType";break;}
+            if(a.DdlBodyOnly                           != b.DdlBodyOnly                          ){ msg = "DdlBodyOnly";                          break;}
+            if(a.DdlHeaderOnly                         != b.DdlHeaderOnly                        ){ msg = "DdlHeaderOnly";                        break;}
+            if(a.Default                               != b.Default                              ){ msg = "Default";                              break;}
+            if(a.DriAll                                != b.DriAll                               ){ msg = "DriAll";                               break;}
+            if(a.DriAllConstraints                     != b.DriAllConstraints                    ){ msg = "DriAllConstraints";                    break;}
+            if(a.DriAllKeys                            != b.DriAllKeys                           ){ msg = "DriAllKeys";                           break;}
+            if(a.DriChecks                             != b.DriChecks                            ){ msg = "DriChecks";                            break;}
+            if(a.DriClustered                          != b.DriClustered                         ){ msg = "DriClustered";                         break;}
+            if(a.DriDefaults                           != b.DriDefaults                          ){ msg = "DriDefaults";                          break;}
+            if(a.DriForeignKeys                        != b.DriForeignKeys                       ){ msg = "DriForeignKeys";                       break;}
+            if(a.DriIncludeSystemNames                 != b.DriIncludeSystemNames                ){ msg = "DriIncludeSystemNames";                break;}
+            if(a.DriIndexes                            != b.DriIndexes                           ){ msg = "DriIndexes";                           break;}
+            if(a.DriNonClustered                       != b.DriNonClustered                      ){ msg = "DriNonClustered";                      break;}
+            if(a.DriPrimaryKey                         != b.DriPrimaryKey                        ){ msg = "DriPrimaryKey";                        break;}
+            if(a.DriUniqueKeys                         != b.DriUniqueKeys                        ){ msg = "DriUniqueKeys";                        break;}
+            if(a.DriWithNoCheck                        != b.DriWithNoCheck                       ){ msg = "DriWithNoCheck";                       break;}
+            if(a.Encoding                              != b.Encoding                             ){ msg = "Encoding";                             break;}
+            if(a.EnforceScriptingOptions               != b.EnforceScriptingOptions              ){ msg = "EnforceScriptingOptions";              break;}
+            if(a.ExtendedProperties                    != b.ExtendedProperties                   ){ msg = "ExtendedProperties";                   break;}
+            if(a.FileName                              != b.FileName                             ){ msg = "FileName";                             break;}
+            if(a.FullTextCatalogs                      != b.FullTextCatalogs                     ){ msg = "FullTextCatalogs";                     break;}
+            if(a.FullTextIndexes                       != b.FullTextIndexes                      ){ msg = "FullTextIndexes";                      break;}
+            if(a.FullTextStopLists                     != b.FullTextStopLists                    ){ msg = "FullTextStopLists";                    break;}
+            if(a.IncludeDatabaseContext                != b.IncludeDatabaseContext               ){ msg = "IncludeDatabaseContext";               break;}
+            if(a.IncludeDatabaseContext                != b.IncludeDatabaseContext               ){ msg = "IncludeDatabaseContext";               break;}
+            if(a.IncludeDatabaseRoleMemberships        != b.IncludeDatabaseRoleMemberships       ){ msg = "IncludeDatabaseRoleMemberships";       break;}
+            if(a.IncludeFullTextCatalogRootPath        != b.IncludeFullTextCatalogRootPath       ){ msg = "IncludeFullTextCatalogRootPath";       break;}
+            if(a.IncludeHeaders                        != b.IncludeHeaders                       ){ msg = "IncludeHeaders";                       break;}
+            if(a.IncludeIfNotExists                    != b.IncludeIfNotExists                   ){ msg = "IncludeIfNotExists";                   break;}
+            if(a.IncludeScriptingParametersHeader      != b.IncludeScriptingParametersHeader     ){ msg = "IncludeScriptingParametersHeader";     break;}
+            if(a.Indexes                               != b.Indexes                              ){ msg = "Indexes";                              break;}
+            if(a.LoginSid                              != b.LoginSid                             ){ msg = "LoginSid";                             break;}
+            if(a.NoAssemblies                          != b.NoAssemblies                         ){ msg = "NoAssemblies";                         break;}
+            if(a.NoCollation                           != b.NoCollation                          ){ msg = "NoCollation";                          break;}
+            if(a.NoCommandTerminator                   != b.NoCommandTerminator                  ){ msg = "NoCommandTerminator";                  break;}
+            if(a.NoExecuteAs                           != b.NoExecuteAs                          ){ msg = "NoExecuteAs";                          break;}
+            if(a.NoFileGroup                           != b.NoFileGroup                          ){ msg = "NoFileGroup";                          break;}
+            if(a.NoFileStream                          != b.NoFileStream                         ){ msg = "NoFileStream";                         break;}
+            if(a.NoFileStreamColumn                    != b.NoFileStreamColumn                   ){ msg = "NoFileStreamColumn";                   break;}
+            if(a.NoIdentities                          != b.NoIdentities                         ){ msg = "NoIdentities";                         break;}
+            if(a.NoIndexPartitioningSchemes            != b.NoIndexPartitioningSchemes           ){ msg = "NoIndexPartitioningSchemes";           break;}
+            if(a.NoMailProfileAccounts                 != b.NoMailProfileAccounts                ){ msg = "NoMailProfileAccounts";                break;}
+            if(a.NoMailProfilePrincipals               != b.NoMailProfilePrincipals              ){ msg = "NoMailProfilePrincipals";              break;}
+            if(a.NonClusteredIndexes                   != b.NonClusteredIndexes                  ){ msg = "NonClusteredIndexes";                  break;}
+            if(a.NoTablePartitioningSchemes            != b.NoTablePartitioningSchemes           ){ msg = "NoTablePartitioningSchemes";           break;}
+            if(a.NoVardecimal                          != b.NoVardecimal                         ){ msg = "NoVardecimal";                         break;}
+            if(a.NoViewColumns                         != b.NoViewColumns                        ){ msg = "NoViewColumns";                        break;}
+            if(a.NoXmlNamespaces                       != b.NoXmlNamespaces                      ){ msg = "NoXmlNamespaces";                      break;}
+            if(a.OptimizerData                         != b.OptimizerData                        ){ msg = "OptimizerData";                        break;}
+            if(a.Permissions                           != b.Permissions                          ){ msg = "Permissions";                          break;}
+            if(a.PrimaryObject                         != b.PrimaryObject                        ){ msg = "PrimaryObject";                        break;}
+            if(a.SchemaQualify                         != b.SchemaQualify                        ){ msg = "SchemaQualify";                        break;}
+            if(a.SchemaQualifyForeignKeysReferences    != b.SchemaQualifyForeignKeysReferences   ){ msg = "SchemaQualifyForeignKeysReferences";   break;}
+            if(a.ScriptBatchTerminator                 != b.ScriptBatchTerminator                ){ msg = "ScriptBatchTerminator";                break;}
+            if(a.ScriptData                            != b.ScriptData                           ){ msg = "ScriptData";                           break;}
+            if(a.ScriptDataCompression                 != b.ScriptDataCompression                ){ msg = "ScriptDataCompression";                break;}
+            if(a.ScriptDrops                           != b.ScriptDrops                          ){ msg = "ScriptDrops";                          break;}
+            if(a.ScriptForAlter                        != b.ScriptForAlter                       ){ msg = "ScriptForAlter";                       break;}
+            if(a.ScriptForCreateDrop                   != b.ScriptForCreateDrop                  ){ msg = "ScriptForCreateDrop";                  break;}
+            if(a.ScriptOwner                           != b.ScriptOwner                          ){ msg = "ScriptOwner";                          break;}
+            if(a.ScriptSchema                          != b.ScriptSchema                         ){ msg = "ScriptSchema";                         break;}
+            if(a.SpatialIndexes                        != b.SpatialIndexes                       ){ msg = "SpatialIndexes";                       break;}
+            if(a.Statistics                            != b.Statistics                           ){ msg = "Statistics";                           break;}
+            if(a.TargetDatabaseEngineEdition           != b.TargetDatabaseEngineEdition          ){ msg = "TargetDatabaseEngineEdition";          break;}
+            if(a.TargetDatabaseEngineType              != b.TargetDatabaseEngineType             ){ msg = "TargetDatabaseEngineType";             break;}
+            if(a.TargetServerVersion                   != b.TargetServerVersion                  ){ msg = "TargetServerVersion";                  break;}
+            if(a.TimestampToBinary                     != b.TimestampToBinary                    ){ msg = "TimestampToBinary";                    break;}
+            if(a.ToFileOnly                            != b.ToFileOnly                           ){ msg = "ToFileOnly";                           break;}
+            if(a.Triggers                              != b.Triggers                             ){ msg = "Triggers";                             break;}
+            if(a.WithDependencies                      != b.WithDependencies                     ){ msg = "WithDependencies";                     break;}
+            if(a.XmlIndexes                            != b.XmlIndexes                           ){ msg = "XmlIndexes";                           break;}
+            ret = true;
+            msg = "";
+         } while (false);
+
+         return ret;
       }
 
       /// <summary>

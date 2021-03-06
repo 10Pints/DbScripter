@@ -31,7 +31,89 @@ namespace RSS.Test
       /// "{dbo, [ teSt]}"
       /// </summary>
       [TestMethod()]
-      //[ExpectedException typeof(ArgumentException)]
+      public void SetExportFlagsFromSqlTypeTest()
+      {
+         // 1: test from cstr
+         ParamsTestable p = new ParamsTestable(
+             name              : "ParseRequiredSchemasTestWhen2SchemasThenOk param"
+            ,prms              : null
+            ,serverName        : @"DESKTOP-UAULS0U\SQLEXPRESS"
+            ,instanceName      : "SQLEXPRESS"
+            ,databaseName      : "Covid_T1" 
+            ,exportScriptPath  : null
+            ,newSchemaName     : null
+            ,requiredSchemas   : "{dbo}"
+            ,requiredTypes     : null
+            ,sqlType           : null
+            ,createMode        : null
+            ,scriptUseDb       : null
+            ,addTimestamp      : null
+         );
+
+         // Clear all the is exporting state flags
+         p.SetExportFlagState(null);
+         p.IsExprtngDb   = true;//   isxDb, isxS,  isxFn, isxp,  isxTbls,isxTTy, isxVw, isxData
+         Assert.IsTrue(Checkflags(p, true,  null,  null,  null,  null,   null,   null,  null));
+         p.SetExportFlagState(false);
+         p.IsExprtngSchema = true;
+         Assert.IsTrue(Checkflags(p, false, true,  false, false, false,  false,  false, false));
+         p.SetExportFlagState(true);
+         p.IsExprtngFns = false;
+         Assert.IsTrue(Checkflags(p, true,  true,  false, true,  true,   true,   true,  true));
+         p.SetExportFlagState(null);
+         p.IsExprtngProcs = false;
+         Assert.IsTrue(Checkflags(p, null,  null,  null,  false, null,   null,   null,  null));
+
+         p.SetExportFlagState(null);
+         p.IsExprtngTbls = true;
+         p.IsExprtngTTys = false;
+         Assert.IsTrue(Checkflags(p, null,  null,  null,  null,  true,   false,  null,  null));
+
+         p.SetExportFlagState(false); 
+         p.IsExprtngVws  = null;
+         p.IsExprtngData = true;
+         Assert.IsTrue(Checkflags(p, false, false, false, false, false,  false,  null,  true));
+      }
+
+      bool Checkflags(Params p
+                     ,bool? isExprtngDb
+                     ,bool? isExprtngSchema
+                     ,bool? isExprtngFns
+                     ,bool? isExprtngProcs
+                     ,bool? isExprtngTbls
+                     ,bool? isExprtngTTys
+                     ,bool? isExprtngVws
+                     ,bool? isExprtngData
+                     )
+      {
+         bool ret = true;
+         if(p.IsExprtngDb     != isExprtngDb    ) ret = false;
+         if(p.IsExprtngSchema != isExprtngSchema) ret = false;
+         if(p.IsExprtngFns    != isExprtngFns   ) ret = false;
+         if(p.IsExprtngProcs  != isExprtngProcs ) ret = false;
+         if(p.IsExprtngTbls   != isExprtngTbls  ) ret = false;
+         if(p.IsExprtngTTys   != isExprtngTTys  ) ret = false;
+         if(p.IsExprtngVws    != isExprtngVws   ) ret = false;
+         if(p.IsExprtngData   != isExprtngData  ) ret = false;
+
+         return ret;
+      }
+
+
+      /// <summary>
+      /// PRECONDITIONS: 
+      ///   
+      /// POSTCONDITIONS: 
+      ///   POST 1: returns null if rs is null, empty
+      ///   POST 2: returns null if rs contains no schemas
+      ///   POST 3: returns all the required schemas in rs in the returned collection
+      ///   POST 4: contains no empty schemas
+      ///   POST 5: Server, Instance Database exist
+      ///   POST 6: the schemas found should exist in the database
+      ///           AND match the Case of the Db Schema name
+      /// "{dbo, [ teSt]}"
+      /// </summary>
+      [TestMethod()]
       public void ParseRequiredSchemasTestWhen2SchemasThenOk()
       {
          //var exportScriptPath = @"C:\temp\PareseRequiredschemasTest.sql";
@@ -45,7 +127,6 @@ namespace RSS.Test
             ,newSchemaName     : null
             ,requiredSchemas   : "{dbo, [ teSt]}"// should handle more than 1 schema and crappy formatting
             ,requiredTypes     : null
-//            ,dbOpType          : null
             ,sqlType           : null
             ,createMode        : null
             ,scriptUseDb       : null

@@ -1,13 +1,7 @@
 ﻿using System;
-using System.IO;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using DbScripterLib;
-using System.Linq;
 using Microsoft.SqlServer.Management.Smo;
-using System.Collections;
-using System.Text.RegularExpressions;
-using System.Text;
-using System.Collections.Generic;
 using System.Diagnostics;
 using RSS.Common;
 using static DbScripterLib.Params;
@@ -20,6 +14,290 @@ namespace RSS.Test
    public class DbScriptorTests : UnitTestBase
    {
       #region tests
+
+      [TestMethod]
+      public void ExportProceduresDropTest()
+      {
+         LogS();
+         DbScripter sc = new DbScripter();
+         var exportScriptPath = @"C:\temp\ExportProceduresCreateTest.sql";
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : exportScriptPath
+            ,sqlType          : SqlTypeEnum.Function
+            ,createMode       : CreateModeEnum.Drop
+            ,requiredSchemas  : "{tSQLt}"
+            ,requiredTypes    : "P"
+         );
+
+         try
+         { 
+            Console.WriteLine(p);
+            var script = sc.Export(p);
+
+            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE.*)",           exportScriptPath, 955));
+            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[dbo\].*)",   exportScriptPath, 918));
+            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[test\].*)",  exportScriptPath, 91));
+            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[tSQLt\].*)", exportScriptPath, 936));
+         }
+         catch(Exception e)
+         {
+            LogException(e);
+            DisplayLog();
+            Process.Start("notepad++.exe", exportScriptPath);
+            throw;
+         }
+      }
+
+      [TestMethod]
+      public void ExportProceduresCreateTest()
+      {
+         LogS();
+         DbScripter sc = new DbScripter();
+         var exportScriptPath = @"C:\temp\ExportProceduresCreateTest.sql";
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : exportScriptPath
+            ,sqlType          : SqlTypeEnum.Procedure
+            ,createMode       : CreateModeEnum.Create
+            ,requiredSchemas  : "{dbo, tSQLt}"
+            ,requiredTypes    : "P"
+         );
+
+         try
+         { 
+            Console.WriteLine(p);
+            var script = sc.Export(p);
+
+            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE.*)",           exportScriptPath, 131));
+            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[dbo\].*)",   exportScriptPath, 37));
+            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[test\].*)",  exportScriptPath, 0));
+            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[tSQLt\].*)", exportScriptPath, 94));
+         }
+         catch(Exception e)
+         {
+            LogException(e);
+            DisplayLog();
+            Process.Start("notepad++.exe", exportScriptPath);
+            throw;
+         }
+      }
+
+      [TestMethod]
+      public void ExportFunctionsTest()
+      {
+         LogS();
+         DbScripter sc = new DbScripter();
+         var exportScriptPath = @"C:\temp\ExportFunctionsTest.sql";
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : exportScriptPath
+            ,sqlType          : SqlTypeEnum.Function
+            ,createMode       : CreateModeEnum.Create
+            ,requiredSchemas  : "{dbo, [ teSt], tSQLt}" // should handle more than 1 schema and crappy formatting
+            ,requiredTypes    : "F"
+         );
+
+         try
+         { 
+            Console.WriteLine(p);
+            var script = sc.Export(p);
+
+            Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION.*)",           exportScriptPath, 55));
+            Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION \[dbo\].*)",   exportScriptPath, 18));
+            Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION \[test\].*)",  exportScriptPath, 1));
+            Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION \[tSQLt\].*)", exportScriptPath, 36));
+         }
+         catch(Exception e)
+         {
+            LogException(e);
+            DisplayLog();
+            Process.Start("notepad++.exe", exportScriptPath);
+            throw;
+         }
+      }
+
+
+      [TestMethod]
+      public void ExportDatabaseTest()
+      {
+         LogS();
+         DbScripter sc = new DbScripter();
+         var exportScriptPath = @"C:\temp\ExportDatabase.sql";
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : exportScriptPath
+            ,sqlType          : SqlTypeEnum.Database
+            ,createMode       : CreateModeEnum.Create
+            ,requiredSchemas  : "{dbo, [ teSt], tSQLt}" // should handle more than 1 schema and crappy formatting
+            ,requiredTypes    : null
+         );
+
+         try
+         { 
+            Console.WriteLine(p);
+            var script = sc.Export(p);
+
+            Assert.IsTrue(ChkContains(script, @"^(CREATE Database.*)", exportScriptPath, 1));
+         }
+         catch(Exception e)
+         {
+            LogException(e);
+            DisplayLog();
+            Process.Start("notepad++.exe", exportScriptPath);
+            throw;
+         }
+      }
+
+      [TestMethod]
+      public void ExportschemasTest()
+      {
+         LogS();
+         DbScripter sc = new DbScripter();
+         var exportScriptPath = @"C:\temp\Count1CrtSTableTest2.sql";
+
+         Params p = Params.PopParams
+         (
+             name             : "Count1CrtSchemaTest Params"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : exportScriptPath
+            ,sqlType          : SqlTypeEnum.Schema
+            ,createMode       : CreateModeEnum.Create
+            ,requiredSchemas  : "{dbo, [ teSt], tSQLt}" // should handle more than 1 schema and crappy formatting
+            ,requiredTypes    : "s"
+         );
+
+         try
+         { 
+            Console.WriteLine(p);
+            var script = sc.Export(p);
+
+            Assert.IsTrue(ChkContains(script, @"^(CREATE SCHEMA.*)", exportScriptPath, 3));
+         }
+         catch(Exception e)
+         {
+            LogException(e);
+            DisplayLog();
+            Process.Start("notepad++.exe", exportScriptPath);
+            throw;
+         }
+      }
+
+
+      [TestMethod]
+      public void ExportFunctionsCreateTest()
+      {
+         LogS();
+         DbScripter sc = new DbScripter();
+         var exportScriptPath = @"C:\temp\ExportFunctionsCreate.sql";
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : exportScriptPath
+            ,sqlType          : SqlTypeEnum.Function
+            ,createMode       : CreateModeEnum.Create
+            ,requiredSchemas  : "{dbo}"
+            ,requiredTypes    : "F"
+            ,isExprtngSchema  : true
+         );
+
+         try
+         { 
+            Console.WriteLine(p);
+            var script = sc.Export(p);
+
+            Assert.IsTrue(ChkContains(script, @"^(CREATE Function.*)", exportScriptPath, 18));
+         }
+         catch(Exception e)
+         {
+            LogException(e);
+            DisplayLog();
+            Process.Start("notepad++.exe", exportScriptPath);
+            throw;
+         }
+      }
+
+      [TestMethod]
+      public void ExportFunctionsDropTest()
+      {
+         LogS();
+         DbScripter sc = new DbScripter();
+         var exportScriptPath = @"C:\temp\ExportFunctionsDrop.sql";
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : exportScriptPath
+            ,sqlType          : SqlTypeEnum.Function
+            ,createMode       : CreateModeEnum.Drop
+            ,requiredSchemas  : "{dbo}"
+            ,requiredTypes    : "F"
+            ,isExprtngSchema  : true
+         );
+
+         try
+         { 
+            Console.WriteLine(p);
+            var script = sc.Export(p);
+
+            Assert.IsTrue(ChkContains(script, @"^(DROP Function.*)", exportScriptPath, 18));
+         }
+         catch(Exception e)
+         {
+            LogException(e);
+            DisplayLog();
+            Process.Start("notepad++.exe", exportScriptPath);
+            throw;
+         }
+      }
+      [TestMethod]
+      public void Count1CrtSTableTestBothExpSchemaAndExpDataNotDefinedTest()
+      {
+         LogS();
+         DbScripter sc = new DbScripter();
+         var exportScriptPath = @"C:\temp\Count1CrtSTableTest2.sql";
+
+         Params p = Params.PopParams(
+             name             : "Count1CrtSchemaTest Params"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : exportScriptPath
+            ,sqlType          : SqlTypeEnum.Table
+            ,createMode       : CreateModeEnum.Create
+            ,requiredSchemas  : "{dbo, [ teSt]}" // should handle more than 1 schema and crappy formatting
+            ,requiredTypes    : "t"              // this is overridden in Export schema as it exports all the child objects
+            );
+
+         try
+         { 
+            Console.WriteLine(p);
+            var script = sc.Export(p);
+
+            Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[dbo\]\..*)"     , exportScriptPath, 21));
+            Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[test\]\..*)"    , exportScriptPath,  3));
+         }
+         catch(Exception e)
+         {
+            LogException(e);
+            DisplayLog();
+            Process.Start("notepad++.exe", exportScriptPath);
+            throw;
+         }
+      }
 
       /// <summary>
       /// 
@@ -51,12 +329,13 @@ namespace RSS.Test
          }
          catch(Exception e)
          {
+            LogException(e);
             DisplayLog();
          }
       }
 
       /// <summary>
-      /// should not sallow this combination
+      /// should not allow this combination
       /// </summary>
       [TestMethod()]
       [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
@@ -204,9 +483,6 @@ namespace RSS.Test
             var script = sc.Export(p);
 
             Assert.IsTrue(ChkContains(script, "^(CREATE SCHEMA.*)"               , exportScriptPath, 2));
-            //Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[dbo\]\..*)"     , exportScriptPath, 21));
-            //Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[test\]\..*)"    , exportScriptPath,  3));
-            //Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[test\]\..*)", exportScriptPath, 36));
          }
          catch(Exception )
          {

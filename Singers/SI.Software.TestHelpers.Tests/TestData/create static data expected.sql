@@ -1,1 +1,0 @@
-create static data expected.sql
