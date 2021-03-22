@@ -3,93 +3,245 @@
 
 using System;
 using System.Linq;
-using DbScripterLib;
 using System.IO;
 //using System.Diagnostics;
 using RSS;
 using static RSS.Common.Utils;
+using static RSS.Common.Logger;
+using RSS.Common;
+using System.Diagnostics;
+using System.Configuration;
 
-namespace DbScriptr
+namespace DbScripterLibNS
 {
-   class Program
+   public class Program
    {
       /// <summary>
-      /// This rtn will launch the DbScriptor with the parameters provided
-      /// If successful then it will lanch the exported file in notepad++
+      /// Usage: 
+      ///  -S:     server                                                        default: "."
+      ///  -i:     instance                                                      default: DESKTOP-UAULS0U\\SQLEXPRESS
+      ///  -d:     database                                                      default: none
+      ///  -rt:    root type, optional surrounding [ ]                           default: schema
+      ///  -rs:    required schemas like {dbo,test}, optional surrounding { }    default: dbo
+      ///
+      ///  -tct:   target child types, optional surrounding { }                  default: "P,F"
+      ///      comma separated list of 1 or more typecodes: like {F,P}
+      ///    valid types: {F,P,S,T,TTY,V}
+      ///      F:   user defined function
+      ///      P:   stored procedure
+      ///      S:   schema
+      ///      T:   table
+      ///      TTY: user defined table type
+      ///      V    view
       /// 
-      /// The parameters are map of key value pairs:
-      /// Handles the following switches: e.g:
-      /// -S DESKTOP-UAULS0U\SQLEXPRESS 
-      /// -i SQLEXPRESS
-      /// -d ut
-      /// -schema {dbo, test}
-      /// -E [D:\tmp\utExport.sql]  -O {fn}
-      /// -use    scrip[ts the use database
+      ///  -E:      export file path (timestamp and mode will be added)          default: %TempPath%\DbName_schemas_tcts_tmstmp_export.sql
+      ///  -cm:     create mode: create|alter|drop                               default: ALTER
+      ///  -use:    scripts the use datbase command at the start of the script   default: FALSE
+      ///  -ts      adds a timestamp to the specified export file path           default: FALSE
+      ///  -log     log file
+      /// E.G.  DbScripter -S DESKTOP-UAULS0U\SQLEXPRESS -i SQLEXPRESS -d ut -rt [dbo] -E D:\tmp\utExport.sql -T F,P -M create|alter|drop
       /// </summary>
       /// <param name="args"></param>
-      static void Main( string[] args )
+      public static int Main( string[] args )
       {
+         string script, msg = "";
+         int ret = 1; // error
+
          try 
-         { 
-            ParseArgs(args, out Params p);
+         {
+            LogS();
+            Init();
+
+            do
+            {
+               if(!DoWork( args, out Params p, out script, out msg))
+                  break;
+
+               Console.WriteLine( $"Successfully exported to {p.ExportScriptPath}");
+
+               // Launch notepad++
+               Process.Start("notepad++.exe", p.ExportScriptPath);
+
+               ret = 0; // success
+            } while(false);
+
+         }
+         catch(Exception e)
+         {
+            LogException(e, msg);
+            PrintHelp(e);
+         }
+
+         LogL($"ret: {ret}");
+         return ret;
+      }
+
+      /// <summary>
+      /// The testable aprt of the main functionality
+      /// </summary>
+      /// <param name="args"></param>
+      /// <returns></returns>
+      public static bool DoWork( string[] args, out Params p, out string script, out string msg)
+      {
+         LogS();
+         bool ret = false;
+         script = "";
+         msg = "";
+
+         do
+         {
+            if(!ParseArgs(args, out p, out msg))
+               break;
 
             DbScripter scripter = new DbScripter();
-            throw new NotImplementedException();
-            // scripter.ExportRoutines(p);
-            /*
+            script = scripter?.Export(ref p) ?? "";
 
-            if(!File.Exists(p.ExportScriptPath))
-               throw new Exception($"Failed to create export file: {p.ExportScriptPath}");
+            if(string.IsNullOrEmpty(script))
+            {
+               msg = "no script generated";
+               break;
+            }
 
-            Console.WriteLine( $"Successfully exported to {p.ExportScriptPath}");
+         if(!File.Exists(p.ExportScriptPath))
+            throw new Exception($"Failed to create export file: {p.ExportScriptPath}");
 
-            // Launch notepadd++
-            Process.Start("notepad++.exe", p.ExportScriptPath);*/
-         }
-         catch
-         {
-            PrintHelp();
-         }
+            ret = true;
+         } while(false);
+
+         LogL($"ret: {ret}");
+         return ret;
       }
 
       /// <summary>
-      /// Handles the followuing switches:
-      /// -S DESKTOP-UAULS0U\SQLEXPRESS 
-      /// -I SQLEXPRESS
-      /// -D ut
-      /// -SCHEMA {dbo, test}
-      /// -E [D:\tmp\utExport.sql]
-      /// -T {FP}
-      /// -M {alter create}
+      /// 1 off initialisation
+      ///  log4net
+      /// </summary>
+      public static void Init()
+      {
+         LogS();
+         ServiceLocator.Instance.Register(typeof(ILogProvider).Assembly);
+         ServiceLocator.Instance.Register(typeof(Log4NetLogProvider).Assembly);
+         Logger.LogProvider = ServiceLocator.Instance.ResolveByType<ILogProvider>();
+         Logger.InitLogger();
+         Console.WriteLine($"Log: {Logger.LogFile}");
+         LogL();
+      }
+
+      /// <summary>
+      /// Usage: 
+      ///  -S:     server                                                        default: "."
+      ///  -i:     instance                                                      default: DESKTOP-UAULS0U\\SQLEXPRESS
+      ///  -d:     database                                                      default: none
+      ///  -rt:    root type, optional surrounding [ ]                           default: none
+      ///  -rs:    required schemas like {dbo,test}, optional surrounding { }    default: dbo
+      ///  -tct:   target child types, optional surrounding { } comma separated list of 1 or more typecodes: like {F,P}
+      ///    valid types: {F,P,S,T,TTY,V}
+      ///      F:   user defined function
+      ///      P:   stored procedure
+      ///      S:   schema
+      ///      T:   table
+      ///      TTY: user defined table type
+      ///      V    view
+      /// 
+      ///  -E:      export file path (timestamp and mode will be added)          default: %TempPath%\DbName_schemas_tcts_tmstmp_export.sql
+      ///  -cm:     create mode: create|alter|drop                               default: ALTER
+      ///  -use:    scripts the use datbase command at the start of the script   default: FALSE
+      ///  -ts      adds a timestamp to the specified export file path           default: FALSE
+      ///  -log     log file
+      ///  
+      /// E.G.  DbScripter -S DESKTOP-UAULS0U\SQLEXPRESS -i SQLEXPRESS -d ut -rt [dbo] -E D:\tmp\utExport.sql -T F,P -M create|alter|drop
+      /// 
+      /// PRECONDITIONS:
+      ///   none
+      ///   
+      /// POSTCONDITIONS
+      ///  P: valid state for export
+      ///  POST 1: all fields of P are specified (mot null)
+      ///     ServerName       
+      ///     InstanceName     
+      ///     DatabaseName     
+      ///     ExportScriptPath 
+      ///     RequiredSchemas  
+      ///     RootType         
+      ///     TargetChildTypes 
+      ///     CreateMode       
+      ///     ScriptUseDb      
+      ///     AddTimestamp     
       /// </summary>
       /// <param name="args"></param>
-     protected static void ParseArgs( string[] args, out Params p) // -M create|alter
+     public static bool ParseArgs( string[] args, out Params p, out string msg) // -M create|alter
      {
-         Precondition(args != null, "Args must be supplied");
+         LogS();
+         bool ret = false;
          p = new Params();
-         int len           = args?.Length ?? 0;
-         var argsU         =  args.Select(s => s.ToUpper()).ToArray();
-         p.ServerName      = GetArg( args, argsU, "-S", ".");
-         p.InstanceName    = GetArg( args, argsU, "-I", "DESKTOP-UAULS0U\\SQLEXPRESS");
-         p.DatabaseName    = GetArg( args, argsU, "-D", null);
 
-         Assertion( p.DatabaseName != null, "database must be specified");
+         try 
+         {
+            Utils.Precondition(args != null, "Args must be supplied");
+            int len           = args?.Length ?? 0;
+            var argsU         = args.Select(s => s.ToUpper()).ToArray();
 
-         p.RequiredSchemas = p.ParseRequiredSchemas( GetArg( args, argsU, "-SCHEMA", "."));
-         p.RequiredTypes   = p.ParseRequiredTypes  ( GetArg( args, argsU, "-T", "PF"));
-         // -M create|alter
-         var strMode = GetArg( args, argsU, "-M", "ALTER");
-         p.CreateMode = strMode.FindEnumByAlias<CreateModeEnum>();
+            do
+            {
+               p.ServerName   = GetArg( args, argsU, "-S", "DESKTOP-UAULS0U\\SQLEXPRESS");
+               p.InstanceName = GetArg( args, argsU, "-I", "SQLEXPRESS");
+               p.DatabaseName = GetArg( args, argsU, "-D",  null);
 
-         var _schemas = string.Join("_",p.RequiredSchemas);
-         string default_file = $"{Path.GetTempPath()}{p.DatabaseName}_{_schemas}_{p.RequiredTypes}_{GetTimeStamp()}_export.sql";
-         p.ExportScriptPath  = GetArg( args, argsU, "-E", default_file);
-         p.ScriptUseDb  = (GetArg( args, argsU, "-use"      , null, get_value: false) != null );
-         p.AddTimestamp = (GetArg( args, argsU, "-timestamp", null, get_value: false) != null );
+               var types      = GetArg( args, argsU, "-rt", "schema");
+               var rootTypes  = p.ParseRequiredTypes(types);
+               var rootType   = rootTypes.FirstOrDefault();
+               p.RootType     = rootType;
+
+               p.RequiredSchemas = p.ParseRequiredSchemas( GetArg( args, argsU, "-rs", "dbo"));
+               p.TargetChildTypes= p.ParseRequiredTypes  ( GetArg( args, argsU, "-tct", "P,F"));
+
+               var strMode    = GetArg( args, argsU, "-cm", "ALTER");
+               p.CreateMode   = strMode.FindEnumByAlias<CreateModeEnum>();
+
+               var _schemas   = string.Join("_",p.RequiredSchemas);
+               //         <add key="Script Dir" value="E:\Backups\iDrive\Dev\Db\Scripts" />
+
+               // Try from cmd line, if not found get from Appconfig, if that no good then take default
+               string default_file  = @$"{ConfigurationManager.AppSettings.Get("Script Dir") ?? @"D:\Scripts"}\{p.DatabaseName}_{_schemas}_{Utils.GetTimeStamp()}_export.sql";
+               p.ExportScriptPath   =  GetArg( args, argsU, "-E",    default_file);
+               p.ScriptUseDb        =  GetArg( args, argsU, "-use",  get_value: false).Equals("-use", StringComparison.OrdinalIgnoreCase);
+               p.AddTimestamp       =  GetArg( args, argsU, "-ts" ,  get_value: false).Equals("-ts" , StringComparison.OrdinalIgnoreCase);
+
+               //  -log     log file
+               string default_log_file  = ConfigurationManager.AppSettings.Get("Log File") ??  @"D:\Logs\DbScripter.log";
+               p.LogFile           =  GetArg( args, argsU, "-log" , default_log_file);
+
+               //  POST 1: all fields of P are specified
+               var spec_msg = "must be specified";
+               if( p.ServerName       == null){ msg = $"-S (server name) {spec_msg}";                          break;}
+               if( p.InstanceName     == null){ msg = $"-i (instance name) {spec_msg}";                        break;}
+               if( p.DatabaseName     == null){ msg = $"-d (database) {spec_msg}";                             break;}
+               if( p.ExportScriptPath == null){ msg = $"-E (Export Script Path) {spec_msg}";                   break;}
+               if( p.RequiredSchemas  == null){ msg = $"-rs (required schemas) {spec_msg}";                    break;}
+               if( p.RootType         == null){ msg = $"-rt (Root Type) {spec_msg}";                           break;}
+               if( p.TargetChildTypes == null){ msg = $"-tct (target child types) {spec_msg}";                 break;}
+               if( p.CreateMode       == null){ msg = $"-cm (create mode) {spec_msg}";                         break;}
+               if( p.ScriptUseDb      == null){ msg = $"-use (script usedb) {spec_msg}";                       break;}
+               if( p.AddTimestamp     == null){ msg = $"-ts (add timestamp to script file name) {spec_msg}";   break;}
+               if( p.LogFile          == null){ msg = $"-ts (log file) {spec_msg}";                            break;}
+
+               ret = true;
+               msg = "";
+            } while(false);
+         }
+         catch(Exception e)
+         {
+            msg = e.Message;
+            LogException(e);
+            //throw;
+         }
+
+         LogL($"ret: {ret}");
+         return ret;
       }
 
       /// <summary>
-      /// PRECONDITION args not null
+      /// Utils.Precondition args not null
       /// </summary>
       /// <param name="args">args from command line</param>
       /// <param name="argsU">upper case version of args</param>
@@ -106,7 +258,7 @@ namespace DbScriptr
          { 
             if(get_value)
             { 
-               Assertion(ndx< len-1, "Error parsing args");
+               Utils.Assertion(ndx< len-1, "Error parsing args");
                str = args?[ndx + 1];
             }
             else
@@ -119,7 +271,7 @@ namespace DbScriptr
       }
 
       /// <summary>
-      /// PRECONDITION args not null
+      /// Utils.Precondition args not null
       /// </summary>
       /// <param name="args"></param>
       /// <returns></returns>
@@ -131,22 +283,61 @@ namespace DbScriptr
          return str.Split();
       }
 
-      protected static void PrintHelp()
-      { 
-         var nl = "\r\n";
-         Console.WriteLine("Usage: " + nl +
-            @"DbScripter -S DESKTOP-UAULS0U\SQLEXPRESS  -i SQLEXPRESS -d ut -schema {dbo} -E D:\tmp\utExport.sql  -T F|P -M create|alter" + nl +
-"-S:        server"     + nl +
-"-i:        instance"   + nl +
-"-d:        database"   + nl +
-"-schema:   schema"     + nl +
-"-E:        export file path (timestamp and mode will be added)"        + nl +
-"-T:        type: F: functions, P Procedures FP both"                   + nl +
-"-M:        mode: create|alter"                                         + nl +
-"-use:      scripts the use datbase command at the start of the script" + nl +
-"-timestamp adds a timestamp to the specified export file path (default export file paths are timestamped)"
+      /// <summary>
+      /// Usage: 
+      ///  -S:     server                                                        default: DESKTOP-UAULS0U\SQLEXPRESS
+      ///  -i:     instance                                                      default: SQLEXPRESS
+      ///  -d:     database                                                      default: none
+      ///  -rt:    root type, optional surrounding [ ]                           default: SCHEMA
+      ///  -rs:    required schemas like {dbo,test}, optional surrounding { }    default: dbo
+      ///  -tct:   target child types, optional surrounding { } comma separated list of 1 or more typecodes: like {F,P}
+      ///    valid types: {F,P,S,T,TTY,V}
+      ///      F:   user defined function
+      ///      P:   stored procedure
+      ///      S:   schema
+      ///      T:   table
+      ///      TTY: user defined table type
+      ///      V    view
+      /// 
+      ///  -E:      export file path (timestamp and mode will be added)          default: %TempPath%\DbName_schemas_tmstmp_export.sql
+      ///  -cm:     create mode: create|alter|drop                               default: ALTER
+      ///  -use:    scripts the use datbase command at the start of the script   default: FALSE
+      ///  -ts      adds a timestamp to the specified export file path           default: FALSE
+      ///  
+      /// E.G.  DbScripter -S DESKTOP-UAULS0U\SQLEXPRESS -i SQLEXPRESS -d ut -rt [dbo] -E D:\tmp\utExport.sql -T F,P -M create|alter|drop
+      /// </summary>
+      /// <param name="e"></param>
 
+      protected static void PrintHelp(Exception? e)
+      {
+         if(e != null)
+            Console.WriteLine($"{e}");
+
+         Console.WriteLine(@"
+Usage: 
+E.G.  DbScripter -S DESKTOP-UAULS0U\SQLEXPRESS -i SQLEXPRESS -d ut -rt [dbo] -E D:\tmp\utExport.sql -T F,P -M create|alter|drop
+Where:
+ -S:        server                                                      default: DESKTOP-UAULS0U\SQLEXPRESS
+ -i:        instance                                                    default: SQLEXPRESS
+ -d:        database                                                    default: none
+ -rt:       root type, optional surrounding [ ]                         default: SCHEMA
+ -rs:       required schemas like {dbo,test}, optional surrounding { }  default: dbo
+
+ -tct:      target child types, optional surrounding { } comma separated list of 1 or more typecodes: like {P,F}
+   valid types: {F,P,S,T,TTY,V,P}                                       default: P,F
+      F:   user defined function
+      P:   stored procedure
+      S:   schema
+      T:   table
+      TTY: user defined table type
+      V    view
+
+-E:        export file path (timestamp and mode will be added)          default: %TempPath%\DbName_schemas_tmstmp_export.sql
+-cm:       mode: create|alter|drop                                      default: ALTER
+-use:      scripts the use datbase command at the start of the script   default: FALSE
+-ts        adds a timestamp to the specified export file path           default: FALSE"
             );
       }
    }
+
 }

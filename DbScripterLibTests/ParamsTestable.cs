@@ -1,7 +1,7 @@
 ﻿
 #nullable enable
 
-using DbScripterLib;
+using DbScripterLibNS;
 
 namespace RSS.Test
 {
@@ -22,6 +22,7 @@ namespace RSS.Test
          ,CreateModeEnum?  createMode        = CreateModeEnum  .Undefined
          ,bool?            scriptUseDb       = null
          ,bool?            addTimestamp      = null
+         ,string?          logFile           = null
          ,bool?            isExprtngData     = null
          ,bool?            isExprtngDb       = null
          ,bool?            isExprtngFKeys    = null
@@ -34,35 +35,36 @@ namespace RSS.Test
       )
          : base
          (
-             name
-            ,prms
-            ,serverName
-            ,instanceName
-            ,databaseName
-            ,exportScriptPath
-            ,newSchemaName
-            ,requiredSchemas
-            ,requiredTypes
-            ,sqlType
-            ,createMode
-            ,scriptUseDb
-            ,addTimestamp
-            ,isExprtngData
-            ,isExprtngDb
-            ,isExprtngFKeys
-            ,isExprtngFns
-            ,isExprtngProcs
-            ,isExprtngSchema
-            ,isExprtngTbls
-            ,isExprtngTTys
-            ,isExprtngVws
+             name             : name
+            ,prms             : prms
+            ,serverName       : serverName
+            ,instanceName     : instanceName
+            ,databaseName     : databaseName
+            ,exportScriptPath : exportScriptPath
+            ,newSchemaName    : newSchemaName
+            ,requiredSchemas  : requiredSchemas
+            ,requiredTypes    : requiredTypes
+            ,sqlType          : sqlType
+            ,createMode       : createMode
+            ,scriptUseDb      : scriptUseDb
+            ,addTimestamp     : addTimestamp
+            ,logFile          : logFile
+            ,isExprtngData    : isExprtngData
+            ,isExprtngDb      : isExprtngDb
+            ,isExprtngFKeys   : isExprtngFKeys
+            ,isExprtngFns     : isExprtngFns
+            ,isExprtngProcs   : isExprtngProcs
+            ,isExprtngSchema  : isExprtngSchema
+            ,isExprtngTbls    : isExprtngTbls
+            ,isExprtngTTys    : isExprtngTTys
+            ,isExprtngVws     : isExprtngVws
          )
       { 
       }
 
-      public new void SetExportFlagsFromSqlType()
+      public void SetExportFlagsFromSqlType()
       {
-         base.SetExportFlagsFromSqlType();
+         base.SetExportFlagsFromRootType();
       }
 
       public new void SetExportFlagState(bool? st = null)

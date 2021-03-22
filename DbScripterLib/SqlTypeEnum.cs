@@ -5,7 +5,7 @@ using System.Text;
 using System.Threading.Tasks;
 using RSS.Common;
 
-namespace DbScripterLib
+namespace DbScripterLibNS
 {
    public enum SqlTypeEnum
    {

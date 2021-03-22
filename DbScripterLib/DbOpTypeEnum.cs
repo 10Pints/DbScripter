@@ -4,7 +4,7 @@
 
 using RSS.Common;
 
-namespace DbScripterLib
+namespace DbScripterLibNS
 {
     /// <summary>
     ///  script is used by the SqlTrackingProvider to determine the type of script to run

@@ -1,11 +1,10 @@
 ﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
-using DbScripterLib;
-using static RSS.Common.Logger;
-using static RSS.Common.Utils;
+using DbScripterLibNS;
 using RSS.Common;
 using System.IO;
-using System.Diagnostics;
+//using static RSS.Common.Logger;
+//using static RSS.Common.Utils;
 
 namespace RSS.Test
 {
@@ -18,7 +17,7 @@ namespace RSS.Test
       }
 
       /// <summary>
-      /// PRECONDITIONS: 
+      /// Utils.PreconditionS: 
       ///   
       /// POSTCONDITIONS: 
       ///   POST 1: returns null if rs is null, empty
@@ -101,7 +100,7 @@ namespace RSS.Test
 
 
       /// <summary>
-      /// PRECONDITIONS: 
+      /// Utils.PreconditionS: 
       ///   
       /// POSTCONDITIONS: 
       ///   POST 1: returns null if rs is null, empty
@@ -273,7 +272,7 @@ p11_ source                                           P21_overlap_inp : p11_exp 
       public void ParseRequiredTypesBadInputTest()
       {
          Params p = new Params();
-         AssertThrows<ArgumentException>(() => p.ParseRequiredTypes("t,F,P,v,A"), "Unrecognised SQL type A");
+         Utils.AssertThrows<ArgumentException>(() => p.ParseRequiredTypes("t,F,P,v,A"), "Unrecognised SQL type A");
       }
    
       [TestMethod()]
@@ -310,7 +309,6 @@ p11_ source                                           P21_overlap_inp : p11_exp 
             ,newSchemaName     : null
             ,requiredSchemas   : null
             ,requiredTypes     : null
-         // ,dbOpType          : null
             ,sqlType           : null
             ,createMode        : null
             ,scriptUseDb       : null
@@ -327,7 +325,6 @@ p11_ source                                           P21_overlap_inp : p11_exp 
             ,newSchemaName     : "New Schema Name"
             ,requiredSchemas   : "{dbo, test}"
             ,requiredTypes     : "F,P"
-      //    ,dbOpType          : DbOpTypeEnum   .Undefined
             ,sqlType           : SqlTypeEnum    .Undefined
             ,createMode        : CreateModeEnum .Undefined
             ,scriptUseDb       : false
@@ -344,7 +341,6 @@ p11_ source                                           P21_overlap_inp : p11_exp 
             ,newSchemaName     : null
             ,requiredSchemas   : null
             ,requiredTypes     : null
-    //      ,dbOpType          : DbOpTypeEnum   .Undefined
             ,sqlType           : SqlTypeEnum    .Undefined
             ,createMode        : CreateModeEnum .Undefined
             ,scriptUseDb       : false
@@ -361,7 +357,6 @@ p11_ source                                           P21_overlap_inp : p11_exp 
             ,newSchemaName     : null
             ,requiredSchemas   : null
             ,requiredTypes     : null
-     //     ,dbOpType          : DbOpTypeEnum   .Undefined
             ,sqlType           : SqlTypeEnum    .Undefined
             ,createMode        : CreateModeEnum .Undefined
             ,scriptUseDb       : false
@@ -378,7 +373,6 @@ p11_ source                                           P21_overlap_inp : p11_exp 
             ,newSchemaName     : "New Schema Name"
             ,requiredSchemas   : "{dbo, test}"
             ,requiredTypes     : "F,P"
-     //     ,dbOpType          : DbOpTypeEnum   .Undefined
             ,sqlType           : SqlTypeEnum    .Undefined
             ,createMode        : CreateModeEnum .Undefined
             ,scriptUseDb       : false
@@ -395,7 +389,6 @@ p11_ source                                           P21_overlap_inp : p11_exp 
             ,newSchemaName     : null
             ,requiredSchemas   : null
             ,requiredTypes     : null
-      //    ,dbOpType          : null
             ,sqlType           : null
             ,createMode        : null
             ,scriptUseDb       : null
@@ -404,11 +397,22 @@ p11_ source                                           P21_overlap_inp : p11_exp 
 
       }
 
+      public override void TestSetup_()
+      {
+      }
+
+      public override void TestCleanup_()
+      {
+      }
+
       Params p10_null   = null;
       Params p11_all_inp= null;
       Params p11_exp    = null;
       Params p11_act    = null;
       Params p20_act    = null;
       Params p20_exp    = null;
+
+
+      public override string TestDataDir { get =>_testDataDir; set{ _testDataDir=value;} }
    }
 }

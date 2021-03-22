@@ -1,16 +1,20 @@
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 
-[assembly: AssemblyTitle("DbScriptExporterLibUnitTests")]
+[assembly: AssemblyTitle("DbScripterAppTests")]
 [assembly: AssemblyDescription("")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("")]
-[assembly: AssemblyProduct("DbScriptExporterLibUnitTests")]
+[assembly: AssemblyProduct("DbScripterAppTests")]
 [assembly: AssemblyCopyright("Copyright ©  2021")]
 [assembly: AssemblyTrademark("")]
 [assembly: AssemblyCulture("")]
+
 [assembly: ComVisible(false)]
-[assembly: Guid("0f73e1fc-3e78-4bd7-96eb-b4395b774173")]
+
+[assembly: Guid("ae0e2437-6794-43c6-9a3e-e75f8aeece05")]
+
+// [assembly: AssemblyVersion("1.0.*")]
 [assembly: AssemblyVersion("1.0.0.1")]
 [assembly: AssemblyFileVersion("1.0.0.1")]
-[assembly: log4net.Config.XmlConfigurator(Watch=true)]

@@ -1,8 +1,9 @@
-﻿using DbScripterLib;
+﻿using DbScripterLibNS;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Diagnostics;
-using static RSS.Common.Logger;
+using RSS.Common;
+//using static RSS.Common.Logger;
 
 namespace RSS.Test
 {
@@ -28,11 +29,11 @@ namespace RSS.Test
             ,scriptUseDb       : false
             ,addTimestamp      : true
            );
-
+ 
       [TestMethod]
       public void Count1CrtSTableTest()
       {
-         LogS();
+         Logger.LogS();
          DbScripter sc = new DbScripter();
          var exportScriptPath = @"C:\temp\Count1CrtSchemaTest.sql";
 
@@ -43,25 +44,39 @@ namespace RSS.Test
             ,sqlType          : SqlTypeEnum.Table
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{dbo, [ teSt]}"// should handle more than 1 schema and crappy formatting
-            ,requiredTypes    : "t"              // this is overridden in Export schema as it exports all the child objects
+            ,requiredTypes    : "t"             // this is overridden in Export schema as it exports all the child objects
             );
 
          try
          { 
             Console.WriteLine(p);
-            var script = sc.Export(p);
+            var script = sc.Export(ref p);
 
-            Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[dbo\]\..*)"     , exportScriptPath, 21));
-            Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[test\]\..*)"    , exportScriptPath,  3));
-            LogL("All subtests passed");
+            Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[dbo\]\..*)"     , 21, out var msg), msg);
+            Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[test\]\..*)"    ,  3, out msg), msg);
+            Logger.LogL("All subtests passed");
          }
          catch(Exception e)
          {
-            LogException(e);
-            DisplayLog();
-            Process.Start("notepad++.exe", exportScriptPath);
+            Logger.LogException(e);
+            //Logger.DisplayLog();
+            //Process.Start("notepad++.exe", exportScriptPath);
             throw;
          }
+
+         Logger.LogL();
+      }
+
+      public override void TestSetup_()
+      {
+         Logger.LogS();
+         Logger.LogL();
+      }
+
+      public override void TestCleanup_()
+      {
+         Logger.LogS();
+         Logger.LogL();
       }
 
       #endregion tests

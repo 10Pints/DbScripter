@@ -1,7 +1,7 @@
 ﻿using RSS.Common;
 
 
-namespace DbScripterLib
+namespace DbScripterLibNS
 {
    /// <summary>
    /// CreateModeEnum used to define whether the Dbscripter should emit 

@@ -1,11 +1,12 @@
 ﻿
 #nullable enable
 
-namespace DbScripterLib
+
+namespace DbScripterLibNS
 {
-   interface IDbScripter
+   public interface IDbScripter
    { 
-      string? Export( Params p);
+      string? Export( ref Params p);
       string GetTimestamp();
    }
 }

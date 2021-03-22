@@ -12,6 +12,7 @@ EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{2CCB8BB0-A27A-4646-8F2E-093D32463C12}"
 	ProjectSection(SolutionItems) = preProject
 		.editorconfig = .editorconfig
+		packages.config = packages.config
 	EndProjectSection
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Common", "..\Common\Common\Common.csproj", "{050CF1B9-C938-449C-80F8-B11038A44DA4}"
@@ -19,6 +20,8 @@ EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "TestHelpers", "..\Common\TestHelpers\TestHelpers.csproj", "{15C1F53E-A143-47A9-B447-93716DD83404}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Utils", "..\Common\Utils\Utils.csproj", "{624C6A7F-569F-4E78-96E5-D56D2BFD7261}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DbScripterAppTests", "DbScripterAppTests\DbScripterAppTests.csproj", "{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -141,6 +144,24 @@ Global
 		{624C6A7F-569F-4E78-96E5-D56D2BFD7261}.Release|x64.Build.0 = Release|Any CPU
 		{624C6A7F-569F-4E78-96E5-D56D2BFD7261}.Release|x86.ActiveCfg = Release|Any CPU
 		{624C6A7F-569F-4E78-96E5-D56D2BFD7261}.Release|x86.Build.0 = Release|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Debug - Light Tests Only|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Debug - Light Tests Only|Any CPU.Build.0 = Debug|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Debug - Light Tests Only|x64.ActiveCfg = Debug|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Debug - Light Tests Only|x64.Build.0 = Debug|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Debug - Light Tests Only|x86.ActiveCfg = Debug|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Debug - Light Tests Only|x86.Build.0 = Debug|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Debug|x64.Build.0 = Debug|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Debug|x86.Build.0 = Debug|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Release|Any CPU.Build.0 = Release|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Release|x64.ActiveCfg = Release|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Release|x64.Build.0 = Release|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Release|x86.ActiveCfg = Release|Any CPU
+		{AE0E2437-6794-43C6-9A3E-E75F8AEECE05}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

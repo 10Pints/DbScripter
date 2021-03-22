@@ -1,55 +1,562 @@
-﻿using System;
+﻿#nullable enable
+
+using System;
 using Microsoft.VisualStudio.TestTools.UnitTesting;
-using DbScripterLib;
+using DbScripterLibNS;
 using Microsoft.SqlServer.Management.Smo;
 using System.Diagnostics;
 using RSS.Common;
-using static DbScripterLib.Params;
+using System.Collections.Generic;
+using System.Configuration;
+using System.Text;
+using System.IO;
+using TestHelpers;
 using static RSS.Common.Logger;
 using static RSS.Common.Utils;
 
 namespace RSS.Test
 {
    [TestClass]
-   public class DbScriptorTests : UnitTestBase
+   public class DbScriptorTests : ScriptableUnitTestBase
    {
       #region tests
+/*      [TestMethod]
+      public void ScripterPlayTest()
+      {
+         LogS();
+         string sql;
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,databaseName     : "ut"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : ScriptFile
+            ,sqlType          : SqlTypeEnum.Schema
+            ,createMode       : CreateModeEnum.Alter
+            ,requiredSchemas  : "{dbo}"
+            ,requiredTypes    : null
+            ,logFile          : @"D:\Logs\DbScripter.log"
+            ,scriptUseDb      : true
+         );
+
+         StringBuilder sb     = new();
+         ScriptingOptions so  = new();
+         so.IncludeHeaders    = true;
+         so.ScriptBatchTerminator =true;
+         so.ScriptSchema      = true;
+         so.ScriptOwner       = true;
+         so.AppendToFile      = true;
+         so.FileName          = @"D:\logs\ScripterPlayTest1.sql";
+         DbScripter tsc       = new DbScripterTestable(p);
+         var fn               = tsc.Database?.UserDefinedFunctions["fnIsNumber"];
+         var txns             = fn?.Script(so) ?? new();
+
+         foreach(var txn in txns)
+           sb.AppendLine(txn);
+
+         sql = sb.ToString();
+         File.WriteAllText(@"D:\logs\ScripterPlayTest2.sql", sql);
+
+         Console.WriteLine(sql);
+         Process.Start($"Notepad++.exe", @"D:\logs\ScripterPlayTest1.sql");
+         Process.Start($"Notepad++.exe", @"D:\logs\ScripterPlayTest2.sql");
+         Log(sql);
+         LogL();
+      }
+*/
+      /// <summary>
+      /// NOTE there is a similar requirement for Script Dir
+      /// 
+      /// The permutations are:
+      ///   1: app settings contains a value: so return it
+      ///   2: app settings contains a value: so return the default LogFileProperty
+      ///   
+      /// Strategy:
+      ///   Get the config appsettings and default log file values
+      ///   Ensure are non empty and different
+      ///   
+      ///   1: Call the method GetLogFileFromConfig via DbScripterTestable and compare its return
+      ///      Should match the config app settings value
+      ///   
+      ///   2: Remove the app settings value
+      ///      Verify it has been removed
+      ///      Call the method GetLogFileFromConfig via DbScripterTestable and compare its return
+      ///      Should match the default log file property
+      ///
+      ///   3: Replace the App settings value
+      ///      Verify it has been replaced
+      /// </summary>
+      [TestMethod]
+      public void GetLogFileFromConfigTest()
+      {
+         LogS();
+         var logKey = "Log File";
+         // Get the config appsettings and default log file values
+         // Ensure are non empty and different
+         var origConfigLogFileProperty  = ConfigurationManager.AppSettings.Get(logKey);
+         var origDefaultLogFileProperty = DbScripterTestable.DefaultLogFile; //Property;
+         var configuration = System.Configuration.ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+
+         try
+         {
+            var configLogFileProperty  = ConfigurationManager.AppSettings.Get(logKey);
+            // Cache and replace later
+            // Ensure different
+            DbScripterTestable.DefaultLogFile = "test value";
+            var defaultLogFileProperty = DbScripterTestable.DefaultLogFile; //Property;
+            Assert.IsFalse(string.IsNullOrEmpty(configLogFileProperty));
+            Assert.IsFalse(string.IsNullOrEmpty(defaultLogFileProperty));
+            Assert.IsFalse(configLogFileProperty.Equals(defaultLogFileProperty, StringComparison.OrdinalIgnoreCase));
+
+            // 1: Call the method GetLogFileFromConfig via DbScripterTestable and compare its return
+            // Should match the config app settings value
+            var act = DbScripterTestable.GetLogFileFromConfig();
+            Assert.IsTrue(configLogFileProperty.Equals(act, StringComparison.OrdinalIgnoreCase));
+
+            // 2: Remove the app settings value
+            configuration.AppSettings.Settings.Remove(logKey);
+            configuration.Save(ConfigurationSaveMode.Modified);
+            ConfigurationManager.RefreshSection( "appSettings" );
+            //ConfigurationManager.AppSettings.Remove(logKey);
+
+            // Verify it has been removed
+            configLogFileProperty = ConfigurationManager.AppSettings.Get(logKey);
+            Assert.IsNull(configLogFileProperty);
+
+            // Call the method GetLogFileFromConfig via DbScripterTestable and compare its return
+            act = DbScripterTestable.GetLogFileFromConfig();
+            // Should match the default log file property
+            Assert.IsTrue(defaultLogFileProperty.Equals(act, StringComparison.OrdinalIgnoreCase));
+
+            // 3: Replace the App settings value
+            //ConfigurationManager.AppSettings.Set(logKey, configLogFileProperty);
+            configuration.AppSettings.Settings.Add(logKey, origConfigLogFileProperty);
+            configuration.Save(ConfigurationSaveMode.Modified);
+            // Verify it has been replaced
+            ConfigurationManager.RefreshSection( "appSettings" );
+            Assert.IsTrue(origConfigLogFileProperty.Equals(ConfigurationManager.AppSettings.Get(logKey)));
+         }
+         catch(Exception e)
+         {
+            LogException(e);
+         }
+         finally
+         {
+            DbScripterTestable.DefaultLogFile = origDefaultLogFileProperty;
+            var currentVal = configuration.AppSettings.Settings[logKey].Value;
+
+            if((currentVal == null) || (!currentVal.Equals(origConfigLogFileProperty)))
+            {
+               // ASSERTION: need to reset config state
+               if(configuration.AppSettings.Settings[logKey] != null)
+                  configuration.AppSettings.Settings.Remove(logKey);
+
+               configuration.AppSettings.Settings.Add(logKey, origConfigLogFileProperty);
+
+               configuration.Save(ConfigurationSaveMode.Modified);
+               ConfigurationManager.RefreshSection( "appSettings" );
+               Assert.IsTrue(origConfigLogFileProperty.Equals(ConfigurationManager.AppSettings.Get(logKey)));
+            }
+         }
+
+         LogL();
+      }
+
+      /// <summary>
+      /// NOTE there is a similar requirement for Script Dir
+      /// 
+      /// The permutations are:
+      ///   1: app settings contains a value: so return it
+      ///   2: app settings contains a value: so return the default LogFileProperty
+      ///   
+      /// Strategy:
+      ///   Get the config appsettings and default log file values
+      ///   Ensure are non empty and different
+      ///   
+      ///   1: Call the method GetLogFileFromConfig via DbScripterTestable and compare its return
+      ///      Should match the config app settings value
+      ///   
+      ///   2: Remove the app settings value
+      ///      Verify it has been removed
+      ///      Call the method GetLogFileFromConfig via DbScripterTestable and compare its return
+      ///      Should match the default log file property
+      ///
+      ///   3: Replace the App settings value
+      ///      Verify it has been replaced
+      /// </summary>
+      [TestMethod]
+      public void GetScriptDirFromConfigTest()
+      {
+         LogS();
+         var logKey = "Script Dir";
+         //var appSettings = ConfigurationManager.AppSettings;
+         var configName = ConfigurationManager.AppSettings["Config Name"];
+         Assert.IsTrue(configName.Equals("DbScripterLib Unit Tests config", StringComparison.OrdinalIgnoreCase));
+         // Get the config appsettings and default log file values
+         // Ensure are non empty and different
+         var origConfigScriptDirProperty  = ConfigurationManager.AppSettings.Get(logKey);
+         Assert.IsFalse(string.IsNullOrEmpty(origConfigScriptDirProperty), $"appSettings does not contain {logKey} stting");
+         var origDefaultScriptDirProperty = DbScripterTestable.DefaultLogFile; //Property;
+         Assert.IsFalse(string.IsNullOrEmpty(origDefaultScriptDirProperty), $"origDefaultScriptDirProperty not specified");
+         var configuration = System.Configuration.ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
+
+         try
+         {
+            var configScriptDirProperty = ConfigurationManager.AppSettings.Get(logKey);
+            // Cache and replace later
+            // Ensure different
+            DbScripterTestable.DefaultScriptDir = "test value";
+            var defaultScriptDirProperty = DbScripterTestable.DefaultScriptDir; //Property;
+            Assert.IsFalse(string.IsNullOrEmpty(configScriptDirProperty));
+            Assert.IsFalse(string.IsNullOrEmpty(defaultScriptDirProperty));
+            Assert.IsFalse(configScriptDirProperty.Equals(defaultScriptDirProperty, StringComparison.OrdinalIgnoreCase));
+
+            // 1: Call the method GetLogFileFromConfig via DbScripterTestable and compare its return
+            // Should match the config app settings value
+            var act = DbScripterTestable.GetScriptDirFromConfig();
+            Assert.IsTrue(configScriptDirProperty.Equals(act, StringComparison.OrdinalIgnoreCase));
+
+            // 2: Remove the app settings value
+            configuration.AppSettings.Settings.Remove(logKey);
+            configuration.Save(ConfigurationSaveMode.Modified);
+            ConfigurationManager.RefreshSection( "appSettings" );
+
+            // Verify it has been removed
+            configScriptDirProperty = ConfigurationManager.AppSettings[logKey];
+            Assert.IsNull(configScriptDirProperty);
+
+            // Call the method GetLogFileFromConfig via DbScripterTestable and compare its return
+            act = DbScripterTestable.GetScriptDirFromConfig();
+            // Should match the default log file property
+            Assert.IsTrue(defaultScriptDirProperty.Equals(act, StringComparison.OrdinalIgnoreCase));
+
+            // 3: Replace the App settings value
+            //ConfigurationManager.AppSettings.Set(logKey, configLogFileProperty);
+            configuration.AppSettings.Settings.Add(logKey, origConfigScriptDirProperty);
+            configuration.Save(ConfigurationSaveMode.Modified);
+            // Verify it has been replaced
+            ConfigurationManager.RefreshSection( "appSettings" );
+            var x = ConfigurationManager.AppSettings[logKey];
+            Assert.IsTrue(origConfigScriptDirProperty.Equals(x));
+         }
+         catch(Exception e)
+         {
+            LogException(e);
+         }
+         finally
+         {
+            DbScripterTestable.DefaultScriptDir = origDefaultScriptDirProperty;
+            var currentVal = configuration.AppSettings.Settings[logKey].Value;
+
+            if((currentVal == null) || (!currentVal.Equals(origConfigScriptDirProperty)))
+            {
+               // ASSERTION: need to reset config state
+               if(configuration.AppSettings.Settings[logKey] != null)
+                  configuration.AppSettings.Settings.Remove(logKey);
+
+               configuration.AppSettings.Settings.Add(logKey, origConfigScriptDirProperty);
+
+               configuration.Save(ConfigurationSaveMode.Modified);
+               ConfigurationManager.RefreshSection( "appSettings" );
+               Assert.IsTrue(origConfigScriptDirProperty.Equals(ConfigurationManager.AppSettings.Get(logKey)));
+            }
+         }
+
+         LogL();
+      }
+
+      /// <summary>
+      /// Bugs:
+      /// 1: ALTER FUNCTION [dbo].[fnALTERTrendSql]
+      /// 1: ALTER FUNCTION [dbo].[fnCreateTrendSql]
+      /// should only convert the  first instance of ^[ \t]*Create
+      /// </summary>
+      [TestMethod]
+      public void ExportSchemasAlter1DboTest()
+      {
+         LogS();
+         string msg;
+         DbScripter sc = new DbScripter();
+         // 1 off for this test - reset in test cleanup_
+         DisplayLogAfterTestFailure    = true;
+         DisplayScriptAfterTestFailure = true;
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,databaseName     : "Covid_T1"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : ScriptFile
+            ,sqlType          : SqlTypeEnum.Schema
+            ,createMode       : CreateModeEnum.Alter
+            ,requiredSchemas  : "{dbo}"
+            ,requiredTypes    : null
+            ,logFile          : @"D:\Logs\DbScripter.log"
+            ,scriptUseDb      : true
+         );
+
+         var script = sc.Export(ref p);
+
+         Assert.IsNotNull(script, $"export script not defined");
+         Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "PROCEDURE"     , ""    , 0,  40,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "FUNCTION"      , ""    , 0,  20,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "TABLE"         , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "VIEW"          , ""    , 0,  12,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "DATATYPE"      , ""    , 0,   0,  0, out msg), msg);
+
+         // More detailed check on the lists - the 5 viewa
+         Assert.IsTrue(sc.ExportedViews.ContainsKey("dbo.countryVw"));
+         Assert.IsTrue(sc.ExportedViews.ContainsKey("dbo.owidVw"));
+         Assert.IsTrue(sc.ExportedViews.ContainsKey("dbo.sysTablesVw"));
+         Assert.IsTrue(sc.ExportedViews.ContainsKey("dbo.vwJH_import_stage_1"));
+         Assert.IsTrue(sc.ExportedViews.ContainsKey("dbo.vwType1"));
+
+         Assert.AreEqual(40, sc.ExportedProcedures.Count, "ExportedProcedures");
+         Assert.AreEqual(20, sc.ExportedFunctions .Count, "ExportedFunctions ");
+         Assert.AreEqual( 0, sc.ExportedTables    .Count, "ExportedTables    ");
+         Assert.AreEqual(12, sc.ExportedViews     .Count, "ExportedViews     ");
+         Assert.AreEqual( 0, sc.ExportedTableTypes.Count, "ExportedTableTypes");
+         LogL();
+      }
+      
+
+      /// <summary>
+      /// Bugs:
+      /// 1: ALTER FUNCTION [dbo].[fnALTERTrendSql]
+      /// 1: ALTER FUNCTION [dbo].[fnCreateTrendSql]
+      /// should only convert the  first instance of ^[ \t]*Create
+      /// </summary>
+      [TestMethod]
+      public void ExportSchemasAlter1Test_Covid_T1_Test()
+      {
+         LogS();
+         string msg;
+         DbScripter sc = new DbScripter();
+         // TDD for this test - reset in test cleanup_
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,databaseName     : "Covid_T1"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : ScriptFile
+            ,sqlType          : SqlTypeEnum.Schema
+            ,createMode       : CreateModeEnum.Alter
+            ,requiredSchemas  : "{test}"
+            ,requiredTypes    : null
+            ,logFile          : @"D:\Logs\DbScripter.log"
+            ,scriptUseDb      : true
+         );
+
+         var script = sc.Export(ref p);
+
+         Assert.IsNotNull(script, $"export script not defined");
+         Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
+         Assert.IsTrue(CheckForSchema( script, "test", "PROCEDURE"     , ""    , 0,  37,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "FUNCTION"      , ""    , 0,   1,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "TABLE"         , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "VIEW"          , ""    , 0,   1,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "DATATYPE"      , ""    , 0,   0,  0, out msg), msg);
+
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "PROCEDURE"     , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "FUNCTION"      , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "TABLE"         , ""    , 0,   0,  0, out msg), msg); // 3 tables for drop or creat - 0 for alter
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "VIEW"          , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "DATATYPE"      , ""    , 0,   0,  0, out msg), msg);
+         LogL();
+      }
+
+      /// <summary>
+      /// Bugs:
+      /// 1: ALTER FUNCTION [dbo].[fnALTERTrendSql]
+      /// 1: ALTER FUNCTION [dbo].[fnCreateTrendSql]
+      /// should only convert the  first instance of ^[ \t]*Create
+      /// </summary>
+      [TestMethod]
+      public void ExportSchemasAlter2Test_Covid_4_REAL_Test()
+      {
+         LogS();
+         string msg;
+         DbScripter sc = new DbScripter();
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,databaseName     : "Covid"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : ScriptFile
+            ,sqlType          : SqlTypeEnum.Schema
+            ,createMode       : CreateModeEnum.Alter
+            ,requiredSchemas  : "{dbo,test}"
+            ,requiredTypes    : null
+            ,logFile          : @"D:\Logs\DbScripter.log"
+            ,scriptUseDb      : true
+         );
+
+         var script = sc.Export(ref p);
+
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "PROCEDURE", ""    , 0,   49,     0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "FUNCTION" , ""    , 0,   21,     0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "TABLE"    , ""    , 0,    0,     0, out msg), msg); // 3 tables for drop or creat - 0 for alter
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "VIEW"     , ""    , 0,   20,     0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "DATATYPE" , ""    , 0,    0,     0, out msg), msg);
+
+         Assert.IsNotNull(script, $"export script not defined");
+         Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
+         Assert.IsTrue(CheckForSchema( script, "test", "PROCEDURE", ""    , 0,  48,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "FUNCTION" , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "TABLE"    , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "VIEW"     , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "DATATYPE" , ""    , 0,   0,  0, out msg), msg);
+         LogL();
+      }
+      
+       /// <summary>
+       /// Required types depends on the export type
+       /// For example if Exporting procedures then required types should be procedures only
+       /// 
+       /// If the export type is     schema then { Table, Function, Procedure, Table, TableType, View} are required
+       /// If the export type is not schema or database then only the same 1 export type is required.
+       /// 
+       /// PRECONDITIONS:
+       ///   PRE 1: required_type not SqlTypeEnum.Undefined (handled)
+       ///
+       /// POSTCONDITIONS:
+       ///   POST 1: If the export type is     schema then { Table, Function, Procedure, Table, TableType, View} are required
+       ///   POST 2: If the export type is not schema or database then only the same 1 export type is required
+       /// </summary>
+      [TestMethod]
+      public void CorrectRequiredTypesTest()
+      {
+         LogS();
+         string msg;
+
+         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Table, createMode: CreateModeEnum.Create, inp: null,                                          exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table }, out msg), msg);
+         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Table, createMode: CreateModeEnum.Create, inp: new List<SqlTypeEnum>() { SqlTypeEnum.Table }, exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table }, out msg), msg);
+         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Table, createMode: CreateModeEnum.Create, inp: new List<SqlTypeEnum>() { SqlTypeEnum.Table }, exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table }, out msg), msg);
+
+         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Schema,createMode: CreateModeEnum.Create, inp: new List<SqlTypeEnum>() { SqlTypeEnum.Table,  SqlTypeEnum.Function,  SqlTypeEnum.Procedure }
+                       , exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table, SqlTypeEnum.Function, SqlTypeEnum.Procedure, SqlTypeEnum.TableType, SqlTypeEnum.View }, out msg), msg);
+
+         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Schema,createMode: CreateModeEnum.Drop, inp: new List<SqlTypeEnum>() { SqlTypeEnum.Table,  SqlTypeEnum.Function,  SqlTypeEnum.Procedure }
+                       , exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table, SqlTypeEnum.Function, SqlTypeEnum.Procedure, SqlTypeEnum.TableType, SqlTypeEnum.View }, out msg), msg);
+
+         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Schema,createMode: CreateModeEnum.Alter, inp: new List<SqlTypeEnum>() { SqlTypeEnum.Function,  SqlTypeEnum.Procedure }
+                       , exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Function, SqlTypeEnum.Procedure, SqlTypeEnum.TableType, SqlTypeEnum.View }, out msg), msg);
+         LogL();
+      }
+
+      /// <summary>
+      /// Required types depends on the export type
+      /// For example if Exporting procedures then required types should be procedures only
+      /// 
+      /// If the export type is     schema then { Table, Function, Procedure, Table, TableType, View} are required
+      /// If the export type is not schema or database then only the same 1 export type is required.
+      /// 
+      /// PRECONDITIONS:
+      ///   PRE 1: required_type not SqlTypeEnum.Undefined (handled)
+      ///
+      /// POSTCONDITIONS:
+      ///   POST 1: If the export type is     schema then { Table, Function, Procedure, Table, TableType, View} are required
+      ///   POST 2: If the export type is not schema or database then only the same 1 export type is required
+      /// </summary>
+      [TestMethod]
+      [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
+      public void CorrectRequiredTypesTestWhenUndefinedReqTypeThenExpEx()
+      {
+         LogS();
+         DbScripterTestable.CorrectRequiredTypes(SqlTypeEnum.Undefined, CreateModeEnum.Create, new List<SqlTypeEnum>());
+         LogL();
+      }
+
+      [TestMethod]
+      [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
+      public void CorrectRequiredTypesTestWhenExpSchemasAndCretUndefThenExpEx()
+      {
+         LogS();
+         DbScripterTestable.CorrectRequiredTypes(SqlTypeEnum.Schema, CreateModeEnum.Undefined, new List<SqlTypeEnum>());
+         LogL();
+      }
+
+      protected bool CorrectRequiredTypesHlpr(SqlTypeEnum ty, CreateModeEnum createMode, List<SqlTypeEnum>? inp, List<SqlTypeEnum> exp, out string msg)
+      {
+         bool ret = false;
+         msg = "";
+         var act = DbScripterTestable.CorrectRequiredTypes(ty, createMode, inp);
+
+         do
+         { 
+            if(act.Count != exp.Count)
+            {
+               msg = $"exp len: {exp.Count}, act len: {act.Count}";
+               break;
+            }
+
+            // Counts match so check items match
+            foreach(var exp_ty in exp)
+               if(!(inp?.Contains(exp_ty) ?? false))
+                  break;
+
+            // If here then all chks passed
+            ret = true;
+         } while(false);
+
+         return ret;
+      }
+
+      /// <summary>
+      /// Determeintes if the  schema is a test schema and therfpre should be creeated
+      /// or dropped using the tSQLt methods
+      /// 
+      /// PRECONDITION: schema name is valid
+      /// 
+      /// POSTCONDITIONS:
+      ///   returns true if schema is using tSQLt false otherwise
+      /// 
+      /// </summary>
+      /// <param name="schema"></param>
+      /// <returns></returns>
+      [TestMethod]
+      public void IsTestSchemaTest()
+      {
+         LogS();
+         Assert.IsTrue (DbScripterTestable.IsTestSchema("test"));
+         Assert.IsFalse(DbScripterTestable.IsTestSchema("dbo"));
+         Assert.IsFalse(DbScripterTestable.IsTestSchema("tSQLt"));
+         LogL();
+      }
+
 
       [TestMethod]
       public void ExportProceduresDropTest()
       {
          LogS();
          DbScripter sc = new DbScripter();
-         var exportScriptPath = @"C:\temp\ExportProceduresCreateTest.sql";
 
          Params p = Params.PopParams
          (
              name             : "ExportDatabase Params"
             ,prms             : CovidBaseParams
-            ,exportScriptPath : exportScriptPath
-            ,sqlType          : SqlTypeEnum.Function
+            ,exportScriptPath : ScriptFile
+            ,sqlType          : SqlTypeEnum.Procedure
             ,createMode       : CreateModeEnum.Drop
-            ,requiredSchemas  : "{tSQLt}"
-            ,requiredTypes    : "P"
+            ,requiredSchemas  : "{dbo,test,tSQLt}"
+            ,requiredTypes    : null
          );
 
-         try
-         { 
-            Console.WriteLine(p);
-            var script = sc.Export(p);
+         var script = sc.Export(ref p);
+         Assert.IsNotNull(script, $"export script not defined");
+         Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
+         string msg;
 
-            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE.*)",           exportScriptPath, 955));
-            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[dbo\].*)",   exportScriptPath, 918));
-            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[test\].*)",  exportScriptPath, 91));
-            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[tSQLt\].*)", exportScriptPath, 936));
-         }
-         catch(Exception e)
-         {
-            LogException(e);
-            DisplayLog();
-            Process.Start("notepad++.exe", exportScriptPath);
-            throw;
-         }
+         Assert.IsTrue(ChkContains(script, @"^(DROP PROCEDURE \[dbo\].*)",   40,  out msg), msg);  // dbo   : 39/39
+         Assert.IsTrue(ChkContains(script, @"^(DROP PROCEDURE \[test\].*)",  37 , out msg), msg);  // test  : 45
+         Assert.IsTrue(ChkContains(script, @"^(DROP PROCEDURE \[tSQLt\].*)", 94,  out msg), msg);  // tSQLt : 93
+         Assert.IsTrue(ChkContains(script, @"^(DROP PROCEDURE.*)",           171, out msg), msg);  // all   : 169
+
+         LogL();
       }
 
       [TestMethod]
@@ -57,36 +564,27 @@ namespace RSS.Test
       {
          LogS();
          DbScripter sc = new DbScripter();
-         var exportScriptPath = @"C:\temp\ExportProceduresCreateTest.sql";
 
          Params p = Params.PopParams
          (
              name             : "ExportDatabase Params"
             ,prms             : CovidBaseParams
-            ,exportScriptPath : exportScriptPath
+            ,exportScriptPath : ScriptFile
             ,sqlType          : SqlTypeEnum.Procedure
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{dbo, tSQLt}"
             ,requiredTypes    : "P"
          );
 
-         try
-         { 
-            Console.WriteLine(p);
-            var script = sc.Export(p);
-
-            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE.*)",           exportScriptPath, 131));
-            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[dbo\].*)",   exportScriptPath, 37));
-            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[test\].*)",  exportScriptPath, 0));
-            Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[tSQLt\].*)", exportScriptPath, 94));
-         }
-         catch(Exception e)
-         {
-            LogException(e);
-            DisplayLog();
-            Process.Start("notepad++.exe", exportScriptPath);
-            throw;
-         }
+         Console.WriteLine(p);
+         var script = sc.Export(ref p);
+         string msg;
+         Assert.IsNotNull(script, "Null script");
+         Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE.*)",           134, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[dbo\].*)",   40 , out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[test\].*)",  0  , out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[tSQLt\].*)", 94 , out msg), msg);
+         LogL();
       }
 
       [TestMethod]
@@ -94,36 +592,26 @@ namespace RSS.Test
       {
          LogS();
          DbScripter sc = new DbScripter();
-         var exportScriptPath = @"C:\temp\ExportFunctionsTest.sql";
 
          Params p = Params.PopParams
          (
              name             : "ExportDatabase Params"
             ,prms             : CovidBaseParams
-            ,exportScriptPath : exportScriptPath
+            ,exportScriptPath : ScriptFile
             ,sqlType          : SqlTypeEnum.Function
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{dbo, [ teSt], tSQLt}" // should handle more than 1 schema and crappy formatting
             ,requiredTypes    : "F"
          );
 
-         try
-         { 
-            Console.WriteLine(p);
-            var script = sc.Export(p);
-
-            Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION.*)",           exportScriptPath, 55));
-            Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION \[dbo\].*)",   exportScriptPath, 18));
-            Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION \[test\].*)",  exportScriptPath, 1));
-            Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION \[tSQLt\].*)", exportScriptPath, 36));
-         }
-         catch(Exception e)
-         {
-            LogException(e);
-            DisplayLog();
-            Process.Start("notepad++.exe", exportScriptPath);
-            throw;
-         }
+         var script = sc.Export(ref p);
+         string msg;
+         Assert.IsNotNull(script, "Null script");
+         Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION.*)",           57, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION \[dbo\].*)",   20, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION \[test\].*)",  1 , out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION \[tSQLt\].*)", 36, out msg), msg);
+         LogL();
       }
 
 
@@ -132,67 +620,169 @@ namespace RSS.Test
       {
          LogS();
          DbScripter sc = new DbScripter();
-         var exportScriptPath = @"C:\temp\ExportDatabase.sql";
 
          Params p = Params.PopParams
          (
              name             : "ExportDatabase Params"
             ,prms             : CovidBaseParams
-            ,exportScriptPath : exportScriptPath
+            ,exportScriptPath : ScriptFile
             ,sqlType          : SqlTypeEnum.Database
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{dbo, [ teSt], tSQLt}" // should handle more than 1 schema and crappy formatting
             ,requiredTypes    : null
          );
 
-         try
-         { 
-            Console.WriteLine(p);
-            var script = sc.Export(p);
-
-            Assert.IsTrue(ChkContains(script, @"^(CREATE Database.*)", exportScriptPath, 1));
-         }
-         catch(Exception e)
-         {
-            LogException(e);
-            DisplayLog();
-            Process.Start("notepad++.exe", exportScriptPath);
-            throw;
-         }
+         var script = sc.Export(ref p);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE Database.*)", 1, out var msg), msg);
+         LogL();
       }
 
       [TestMethod]
-      public void ExportschemasTest()
+      public void ExportSchemasCreate1Test()
       {
          LogS();
+         string msg;
          DbScripter sc = new DbScripter();
-         var exportScriptPath = @"C:\temp\Count1CrtSTableTest2.sql";
+
+         // Exception thrown opening server twice: 
+         // Microsoft.Data.SqlClient.resources, Version=2.0.20168.4, Culture=en-GB, PublicKeyToken=23ec7fc2d6eaa4a5' or one of its dependencies. 
+         // The system cannot find the file specified."
 
          Params p = Params.PopParams
          (
              name             : "Count1CrtSchemaTest Params"
             ,prms             : CovidBaseParams
-            ,exportScriptPath : exportScriptPath
+            ,exportScriptPath : ScriptFile
             ,sqlType          : SqlTypeEnum.Schema
             ,createMode       : CreateModeEnum.Create
-            ,requiredSchemas  : "{dbo, [ teSt], tSQLt}" // should handle more than 1 schema and crappy formatting
+            ,requiredSchemas  : "{test}" // should handle more than 1 schema and crappy formatting
+            ,requiredTypes    : null
+         );
+
+         var script = sc.Export(ref p);
+
+         Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[dbo\].*)"      , 0 , out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^([ \t]*EXEC[ \t]+tSQLt\.NewTestClass[ \t]+'test')", 1 , out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE.*)",                   3 , out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE.*)",               37, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION.*)",                1 , out msg), msg);
+         LogL();
+      }
+
+      [TestMethod]
+      public void ExportSchemasAlter2Test()
+      {
+         LogS();
+         string msg;
+         DbScripter sc = new DbScripter();
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportSchemasAlter2 Params"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : ScriptFile
+            ,sqlType          : SqlTypeEnum.Schema
+            ,createMode       : CreateModeEnum.Alter
+            ,requiredSchemas  : "{dbo,test}" // should handle more than 1 schema and crappy formatting
+            ,requiredTypes    : null
+         );
+
+         var script = sc.Export(ref p);
+
+         // Alter schema should not create or drop the schema - it merely alters the child entities
+         Assert.IsTrue(ChkContains(script, @"^(EXEC[ \t\[]+tSQLt.*NewTestClass 'test';)",       0 , out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(EXEC[ \t]+tSQLt.*DropClass 'test';)",            0 , out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE[ \t]+SCHEMA)",                            0 , out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(DROP[ \t]+SCHEMA)",                              0 , out msg), msg);
+         //                                                                       crt alt drp
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "PROCEDURE", ""          , 0,  40, 0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "PROCEDURE", ""          , 0,  37, 0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "view"     , ""          , 0,  12, 0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "view"     , ""          , 0,  1,  0, out msg), msg);
+          // Alter schema should not script Table child tables
+         Assert.IsTrue(CheckForSchema( script, "dbo", "TABLE"     , ""          , 0,  0,  0, out msg), msg);
+
+         // Alter schema should script FUNCTIONs
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "function" , ""          , 0,  20,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "function" , ""          , 0,  1,   0, out msg), msg);
+
+         // CREATE Table data TYPE
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "TYPE"     , ".*AS TABLE", 0,  0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "TYPE"     , ".*AS TABLE", 0,  0,  0, out msg), msg);
+
+         // CREATE Table data TYPE
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "TYPE"     , ".*FROM"    , 0,  0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "TYPE"     , ".*FROM"    , 0,  0,  0, out msg), msg);
+         LogL();
+      }
+
+      protected bool CheckForSchema(string? script
+         , string schema
+         , string ty
+         , string optional
+         , int expcrt
+         , int expalt
+         , int expdrp
+         , out string msg)
+      {
+         bool ret = false;
+
+         do
+         {
+            // Do all 3 tests, log all results before failing
+            if(!ChkContains(script, GetRegEx("create",ty, schema, optional), expcrt, out msg)) break;
+            if(!ChkContains(script, GetRegEx("alter" ,ty, schema, optional), expalt, out msg)) break;
+            if(!ChkContains(script, GetRegEx("drop"  ,ty, schema, optional), expdrp, out msg)) break;
+
+            ret = true;
+         } while(false);
+
+         if(!ret)
+            LogDirect("CheckForSchema failed");
+
+         return ret;
+      }
+
+      protected string GetRegEx(string cmd, string ty, string schema, string optional="")
+      {
+         cmd = cmd.ToUpper();
+         ty = ty.ToUpper();
+         string s = $@"^({cmd}[ \t]+{ty}[ \t\[]+{schema}[ \t\]]+\.{optional}.*)";
+         return s;
+      }
+
+      /*
+       Expect a script generated that will drop 1 or more schema and its children in dependency order
+       */
+      [TestMethod]
+      public void ExportSchemasDrop1Test()
+      {
+         LogS();
+         DbScripter sc = new DbScripter();
+         string msg;
+
+         Params p = Params.PopParams
+         (
+             name             : "Count1CrtSchemaTest Params"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : ScriptFile
+            ,sqlType          : SqlTypeEnum.Schema
+            ,createMode       : CreateModeEnum.Drop
+            ,requiredSchemas  : "{test}" // should handle more than 1 schema and crappy formatting
             ,requiredTypes    : "s"
          );
 
-         try
-         { 
-            Console.WriteLine(p);
-            var script = sc.Export(p);
+         Logger.Log($"params: \r\n {p}");
+         
+         var script = sc.Export(ref p);
 
-            Assert.IsTrue(ChkContains(script, @"^(CREATE SCHEMA.*)", exportScriptPath, 3));
-         }
-         catch(Exception e)
-         {
-            LogException(e);
-            DisplayLog();
-            Process.Start("notepad++.exe", exportScriptPath);
-            throw;
-         }
+         Assert.IsTrue(ChkContains(script, @"^(DROP TABLE.*)",          3 , out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(DROP PROCEDURE.*)",      37, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(DROP FUNCTION.*)",       1 , out msg), msg);
+
+         Assert.IsTrue(ChkContains(script, @"^(EXEC tSQLt\.DropClass 'test')", 1 , out msg), msg);
+
+         LogL();
       }
 
 
@@ -201,13 +791,13 @@ namespace RSS.Test
       {
          LogS();
          DbScripter sc = new DbScripter();
-         var exportScriptPath = @"C:\temp\ExportFunctionsCreate.sql";
 
          Params p = Params.PopParams
          (
              name             : "ExportDatabase Params"
             ,prms             : CovidBaseParams
-            ,exportScriptPath : exportScriptPath
+            ,databaseName     : "Covid_T1"
+            ,exportScriptPath : ScriptFile
             ,sqlType          : SqlTypeEnum.Function
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{dbo}"
@@ -215,20 +805,9 @@ namespace RSS.Test
             ,isExprtngSchema  : true
          );
 
-         try
-         { 
-            Console.WriteLine(p);
-            var script = sc.Export(p);
-
-            Assert.IsTrue(ChkContains(script, @"^(CREATE Function.*)", exportScriptPath, 18));
-         }
-         catch(Exception e)
-         {
-            LogException(e);
-            DisplayLog();
-            Process.Start("notepad++.exe", exportScriptPath);
-            throw;
-         }
+         var script = sc.Export(ref p);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE Function.*)", 20, out var msg), msg);
+         LogL();
       }
 
       [TestMethod]
@@ -236,13 +815,12 @@ namespace RSS.Test
       {
          LogS();
          DbScripter sc = new DbScripter();
-         var exportScriptPath = @"C:\temp\ExportFunctionsDrop.sql";
 
          Params p = Params.PopParams
          (
              name             : "ExportDatabase Params"
             ,prms             : CovidBaseParams
-            ,exportScriptPath : exportScriptPath
+            ,exportScriptPath : ScriptFile
             ,sqlType          : SqlTypeEnum.Function
             ,createMode       : CreateModeEnum.Drop
             ,requiredSchemas  : "{dbo}"
@@ -250,53 +828,33 @@ namespace RSS.Test
             ,isExprtngSchema  : true
          );
 
-         try
-         { 
-            Console.WriteLine(p);
-            var script = sc.Export(p);
-
-            Assert.IsTrue(ChkContains(script, @"^(DROP Function.*)", exportScriptPath, 18));
-         }
-         catch(Exception e)
-         {
-            LogException(e);
-            DisplayLog();
-            Process.Start("notepad++.exe", exportScriptPath);
-            throw;
-         }
+         var script = sc.Export(ref p);
+         Assert.IsTrue(ChkContains(script, @"^(DROP Function.*)", 20, out var msg), msg);
+         LogL();
       }
+
+
       [TestMethod]
       public void Count1CrtSTableTestBothExpSchemaAndExpDataNotDefinedTest()
       {
          LogS();
          DbScripter sc = new DbScripter();
-         var exportScriptPath = @"C:\temp\Count1CrtSTableTest2.sql";
 
          Params p = Params.PopParams(
              name             : "Count1CrtSchemaTest Params"
             ,prms             : CovidBaseParams
-            ,exportScriptPath : exportScriptPath
+            ,exportScriptPath : ScriptFile
             ,sqlType          : SqlTypeEnum.Table
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{dbo, [ teSt]}" // should handle more than 1 schema and crappy formatting
             ,requiredTypes    : "t"              // this is overridden in Export schema as it exports all the child objects
             );
 
-         try
-         { 
-            Console.WriteLine(p);
-            var script = sc.Export(p);
-
-            Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[dbo\]\..*)"     , exportScriptPath, 21));
-            Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[test\]\..*)"    , exportScriptPath,  3));
-         }
-         catch(Exception e)
-         {
-            LogException(e);
-            DisplayLog();
-            Process.Start("notepad++.exe", exportScriptPath);
-            throw;
-         }
+         var script = sc.Export(ref p);
+         string msg;
+         Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[dbo\]\..*)"     , 21, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[test\]\..*)"    ,  3, out msg), msg);
+         LogL();
       }
 
       /// <summary>
@@ -305,9 +863,10 @@ namespace RSS.Test
       [TestMethod()]
       public void InitTableExportTest()
       {
+         LogS();
          // PRE 1: P is valid
          // POST 1: if exporting tables dont specify alter - or the Microsoft scripter will silently fail to emit the script
-         Params p = PopParams( 
+         Params p = Params.PopParams( 
                 prms             : CovidBaseParams
                ,exportScriptPath : @"C:\temp\InitTableExportTest.sql"
                ,createMode       : CreateModeEnum.Create
@@ -316,22 +875,19 @@ namespace RSS.Test
               );
 
          // Create and initise the scripter
-         var sc = new DbScripterTestable(p);
-         var orig = ShallowClone( sc.ScriptOptions);
+         var sc   = new DbScripterTestable(p);
+         var orig = Utils.ShallowClone( sc.ScriptOptions);
+         var msg  = "";
 
-         try 
-         {
-            // Run the rtn
-            var so = sc.InitTableExport();
-            Assert.IsFalse(so.ScriptForAlter);
-            Assert.IsFalse(so.ScriptForCreateOrAlter);
-            Assert.IsTrue(orig.Equals(sc.ScriptOptions));
-         }
-         catch(Exception e)
-         {
-            LogException(e);
-            DisplayLog();
-         }
+         // Run the rtn
+         var so = sc.InitTableExport();
+         Assert.IsFalse(so.ScriptForAlter);
+         Assert.IsFalse(so.ScriptForCreateOrAlter);
+         Assert.IsNotNull(orig);
+         Logger.LogDirect($"orig:\r\n{sc.OptionsToString(orig)}");
+         Logger.LogDirect($"sc.ScriptOptions:\r\n{sc.OptionsToString(sc?.ScriptOptions )}");
+         Assert.IsTrue(sc?.OptionEquals(orig, sc?.ScriptOptions ?? new(), out msg) ?? false, msg);
+         LogL();
       }
 
       /// <summary>
@@ -341,9 +897,10 @@ namespace RSS.Test
       [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
       public void InitTableExportTestEx()
       {
+         LogS();
          // PRE 1: P is valid
          // POST 1: if exporting tables dont specify alter - or the Microsoft scripter will silently fail to emit the script
-         Params p = PopParams( 
+         Params p = Params.PopParams( 
                 prms             : CovidBaseParams
                ,exportScriptPath : @"C:\temp\InitTableExportTestEx.sql"
                ,createMode       : CreateModeEnum.Alter
@@ -355,13 +912,14 @@ namespace RSS.Test
          var sc = new DbScripterTestable(p);
          // Run the rtn
          var so = sc.InitTableExport();
+         LogL();
       }
 
 
       /// <summary>
       /// Sets up the general scripter options
       /// 
-      /// PRECONDITIONS:
+      /// Utils.PreconditionS:
       ///   PRE 1: P is valid
       ///   
       /// POSTCONDITIONS:
@@ -373,9 +931,10 @@ namespace RSS.Test
       [TestMethod()]
       public void InitScriptingOptionsTestExpEx()
       {
+         LogS();
          // PRE 1: P is valid
          // POST 1: if exporting tables dont specify alter - or the Microsoft scripter will silently fail to emit the script
-         Params p = PopParams( 
+         Params p = Params.PopParams( 
                 prms             : CovidBaseParams
                ,exportScriptPath : @"C:\temp\T011_ExportSchemaScriptTest.sql"
                ,createMode       : CreateModeEnum.Alter
@@ -384,14 +943,16 @@ namespace RSS.Test
               );
        
          var sc = new DbScripterTestable(p);
+         LogL();
       }
 
       [TestMethod()]
       public void InitScriptingOptionsTestExpNoEx()
       {
+         LogS();
          // PRE 1: P is valid
          // POST 1: if exporting tables dont specify alter - or the Microsoft scripter will silently fail to emit the script
-         Params p = PopParams( 
+         Params p = Params.PopParams( 
                 prms             : CovidBaseParams
                ,exportScriptPath : @"C:\temp\T011_ExportSchemaScriptTest.sql"
                ,createMode       : CreateModeEnum.Alter
@@ -400,21 +961,23 @@ namespace RSS.Test
               );
        
          var sc = new DbScripterTestable(p);
+         LogL();
       }
 
       [TestMethod()]
       public void MapTypeToSqlTypeTest()
       {
-         Params p = PopParams( 
+         LogS();
+         Params p = Params.PopParams( 
                 prms             :            CovidBaseParams
                ,exportScriptPath :@"C:\temp\MapTypeToSqlTypeTest.sql"
                ,createMode       : CreateModeEnum.Create
                ,sqlType          : SqlTypeEnum.Procedure
                ,requiredSchemas  : "tEst,tSqlt"
-              );;
+              );
        
          var sc = new DbScripterTestable(p);
-         Assert.AreEqual(SqlTypeEnum.Database , DbScripterTestable.MapTypeToSqlType(sc.Database));
+         Assert.AreEqual(SqlTypeEnum.Database , DbScripterTestable.MapTypeToSqlType(sc?.Database));
 
          Assert.AreEqual(SqlTypeEnum.Function , DbScripterTestable.MapTypeToSqlType(new UserDefinedFunction()));
          Assert.AreEqual(SqlTypeEnum.Procedure, DbScripterTestable.MapTypeToSqlType(new StoredProcedure()));
@@ -428,10 +991,10 @@ namespace RSS.Test
       [ExpectedException( typeof(ArgumentException), AllowDerivedTypes=false)]
       public void MapTypeToSqlTypeTestUnknownTypeTest()
       {
-         bool shouldThrowNow = false;
+         LogS();
          try
          { 
-            Params p = PopParams( 
+            Params p = Params.PopParams( 
                    prms             : CovidBaseParams
                   ,exportScriptPath : @"C:\temp\MapTypeToSqlTypeTestUnknownTypeTest.sql"
                   ,sqlType          : SqlTypeEnum.Schema
@@ -441,18 +1004,15 @@ namespace RSS.Test
        
             var sc = new DbScripter(p);
             // expect throw here
-            shouldThrowNow = true;
+            IgnoreThisThrow = true;
             var unexpected = DbScripterTestable.MapTypeToSqlType(new UserDefinedDataType(sc.Database, "unexpected", "dbo"));
          }
          catch(Exception e)
          {
             var msg = e.GetAllMessages();
-            LogException(e, $"shouldThrowNow: {shouldThrowNow}");
-
-            if(shouldThrowNow)
-               DisplayLog();
-
-            Assert.IsTrue(shouldThrowNow);
+            Logger.LogException(e, $"IgnoreThisThrow: {IgnoreThisThrow}");
+            IgnoreThisThrow = false;
+            LogL();
             throw;
          }
 
@@ -461,15 +1021,15 @@ namespace RSS.Test
 
 
      [TestMethod]
-      public void Count1CrtSchemaTest()
+      public void ExportSchemasCreate2Test()
       {
+         LogS();
          DbScripter sc = new DbScripter();
-         var exportScriptPath = @"C:\temp\Count1CrtSchemaTest.sql";
 
          Params p = Params.PopParams(
              name             : "Count1CrtSchemaTest Params"
             ,prms             : CovidBaseParams
-            ,exportScriptPath : exportScriptPath
+            ,exportScriptPath : ScriptFile
             ,newSchemaName    : null
             ,requiredSchemas  : "{dbo, [ teSt]}"// should handle more than 1 schema and crappy formatting
             ,requiredTypes    : null            // this is overridden so that it exports all the child objects
@@ -477,1410 +1037,31 @@ namespace RSS.Test
             ,createMode       : CreateModeEnum.Create
             );
 
-         try
-         { 
-            Console.WriteLine(p);
-            var script = sc.Export(p);
-
-            Assert.IsTrue(ChkContains(script, "^(CREATE SCHEMA.*)"               , exportScriptPath, 2));
-         }
-         catch(Exception )
-         {
-            Process.Start("notepad++.exe", exportScriptPath);
-            DisplayLog();
-            throw;
-         }
-      }
-/*
-      /* Test the constructor
-      /// <summary>
-      /// Main constructor
-      /// sets the ionitial state nothing more
-      /// i.e does not instantiae a Server etc.
-      /// Test: DbScriptorTests.DbScriptorTest
-      /// 
-      /// PRECONDITIONS: none
-      /// 
-      /// POSTCONDITIONS:
-      /// ServerName     = serverName
-      /// InstanceName   = instanceName
-      /// DatabaseName   = databaseName
-      /// WriterFilePath = writerFilePath
-      /// DbOpType       = opType
-      /// 
-      /// </summary>
-      /// <param name="databaseName"></param>
-      /// <param name="opType"></param>
-      /// <param name="writerFilePath"></param>
-      /// <param name="staticDataTables">Tables to export data from</param>
-      * /
-     [TestMethod()]
-      public void T001_DbScripterTest()
-      {
-         var sc = new DbScripter();
-
-         Assert.IsNull(sc.P.ServerName    ,"serverName");
-         Assert.IsNull(sc.P.InstanceName  ,"instanceName");
-         Assert.IsNull(sc.P.DatabaseName  ,"databaseName");
-         Assert.IsNull(sc.P.ExportScriptPath,"writerFilePath");
-//         Assert.IsNull(sc.P.DbOpType      ,"DbOpType");
+         var script = sc.Export(ref p);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE SCHEMA.*)"                  , 1, out var msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(EXEC tSQLt\.NewTestClass 'test';)" , 1, out     msg), msg);
+         LogL();
       }
 
-      /// <summary>
-      /// Initialize state, deletes the writerFilePath file if it exists
-      /// Only completes the initialisation if the parameters are all specified
-      /// 
-      /// PRECONDITIONS: none
-      ///   
-      /// POSTCONDITIONS:
-      ///   1: Initialises the initial state
-      ///   2: server and makes a connection, throws exception otherwise
-      ///   3: sets the scripter options configuration based on optype
-      /// </summary>
-      /// <param name="databaseName"></param>
-      /// <param name="opType"></param>
-      /// <param name="writerFilePath"></param>
-      /// <param name="staticDataTables"></param>
-      /// <returns>Status</returns>
-     [TestMethod()]
-      public void T002_InitTest()
-      {
-         Params p = PopParams();
-         var tsc = new DbScripterTestable();
-         tsc.Init(p);
-
-         Assert.AreEqual(tsc.P.ServerName       , @"DESKTOP-UAULS0U\SQLEXPRESS");
-         Assert.AreEqual(tsc.P.InstanceName     , "SQLEXPRESS");
-         Assert.AreEqual(tsc.P.DatabaseName     , "Covid_T1");
-         Assert.AreEqual(tsc.P.ExportScriptPath , @"C:\tmp\T002_InitTest_export.sql");
- //        Assert.AreEqual(tsc.P.DbOpType         , DbOpTypeEnum.CreateSchema);
-         Assert.AreEqual(tsc.P.NewSchemaName    , "newSchemaName");
-         Assert.AreEqual(tsc.P.CreateMode       , CreateModeEnum.Alter);
-         Assert.AreEqual(tsc.P.RequiredSchemas  , "FP");
-      }
-
-
-      [TestMethod]
-      public void T003_Export_FnTest()
-      {
-         Params p = PopParams();
-         var scriptor = new DbScripter();
-         throw new NotImplementedException();
-         //var script  = scriptor.ExportRoutines(p);
-/*
-         Assert.IsTrue(HelperChkListCount<UserDefinedFunction>( 
-              scriptor.Database.UserDefinedFunctions
-            , "dbo"
-            , scriptor.ExportedFunctions.Count));
-* /
-      }
-
-
-      [TestMethod]
-      public void T004_ExportRoutines_ProcTest()
-      {
-         Params p = PopParams();
-         var scriptor = new DbScripter();
-/* serverName:        @"DESKTOP-UAULS0U\SQLEXPRESS"
-  ,instanceName:      "SQLEXPRESS"
-  ,databaseName:      "ut"
-  ,exportScriptPath:  @"C:\temp\T004_ExportRoutines_ProcTest.sql"
-  ,requiredSchemas:   "[dbo]"
-  ,requiredTypes:     "P"
-  ,createMode:        CreateModeEnum.Create
-  ,scriptUseDb:       true
-  ,addTimestamp:      true
-* /
-          throw new NotImplementedException();
-        /*var script  = scriptor.ExportRoutines(PopParams
-         (
-             databaseName:    "ut"
-            ,exportScriptPath:@"C:\temp\T004_ExportRoutines_ProcTest.sql"
-            ,requiredSchemas: "[dbo]"
-            ,requiredTypes:   "P"
-            ,createMode:      CreateModeEnum.Create
-            ,scriptUseDb:     true
-            ,addTimestamp:    true
-         ));
-
-         Assert.IsTrue(HelperChkListCount<StoredProcedure>(
-            scriptor.Database.StoredProcedures
-          , "dbo"
-          , scriptor.ExportedProcedures.Count));
-* /
-      }
-
-/* serverName:        @"DESKTOP-UAULS0U\SQLEXPRESS"
-  ,instanceName:      "SQLEXPRESS"
-  ,databaseName:      "ut"
-  ,exportScriptPath:  @"C:\temp\T005_ExportRoutines_FnAndPocTest.sql"
-  ,requiredSchemas:   "[dbo]"
-  ,requiredTypes:     "F,P"
-  ,createMode:        CreateModeEnum.Create
-  ,scriptUseDb:       true
-  ,addTimestamp:      true
-* /
-      [TestMethod]
-      public void T005_ExportRoutines_FnAndPocTest()
-      {
-         var filePath = $"{Path.GetTempPath()}test.sql";
-         DbScripter scriptor = new DbScripter();
-         throw new NotImplementedException();
-         /*
-         var script  = scriptor.ExportRoutines(PopParams
-            (
-             databaseName:    "ut"
-            ,exportScriptPath:@"C:\temp\T005_ExportRoutines_FnAndPocTest.sql"
-            ,requiredSchemas: "[dbo]"
-            ,requiredTypes:   "F,P"
-            ,createMode:      CreateModeEnum.Create
-            ,scriptUseDb:     true
-            ,addTimestamp:    true
-            ));
-
-         Assert.IsTrue(HelperChkListCount<UserDefinedFunction>( scriptor.Database.UserDefinedFunctions, "dbo", scriptor.ExportedFunctions.Count));
-         Assert.IsTrue(HelperChkListCount<StoredProcedure>    ( scriptor.Database.StoredProcedures, "dbo", scriptor.ExportedProcedures.Count));
-         * /
-      }
-
-/*
-   serverName:        @"DESKTOP-UAULS0U\SQLEXPRESS"
- , instanceName:      "SQLEXPRESS"
- , databaseName:      "covid"
- , exportScriptPath:  @"C:\temp\T006_ExportRoutines_FnsAlterMode.sql"
- , requiredTypes:     "F"
- , createMode:        CreateModeEnum.Alter
- , scriptUseDb:       true
- , newSchemaName:     "newdbo"
- , addTimestamp:      true
- , requiredSchemas:   "dbo"
-* /
-      [TestMethod]
-      public void T006_ExportRoutines_FnsAlterMode()
-      {
-          throw new NotImplementedException();/*
-        var filePath        = $"{Path.GetTempPath()}test.sql";
-         DbScripter scriptor = new DbScripter();//serverName, instance, databaseName, writerFilePath: filePath);
-         string script       = scriptor.ExportRoutines(PopParams
-            (
-             databaseName:    "covid"
-            ,exportScriptPath:@"C:\temp\T006_ExportRoutines_FnsAlterMode.sql"
-            ,requiredSchemas: "dbo"
-            ,requiredTypes:   "F"
-            ,createMode:      CreateModeEnum.Alter
-            ,scriptUseDb:     true
-            ,newSchemaName:   "newdbo"
-            ,addTimestamp:    true
-            ));
-
-         // chk for alter function
-         var numFnsExp = scriptor.ExportedFunctions.Count;
-         //var    pattern = @"^ALTER FUNCTION\s\[*(.*?[^\]]*)\]*\.\[*(.*?[^\]]*)";
-         var    pattern = @"^ALTER FUNCTION\s(.*)";
-         MatchCollection matches= Regex.Matches(script, pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
-         var numFnsAct = matches.Count;
-
-         if(numFnsExp != numFnsAct)
-         {
-            Console.WriteLine($"(numFnsExp: {numFnsExp} != numFnsAct: {numFnsAct} listing\r\n EXP:");
-
-            foreach(var exp in scriptor.ExportedFunctions)
-               Console.WriteLine(exp);
-
-            Console.WriteLine("\r\nACT:");
-
-            foreach (System.Text.RegularExpressions.Match m in matches)
-            { 
-               //string line = $"{m.Groups[2].Value}\t\t {m.Groups[1].Value}\t\t{m.Groups[0].Value}";
-               string line = $"{m.Name}";
-
-               // add game to list if not contained
-               Console.WriteLine(line);
-            }
-
-            Console.WriteLine();
-
-            Assert.IsTrue(HelperChkListCount<UserDefinedFunction>( scriptor.Database.UserDefinedFunctions, "dbo", numFnsExp));
-         }
-
-         Assert.AreEqual(numFnsExp, numFnsAct);
-         * /
-      }
-
-/*
- *               serverName:        @"DESKTOP-UAULS0U\SQLEXPRESS"
-               , instanceName:      "SQLEXPRESS"
-               , databaseName:      "covid"
-               , exportScriptPath:  @"C:\temp\T007_ExportRoutines_AlterMode.sql"
-               , requiredSchemas:   "tSQLt"
-               , requiredTypes:     "P"
-               , createMode:        CreateModeEnum.Alter
-               , scriptUseDb:       true
-               , addTimestamp:      true
- * /
-      [TestMethod]
-      public void T007_ExportRoutines_AlterMode()
-      {
-                   throw new NotImplementedException();/*
-
-         DbScripter scriptor = new DbScripter();
-         string script       = scriptor.ExportRoutines(PopParams
-            (
-             databaseName:      "Covid_T2"
-            ,exportScriptPath:  @"C:\temp\T007_ExportSchemaScriptTest.sql"
-            ,requiredSchemas:   "dbo"
-            ,requiredTypes:     "F"
-            ,createMode:        CreateModeEnum.Alter
-            ,scriptUseDb:       true
-            ,newSchemaName:     "newdbo"
-            ,addTimestamp:      true
-            ));
- 
-         // chk for alter proc
-         var numPrcsExp = scriptor.ExportedProcedures.Count;
-         var pattern = @"^ALTER PROC(.*)";
-         MatchCollection matches= Regex.Matches(script, pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
-         var numpPrcsAct = matches.Count;
-
-         if(numPrcsExp != numpPrcsAct)
-         {
-            Console.WriteLine($"(numFnsExp: {numPrcsExp} != numFnsAct: {numpPrcsAct} listing\r\n EXP:");
-
-            foreach(var exp in scriptor.ExportedProcedures)
-               Console.WriteLine(exp);
-
-            Console.WriteLine("\r\nACT:");
-
-            foreach (System.Text.RegularExpressions.Match m in matches)
-               Console.WriteLine(m.Name);
-
-            Console.WriteLine();
-            Assert.IsTrue(HelperChkListCount<StoredProcedure>( scriptor.Database.StoredProcedures, "tSQLt", numPrcsExp));
-         }
-
-         Assert.AreEqual(numPrcsExp, numpPrcsAct);
-         * /
-      }
-
-      [TestMethod]
-      public void T008_ParseSchemas()
-      {
-         String msg;
-         DbScripterTestable scriptor  = new DbScripterTestable();
-
-         Assert.IsTrue(HelperParseSchemas( scriptor, "{dbo,[test] , [ab c]}", new string []{"dbo","test", "ab c"}, out msg), msg);
-         Assert.IsTrue(HelperParseSchemas( scriptor, "   {   dbo    }   ", new string []{"dbo"}, out msg), msg);
-         Assert.IsTrue(HelperParseSchemas( scriptor, null, null, out msg), msg);
-         Assert.IsTrue(HelperParseSchemas( scriptor, ""  , null, out msg), msg);
-      }
-
-/*
- *               serverName:        @"DESKTOP-UAULS0U\SQLEXPRESS"
-               , instanceName:      "SQLEXPRESS"
-               , databaseName:      "covid"
-               , exportScriptPath:  @"C:\temp\T009_ExportRoutines_MultipleAlterSchemas.sql"
-               , requiredSchemas:   "{dbo , [test], tSQLt}"
-               , requiredTypes:     "P"
-               , createMode:        CreateModeEnum.Alter
-               , scriptUseDb:       true
-               , addTimestamp:      true
-* /
-      [TestMethod]
-      public void T009_ExportRoutines_MultipleAlterSchemas()
-      {
-           throw new NotImplementedException();/*
-        DbScripter scriptor = new DbScripter();
-
-         string script       = scriptor.ExportRoutines(PopParams
-            (
-             databaseName:      "covid"
-            ,exportScriptPath:  @"C:\temp\T009_ExportRoutines_MultipleAlterSchemas.sql"
-            ,requiredSchemas:   "{dbo , [test], tSQLt}"
-            ,requiredTypes:     "P"
-            ,createMode:        CreateModeEnum.Alter
-            ,scriptUseDb:       true
-            ,addTimestamp:      true
-            ));
- 
-         // chk for alter proc
-         var numPrcsExp = scriptor.ExportedProcedures.Count;
-         //var pattern = @"^ALTER PROC[^\s]*[\s\[]*([^\]\.]*)[/s\.](.*)";  137 hits
-         var pattern = @"^ALTER PROC[^\s]*[\s\[]*(.*)";
-         MatchCollection matches= Regex.Matches(script, pattern, RegexOptions.Multiline | RegexOptions.IgnoreCase);
-         var numpPrcsAct = matches.Count;
-
-         //LogExpAct(scriptor.ExportedProcedures.Values, matches, @"C:\Temp\T009_ExportRoutines_MultipleAlterSchemas.dat",@"C:\temp\T007_ExportRoutines_MultipleAlterSchemas.sql");
-
-         Assert.AreEqual(numPrcsExp, numpPrcsAct);
-         * /
-      }
-
-/*
-                 serverName:        @"DESKTOP-UAULS0U\SQLEXPRESS"
-               , instanceName:      "SQLEXPRESS"
-               , databaseName:      "covid"
-               , exportScriptPath:  @"C:\temp\T010_ExportTest_CrtDb.sql"
-               , dbOpType:          DbOpTypeEnum.ExportCreateDatabaseScript
-               , addTimestamp:      true
-* /
-      [TestMethod()]
-      public void T010_ExportTest_CrtDb()
-      {
-         DbScripter scriptor = new DbScripter();
-
-         string script       = scriptor.Export(PopParams
-            (
-             databaseName:      "covid"
-            ,exportScriptPath:  @"C:\temp\T010_ExportTest_CrtDb.sql"
-            ,requiredSchemas:   "{dbo , [test], tSQLt}"
-            ,requiredTypes:     null
-            ,addTimestamp:      true
-            ));
-      }
-
-      /// <summary>
-      /// Format: ut_{dbo}_FP_210214-2109_export.sql
-      /// </summary>
-      [TestMethod()]
-      public void HandleExportFilePathTest()
-      {
-         string act;
-         string exp2 ;
-         var sct = new DbScripterTestable();
-
-         // Format: ut_{dbo}_FP_210214-2109_export.sql: exp appended timestamp
-         Assert.IsTrue( HandleExportFilePathHlpr(
-              sct
-            , @"C:\temp\T010_ExportTest_CrtDb.sql"
-            , true
-            , @"C:\temp\T010_ExportTest_CrtDb_210101-0000.sql"
-            , out exp2
-            , out act), $" expected: {exp2}, but act: {act}");
-
-         // Format: ut_{dbo}_FP_210214-2109_export.sql: no change
-         Assert.IsTrue( HandleExportFilePathHlpr(
-              sct
-            , @"C:\temp\ut_{dbo}_FP_210214-2109_export.sql"
-            , true
-            , @"C:\temp\ut_{dbo}_FP_210214-2109_export.sql"
-            , out exp2
-            , out act), $" expected: {exp2}, but act: {act}");
-      }
-
-/*
-               serverName:        @"DESKTOP-UAULS0U\SQLEXPRESS"
-            , instanceName:      "SQLEXPRESS"
-            , databaseName:      "Covid_T1"
-            , newSchemaName:     "testx"
-            , exportScriptPath:  @"C:\temp\T011_ExportSchemaScriptTest.sql"
-* /
-      [TestMethod()]
-      public void T011_ExportSchemaScriptTest()
-      {
-          throw new NotImplementedException();/*
-         var sc = new DbScripter();
-
-         var script = sc.ExportSchemas (PopParams
-            (
-             serverName:        @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName:      "SQLEXPRESS"
-            ,databaseName:      "Covid_T1"
-            ,exportScriptPath:  @"C:\temp\T011_ExportSchemaScriptTest.sql"
-            ,requiredSchemas:   "{dbo , [test], tSQLt}"
-            ,requiredTypes:     null
-            ,addTimestamp:      true
-            ));
-
-         var counts = new Counts(script, "CREATE");
-
-         Assert.Fail();
-* /
-      }
-
-      /*         string serverName    = @"DESKTOP-UAULS0U\SQLEXPRESS"
-              , instanceName  = "SQLEXPRESS"
-              , databaseName  = "Covid_T2"
-              , exportScriptPath =  @"C:\temp\TreateDatabaseTest.sql"
-              , newSchemaName:   "testx"
-* /
-      [TestMethod()]
-      public void CreateDatabaseTest()
-      {
-          throw new NotImplementedException();/*
-         var sc = new DbScripter();
-
-         var script = sc.ExportCreateDatabaseScript(PopParams
-         (
-             serverName:        @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName:      "SQLEXPRESS"
-            ,databaseName:      "Covid_T2"
-            ,exportScriptPath:  @"C:\temp\TreateDatabaseTest.sql"
-            ,requiredSchemas:   null
-            ,requiredTypes:     null
-            ,addTimestamp:      true
-            ,newSchemaName:     null
-         ));
-         
-         Assert.IsNotNull(script);
-         Assert.IsTrue(script.Length >0);
-         // CREATE DATABASE [Covid_T2]
-         Assert.IsTrue(script.Contains("CREATE DATABASE"));
-         Assert.IsTrue(script.Contains("[Covid_T2]"));
-         Assert.IsFalse(script.Contains("[["));
-         Assert.IsFalse(script.Contains("]]"));
-         Process.Start("notepad++.exe", sc.P.ExportScriptPath);
-      * /
-      }
-     [TestMethod()]
-      public void CreateDatabaseTestHndlSqBrkts()
-      {
-                   throw new NotImplementedException();/*
-var sc = new DbScripter();
-
-         var script = sc.ExportCreateDatabaseScript(PopParams
-         (
-             serverName:        @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName:      "SQLEXPRESS"
-            ,databaseName:      "[Covid_T2]"
-            ,exportScriptPath:  @"C:\temp\CreateDatabaseTestHndlSqBrkts.sql"
-            ,requiredSchemas:   null
-            ,requiredTypes:     null
-            ,addTimestamp:      true
-            ,newSchemaName:     null
-         ));
-         
-         Assert.IsNotNull(script);
-         Assert.IsTrue(script.Length >0);
-         // CREATE DATABASE [Covid_T2]
-         Assert.IsTrue(script.Contains("CREATE DATABASE"));
-         Assert.IsTrue(script.Contains("[Covid_T2]"));
-         Assert.IsFalse(script.Contains("[["));
-         Assert.IsFalse(script.Contains("]]"));
-         Process.Start("notepad++.exe", sc.P.ExportScriptPath);
-      * /
-      }
-
-      /// <summary>
-      /// Desc: the tested fn: filters against the  current parameters
-      /// Rules, Responsibilities & Preconditions
-      /// 
-      /// Rules:
-      /// 
-      /// Responsibilities
-      /// 
-      /// Preconditions
-      /// 
-      /// Tests, test for the following:
-      /// T01: exisiting   wanted db                                    exp: true
-      /// T02: exisiting unwanted db                                    exp: true
-      /// T03:  null item                                               exp: false
-      /// T04: unwanted schema from dif db that exists in the crnt db   exp: false
-      /// T05:   wanted sql type                                        exp: true
-      /// T06: unwanted sqltype                                         exp: false
-      /// T0:  exp: false
-      /// </summary>
-      [TestMethod()]
-      public void IsWantedTest()
-      {          throw new NotImplementedException();/*
-
-         var exportScriptPath = @"C:\temp\IsWantedTest_0.sql";
-         var defltPrms = new Params
-         (
-             serverName        : @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName      : "SQLEXPRESS"
-            ,databaseName      : "Covid_T1"
-            ,exportScriptPath  : exportScriptPath 
-            ,newSchemaName     : null
-            ,requiredSchemas   : null
-            ,requiredTypes     : null
-            ,dbOpType          : DbOpTypeEnum.Undefined
-            ,sqlType           : SqlTypeEnum.Undefined
-            ,createMode        : CreateModeEnum.Undefined
-            ,scriptUseDb       : false
-            ,addTimestamp      : false
-         );
-
-         DbScripterTestable tsc = new DbScripterTestable(defltPrms);
-
-         try
-         { 
-            do
-            { 
-
-               /// T01: exisiting   wanted scheam                                   exp: true
-               Schema schema = new Schema(tsc.Database, "dbo");
-  
-               tsc.Init
-               (
-                  PopParams
-                  (
-                      prms:               defltPrms
-                     ,exportScriptPath:   @"C:\temp\IsWantedTest_1.sql"
-                     ,requiredSchemas:    "{dbo , [test], tSQLt}"
-                     ,requiredTypes:      null
-                  ), true
-               ); // Append = true
-
-               Assert.AreEqual(true, tsc.IsWanted(schema.Name, schema));
-
-
-               /// T02: exisiting unwanted Schema   [test]                                 exp: true
-               tsc.Init(PopParams
-                  (
-                      prms: tsc.P
-                     ,exportScriptPath:   @"C:\temp\IsWantedTest_2.sql"
-                     ,requiredSchemas:    "{ [test], tSQLt}"
-                     ,requiredTypes:      null
-                  )
-                  ,true // Append = true
-                );
-
-               Assert.AreEqual(false, tsc.IsWanted(schema.Name, new Schema(tsc.Database, "dbo")));
-              // break;
-              
-               /// T03:  null item                                               exp: false
-               IsWantedHlpr
-               (
-                   tsc:    tsc
-                  ,prms:   PopParams
-                  (
-                      prms: tsc.P
-                     ,exportScriptPath:   @"C:\temp\IsWantedTest_3.sql"
-                     ,requiredSchemas:    "{dbo , [test], tSQLt}"
-                     ,requiredTypes:      null
-                  )
-                  , obj: new Schema(tsc.Database, "")
-                  ,currentSchemaName: "Fred"
-                  ,exp:  true
-                );
-               /// T04: unwanted schema from dif db that exists in the crnt db   exp: false
-               IsWantedHlpr
-               (
-                   tsc:    tsc
-                  ,prms:   PopParams
-                  (
-                      prms: tsc.P
-                     ,requiredSchemas:    "{dbo , [test], tSQLt}"
-                     ,exportScriptPath:   @"C:\temp\IsWantedTest_4.sql"
-                     ,requiredTypes:      null
-                  )
-                  , obj: new Schema(tsc.Database, "")
-                  ,currentSchemaName: "Fred"
-                  ,exp:  true
-                );
-
-               /// T05:   wanted sql type                                        exp: true
-               IsWantedHlpr
-               (
-                   tsc:    tsc
-                  ,prms:   PopParams
-                  (
-                      prms: tsc.P
-                     ,exportScriptPath:   @"C:\temp\IsWantedTest_5.sql"
-                     ,requiredSchemas:    "{dbo , [test], tSQLt}"
-                     ,requiredTypes:      null
-                  )
-                  , obj: new Schema(tsc.Database, "")
-                  ,currentSchemaName: "Fred"
-                  ,exp:  true
-                );
-
-               /// T06: unwanted sqltype                                         exp: false
-               IsWantedHlpr
-               (
-                   tsc:    tsc
-                  ,prms:   PopParams
-                  (
-                      prms: tsc.P
-                     ,exportScriptPath:   @"C:\temp\IsWantedTest_6.sql"
-                     ,requiredSchemas:    "{dbo , [test], tSQLt}"
-                     ,requiredTypes:      null
-                  )
-                  , obj: new Schema(tsc.Database, "")
-                  ,currentSchemaName: "Fred"
-                  ,exp:  true
-                );
-
-            } while(false);
-         }
-         catch(Exception e)
-         { 
-            LogException(e);
-            Process.Start("notepad++.exe", exportScriptPath);
-            throw;
-         }
-         * /
-      }
-
-
-      protected void IsWantedHlpr(DbScripterTestable tsc, Params prms, string currentSchemaName, SqlSmoObject obj, bool exp)
-      { 
-         tsc.Init(prms);
-         bool act = tsc.IsWanted(currentSchemaName, obj);
-         Assert.AreEqual(exp, act);
-      }
-
-      /// <summary>
-      /// PRE Init called
-      ///     serverName:         @"DESKTOP-UAULS0U\SQLEXPRESS"
-      ///   , instanceName:      "SQLEXPRESS"
-      ///   , databaseName:      "Covid_T1"
-      ///   , exportScriptPath:  @"C:\temp\ExportDropSchemaScriptTest.sql"
-      ///   , newSchemaName:     
-      ///   , dbOpType:          
-      ///   , createMode:        
-      ///
-      ///  Rules:
-      ///   R01: 1 and only 1 schema can be dropped at a time 
-      ///   R02: schema name must not be null and have at least 1 character
-      ///   R03: Schema {tgtSchemaName} does not exist in the database {Database.Name}
-      ///   
-      /// Test Dependencies:
-      ///   IsWanted
-      ///   ExportViews
-      ///   ExportTabless
-      ///   ExportProcedures
-      ///   ExportFunctionss
-      /// </summary>
-      [TestMethod()]
-      public void ExportDropSchemaScriptTest()
-      {
-         var sc = new DbScripter();
-         var exportScriptPath =  @"C:\temp\ExportDropSchemaScriptTest.sql";
-
-         // General Green test
-         Params p = PopParams(
-             prms:               CovidBaseParams
-            ,serverName:         @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName:       "SQLEXPRESS"
-            ,databaseName:       "Covid_T1"
-            ,exportScriptPath:   exportScriptPath
-//          ,dbOpType:           DbOpTypeEnum.DropSchema
-            ,requiredSchemas:    "{[test]}"
-            ,requiredTypes:      null //"F,P,V,T,TTy" // all types TTy = Table type
-            ,scriptUseDb:        true
-         );
-
-         var script = sc.Export(p).ToUpper();
-
-         try 
-         { 
-            // Test the rules
-            //   R01: 1 and only 1 schema can be dropped at a time
-            Assert.AreEqual(1, script.Occurrences("DROP SCHEMA"), "R01: 1 and only 1 schema can be dropped at a time");
-            Assert.IsTrue(script.Contains("DROP VIEW"), "no views droppped");
-            Assert.IsTrue(script.Contains("DROP PROCEDURE"), "drop script is not producing drop procedures correctly");
-            Assert.IsTrue(script.Contains("DROP FUNCTION") , "drop script is not producing drop functions correctly");
-
-            Assert.IsTrue(script.Contains("COVID_T1"), "Db name present test failed");
-            Assert.IsFalse(script.Contains("CREATE PROCEDURE"), "drop script is not producing drop procedures correctly");
-            Assert.IsFalse(script.Contains("CREATE FUNCTION"), "drop script is not producing drop functions correctly");
-
-            // Test the rules
-            //   R01: 1 and only 1 schema can be dropped at a time
-
-            /*
-                     //   R02: schema name must not be null and have at least 1 character
-                     Assert.IsTrue( ExportDropSchemaScriptTestExHlpr(sc, PopParams(
-                         databaseName:       "Covid_T1"
-                        ,exportScriptPath:   @"C:\temp\ExportDropSchemaScriptTest.sql"
-                        ,dbOpType:           DbOpTypeEnum.DropSchema
-                        ,requiredSchemas:    null
-                     // ,requiredTypes:     null
-                     // ,addTimestamp:      true
-                     // ,newSchemaName:     "testx"
-                     ), "R01: 1 and only 1 schema can be dropped at a time"));
-
-                     //   R02.2: schema name must not be null and have at least 1 character
-                     Assert.IsTrue( ExportDropSchemaScriptTestExHlpr(sc, PopParams(
-                         databaseName:       "Covid_T1"
-                        ,exportScriptPath:   @"C:\temp\ExportDropSchemaScriptTest.sql"
-                        ,dbOpType:           DbOpTypeEnum.DropSchema
-                        ,requiredSchemas:    "{}"
-                     // ,requiredTypes:     null
-                     // ,addTimestamp:      true
-                     // ,newSchemaName:     "testx"
-                     ), "R02: schema name must not be null and have at least 1 character"));
-
-                    //   R03: Schema {tgtSchemaName} does not exist in the database {Database.Name}
-                    Assert.IsTrue( ExportDropSchemaScriptTestExHlpr(sc, PopParams(
-                         databaseName:       "Covid_T1"
-                        ,exportScriptPath:   @"C:\temp\ExportDropSchemaScriptTest.sql"
-                        ,dbOpType:           DbOpTypeEnum.DropSchema
-                        ,requiredSchemas:   "{abcd}"
-                     // ,requiredTypes:     null
-                     // ,addTimestamp:      true
-                     // ,newSchemaName:     "testx"
-                     ), $"R03: Schema abcd does not exist in the database {sc.Database.Name}"));
-                     * /
-         }
-         catch(Exception e)
-         { 
-            LogException(e);
-            Process.Start("notepad++.exe", exportScriptPath);
-            throw;
-         }
-      }
-
-/*
-   This test tests the creation of a DropDatabaseScript even tho the database does not exist
-         string exportScriptPath:  @"C:\temp\ExportDropDatabaseScriptTest.sql"; 
-         DB: "Covid_T2"
-* /
-      [TestMethod()]
-      public void ExportDropDatabaseScriptTest()
-      {
-          throw new NotImplementedException();/*
-         var sc = new DbScripter();
-         string script;
-         string exportScriptPath = @"C:\temp\ExportDropDatabaseScriptTest.sql";
-         
-         try
-         { 
-            script = sc.ExportDropDatabaseScript(PopParams
-                        (
-                           serverName:       @"DESKTOP-UAULS0U\SQLEXPRESS"
-                          ,instanceName:     "SQLEXPRESS"
-                          ,databaseName:     "Covid_T1"
-                          ,exportScriptPath: exportScriptPath
-                          ,dbOpType:         DbOpTypeEnum.DropDatabase
-                        )).ToUpper();
-
-            Assert.IsTrue(script.Contains("DROP DATABASE"), "DROP DATABASE test failed");
-            Assert.IsTrue(script.Contains("COVID_T1"), "Db name present test failed");
-         }
-         catch(Exception e)
-         {
-            LogException(e);
-            Process.Start("notepad++.exe", exportScriptPath);
-            throw;
-         }
-         * /
-      }
-/*
-      [TestMethod()]
-      public void ExportStaticDataScriptTest()
-      {
-         Assert.Fail();
-      }
-
-      [TestMethod()]
-      public void ExportDynamicDataScriptTest()
-      {
-         Assert.Fail();
-      }
-* /
-
-      [TestMethod()]
-      public void ScriptSchemaCreateTest()
-      {
-          throw new NotImplementedException();/*
-         var exportScriptPath = @"C:\temp\ExportDropViewsTest.sql";
-         var sc = new DbScripter();
-         var script = sc.Export(PopParams
-            (
-             prms:CovidBaseParams
-        //    ,dbOpType: DbOpTypeEnum.DropViews
-            ,exportScriptPath: exportScriptPath
-            ,requiredSchemas: "dbo"
-            ));
-* /
-      }
-
-      [TestMethod()]
-      public void ExportDropViewsTest()
-      {  
-         var exportScriptPath = @"C:\temp\ExportDropViewsTest.sql";
-         var sc = new DbScripter();
-         var script = sc.ExportViews(PopParams
-            (
-             prms:CovidBaseParams
- //         ,dbOpType: DbOpTypeEnum.DropViews
-            ,exportScriptPath: exportScriptPath
-            ,requiredSchemas: "dbo"
-            ));
-
-         ChkContains(script, "DROP VIEW ", exportScriptPath, 5);
-      }
-
-      [TestMethod()]
-      public void ExportDropViewsTest2()
-      {  
-         var exportScriptPath = @"C:\temp\ExportDropViewsTest2.sql";
-         var sc = new DbScripter();
-         Params p =PopParams
-            (
-                prms:CovidBaseParams
-//             ,dbOpType         : DbOpTypeEnum.DropViews
-               ,exportScriptPath : exportScriptPath
-               ,serverName       : @"DESKTOP-UAULS0U\SQLEXPRESS"
-               ,instanceName     : "SQLEXPRESS"
-               ,databaseName     : "Covid_T1"
-               ,newSchemaName    : null
-               ,requiredSchemas  : "{tSqLT}" // case insensitive
-               ,requiredTypes    : null
-               ,sqlType          : SqlTypeEnum.Undefined
-               ,createMode       : CreateModeEnum.Undefined
-               ,scriptUseDb      : false
-               ,addTimestamp     : false
-           );
-
-         var script = sc.ExportViews(p);
-         
-         var r = new Counts(script, "DROP VIEW ");
-         ChkContains(script, "DROP VIEW ", exportScriptPath, 4);
-         // 1 accurate line test
-         ChkContains(script, "DROP VIEW [tSQLt].[Private_SysIndexes]", exportScriptPath, 4);
-/*
-         try
-         { 
-            Assert.IsTrue(script.Contains("DROP VIEW "), "script does not contain 'DROP VIEW '");
-            var r = new Counts(script, "DROP");
-            // Expect
-            Assert.AreEqual(4, r.ExportedViews.Count);
-            // 1 accurate line test
-            Assert.IsTrue(script.Contains("DROP VIEW [tSQLt].[Private_SysIndexes]"), "script does not contain 'DROP VIEW [tSQLt].[Private_SysIndexes]'");
-          }
-         catch(Exception e)
-         { 
-            LogException(e);
-            Process.Start("notepad++.exe", exportScriptPath);
-            throw;
-         }
-* /
-     }
-
-      /// <summary>
-      ///   If InitWriter fails it will throw and exception
-      /// </summary>
-      [TestMethod()]
-      public void T012_InitWriterTest()
-      {
-         string exportScriptPath = @"C:\temp\T014_InitWriterTest.sql";
-         Params p = Params.PopParams(exportScriptPath: exportScriptPath);
-         var tsc = new DbScripterTestable();
-         tsc.P.ExportScriptPath = exportScriptPath;
-         tsc.InitWriter();// "T014_InitWriterTest: InitWriter failed 1");
-      }
-
-      /// <summary>
-      /// Functional dependencies:
-      /// Init()
-      /// Test dependencies:
-      /// T002_InitTest()
-      /// T012_InitWriterTest
-      /// </summary>
-/*
-          string serverName   = @"DESKTOP-UAULS0U\SQLEXPRESS"
-              , instanceName  = "SQLEXPRESS"
-              , databaseName  = "Covid_T1"
-              , newSchemaName = "testX"
-              , tableName     = "Covid"
-              , exportScriptPath:  $@"C:\tmp\{databaseName}"
-              ;
-
-* /
-      [TestMethod()]
-      public void T013_ExportTableTest()
-      {
-         string serverName       = @"DESKTOP-UAULS0U\SQLEXPRESS"
-              , instanceName     = "SQLEXPRESS"
-              , databaseName     = "Covid_T1"
-              , newSchemaName    = "testX"
-              , tableName        = "Covid"
-              , exportScriptPath =  $@"C:\tmp\{databaseName}"
-              ;
-
-         StringBuilder sb = new StringBuilder();
-
-        var tsc = new DbScripterTestable();
-        tsc.ExportTable
-        (  tableName: tableName
-        , p: PopParams( 
-                databaseName:      "Covid_T1"
-               ,serverName:        serverName
-               ,instanceName:      instanceName
-               ,exportScriptPath:  exportScriptPath
-               ,newSchemaName:     newSchemaName
-               ,createMode:        CreateModeEnum.Alter
-              )
-         , sb
-        );
-
-        Assert.IsTrue(sb.Length>0);
-      }
-
-
-      /// <summary>
-      /// Test dependencies:
-      /// T012_InitWriterTest
-      /// T013_ExportTableTest()
-      /// </summary>
-      [TestMethod()]
-      public void T014_ExportTablesTest()
-      {
-         string serverName    = @"DESKTOP-UAULS0U\SQLEXPRESS"
-              , instanceName  = "SQLEXPRESS"
-              , databaseName  = "Covid_T1";
-
-        var sc = new DbScripter();
-
-         var script = sc.Export
-         (PopParams(
-             serverName:         serverName
-            ,instanceName:       instanceName
-            ,databaseName:       databaseName
-            ,exportScriptPath:   @"C:\temp\T011_ExportSchemaScriptTest.sql"
-//            ,dbOpType:           DbOpTypeEnum.CreateTables
-            ,newSchemaName:      "tested"
-         ));
-
-         var counts = new Counts(script, "CREATE");
-
-         Assert.Fail();
-      }
-
-      [TestMethod()]
-      public void T015_ClearStateTest()
-      {
-         var tsc = new DbScripterTestable();
-         tsc.ClearState();
-
-         // Primary properties
-         Assert.AreEqual(tsc.P.CreateMode, CreateModeEnum.Undefined);
-         Assert.IsNull(tsc.P.DatabaseName);
-//         Assert.AreEqual(tsc.P.DbOpType, DbOpTypeEnum.Undefined);
-         Assert.IsNull(tsc.P.InstanceName);
-         Assert.IsNull(tsc.P.NewSchemaName);
-         Assert.IsNull(tsc.P.ServerName);
-         Assert.AreEqual(tsc.P.SqlType, SqlTypeEnum.Undefined);
-         //Assert.IsFalse(tsc.P.Status);
-         Assert.IsNull(tsc.P.NewSchemaName);
-
-         // Major properties
-         Assert.IsNull(tsc.Database);
-         Assert.IsNull(tsc.Scripter);
-         Assert.IsNull(tsc.ScriptOptions);
-         Assert.IsNull(tsc.Server);
-         Assert.IsNull(tsc.Writer);
-
-         // info cache
-         Assert.IsNotNull( tsc.ExportedFunctions);
-         Assert.IsNotNull( tsc.ExportedProcedures);
-         Assert.IsNotNull( tsc.ExportedTables);
-         Assert.IsNotNull( tsc.ExportedViews);
-         
-         Assert.AreEqual( 0, tsc.ExportedFunctions .Count);
-         Assert.AreEqual( 0, tsc.ExportedProcedures.Count);
-         Assert.AreEqual( 0, tsc.ExportedTables    .Count);
-         Assert.AreEqual( 0, tsc.ExportedViews     .Count);
-      }
-
-
-      [TestMethod()]
-      public void T016_CreateAndOpenServerTest()
-      {
-         string serverName    = @"DESKTOP-UAULS0U\SQLEXPRESS"
-              , instanceName  = "SQLEXPRESS";
-//            , databaseName  = "Covid_T1";
-
-         var tsc = new DbScripterTestable();
-         Server server = Utils.CreateAndOpenServer(serverName, instanceName);//, databaseName);
-         Assert.IsNotNull(server,  "did not create Server object");
-      }
-
-      [TestMethod()]
-      public void GetDependencyWalkTest()
-      {
-         Params p = PopParams( 
-                prms:            CovidBaseParams
-               ,exportScriptPath:@"C:\temp\T011_ExportSchemaScriptTest.sql"
- //            ,dbOpType:        DbOpTypeEnum.CreateTables
-               ,requiredSchemas: "tEst,tSqlt"
-              );
-       
-         var sc = new DbScripter(p);
-         var name = sc.Database.Tables[0].Name;
-         var tables= new List<Table>();
-         tables.Add(sc.Database.Tables["AppLog", "test"]);
-         tables.Add(sc.Database.Tables["Covid_tst", "test"]);
-         tables.Add(sc.Database.Tables["Private_AssertEqualsTableSchema_Actual", "tSQLt"]);
-         tables.Add(sc.Database.Tables["Private_ExpectException", "tSQLt"]);
-         var walk = sc.GetDependencyWalk(tables);
-         Assert.AreEqual(5, walk.Count);
-         Assert.IsTrue(walk.Contains("Private_AssertEqualsTableSchema_Actual"));
-      }
-
-      [TestMethod()]
-//      [ExpectedException( typeof(ArgumentException), AllowDerivedTypes=false)]
-      public void IsTypeWantedTest()
-      {
-         Params p = PopParams( 
-                prms             : CovidBaseParams
-               ,exportScriptPath : @"C:\temp\T011_ExportSchemaScriptTest.sql"
-               //,dbOpType         : DbOpTypeEnum.CreateTables
-               ,requiredSchemas  : "tEst,tSqlt"
-               //,isExprtngData    : true
-               //,isExprtngDb      : true
-               //,isExprtngFKeys   : true
-               //,isExprtngFns     : true
-               //,isExprtngProcs   : true
-               //,isExprtngSchema  : true
-               //,isExprtngTbls    : true
-               //,isExprtngTTys    : true
-               //,isExprtngVws   : true
-              );
-       
-         var sc = new DbScripter(p);
-
-         // 1: defaults
-         Assert.IsNull(sc.P.IsExprtngData   );
-         Assert.IsNull(sc.P.IsExprtngDb     );
-         Assert.IsNull(sc.P.IsExprtngFKeys  );
-         Assert.IsNull(sc.P.IsExprtngFns    );
-         Assert.IsNull(sc.P.IsExprtngProcs  );
-         Assert.IsNull(sc.P.IsExprtngSchema );
-         Assert.IsNull(sc.P.IsExprtngTbls   );
-         Assert.IsNull(sc.P.IsExprtngTTys   );
-         Assert.IsNull(sc.P.IsExprtngVws    );
-
-         // set true get cycle
-         sc.P.IsExprtngData   = true;
-         sc.P.IsExprtngDb     = true;
-         sc.P.IsExprtngFKeys  = true;
-         sc.P.IsExprtngFns    = true;
-         sc.P.IsExprtngProcs  = true;
-         sc.P.IsExprtngSchema = true;
-         sc.P.IsExprtngTbls   = true;
-         sc.P.IsExprtngTTys   = true;
-         sc.P.IsExprtngVws    = true;
-
-         Assert.IsTrue(sc.P.IsExprtngData   ?? false);
-         Assert.IsTrue(sc.P.IsExprtngDb     ?? false);
-         Assert.IsTrue(sc.P.IsExprtngFKeys  ?? false);
-         Assert.IsTrue(sc.P.IsExprtngFns    ?? false);
-         Assert.IsTrue(sc.P.IsExprtngProcs  ?? false);
-         Assert.IsTrue(sc.P.IsExprtngSchema ?? false);
-         Assert.IsTrue(sc.P.IsExprtngTbls   ?? false);
-         Assert.IsTrue(sc.P.IsExprtngTTys   ?? false);
-         Assert.IsTrue(sc.P.IsExprtngVws    ?? false);
-
-          // set false get cycle
-         sc.P.IsExprtngData   = false;
-         sc.P.IsExprtngDb     = false;
-         sc.P.IsExprtngFKeys  = false;
-         sc.P.IsExprtngFns    = false;
-         sc.P.IsExprtngProcs  = false;
-         sc.P.IsExprtngSchema = false;
-         sc.P.IsExprtngTbls   = false;
-         sc.P.IsExprtngTTys   = false;
-         sc.P.IsExprtngVws    = false;
-
-         Assert.IsFalse(sc.P.IsExprtngData   ?? true);
-         Assert.IsFalse(sc.P.IsExprtngDb     ?? true);
-         Assert.IsFalse(sc.P.IsExprtngFKeys  ?? true);
-         Assert.IsFalse(sc.P.IsExprtngFns    ?? true);
-         Assert.IsFalse(sc.P.IsExprtngProcs  ?? true);
-         Assert.IsFalse(sc.P.IsExprtngSchema ?? true);
-         Assert.IsFalse(sc.P.IsExprtngTbls   ?? true);
-         Assert.IsFalse(sc.P.IsExprtngTTys   ?? true);
-         Assert.IsFalse(sc.P.IsExprtngVws    ?? true);
-      }
-
-      /// <summary>
-      /// PRE:  NONE
-      /// POST: all UNDEFIEND flags set true
-      /// </summary>
-      [TestMethod()]
-      public void SetUndefinedExportSchemaFlagsTest()
-      {
-         string fn = "SetUndefinedExportSchemaFlagsTest";
-         LogS(fn);
-
-         Params p = PopParams( 
-                name             : "SetUndefinedExportSchemaFlagsTest Params"
-               ,prms             : CovidBaseParams
-               ,exportScriptPath : null
-//             ,dbOpType         : DbOpTypeEnum.CreateTables
-               ,requiredSchemas  : "tEst,tSqlt"
-               //,isExprtngData  : true
-               //,isExprtngDb    : true
-               //,isExprtngFKeys : true
-               //,isExprtngFns   : true
-               //,isExprtngProcs : true
-               //,isExprtngSchema: true
-               //,isExprtngTbls  : true
-               //,isExprtngTTys  : true
-               //,isExprtngVws   : true
-              );
-       
-         LogD("calling new DbScripterTestable(p)");
-         var tsc = new DbScripterTestable(p);
-         LogD("ret frm new DbScripterTestable(p)");
-         string msg;
-         // start with all null
-         Assert.IsTrue(SetUndefinedExportSchemaFlagsTestHlpr("ST01", null,  out msg), msg);
-         // start with all clear
-         Assert.IsTrue(SetUndefinedExportSchemaFlagsTestHlpr("ST01", false, out msg), msg);
-         // start with all set
-         Assert.IsTrue(SetUndefinedExportSchemaFlagsTestHlpr("ST01", true , out msg), msg);
-      }
-
-      protected bool SetUndefinedExportSchemaFlagsTestHlpr(string name, bool? st, out string msg)
-      {
-         string fn = "SetUndefinedExportSchemaFlagsTestHlpr";
-         LogS(fn);
-         var tsc = new DbScripterTestable();
-         msg = null;
-         bool ret = false;
-
-         // start with all null
-         tsc.ResetUndefinedExportSchemaFlags(null);
-
-         tsc.Init(PopParams
-         (
-               name             : name
-            ,prms             : CovidBaseParams
-            ,exportScriptPath : $@"C:\temp\SetUndefinedExportSchemaFlagsTest {name}.sql"
-//          ,dbOpType         : DbOpTypeEnum.CreateTables
-//          ,requiredSchemas  : "tEst,tSqlt"
-            ,isExprtngData    : st
-            ,isExprtngDb      : st
-            ,isExprtngFKeys   : st
-            ,isExprtngFns     : st
-            ,isExprtngProcs   : st
-            ,isExprtngSchema  : st
-            ,isExprtngTbls    : st
-            ,isExprtngTTys    : st
-            ,isExprtngVws   : st
-            ));
-
-         do { 
-         if(tsc.P.IsExprtngData   != st) { msg = "IsExprtngData  "; break;}
-         if(tsc.P.IsExprtngDb     != st) { msg = "IsExprtngDb    "; break;}
-         if(tsc.P.IsExprtngFKeys  != st) { msg = "IsExprtngFKeys "; break;}
-         if(tsc.P.IsExprtngFns    != st) { msg = "IsExprtngFns   "; break;}
-         if(tsc.P.IsExprtngProcs  != st) { msg = "IsExprtngProcs "; break;}
-         if(tsc.P.IsExprtngSchema != st) { msg = "IsExprtngSchema"; break;}
-         if(tsc.P.IsExprtngTbls   != st) { msg = "IsExprtngTbls  "; break;}
-         if(tsc.P.IsExprtngTTys   != st) { msg = "IsExprtngTTys  "; break;}
-         if(tsc.P.IsExprtngVws    != st) { msg = "IsExprtngViews "; break;}
-
-         ret = true;
-         } while(false);
-
-         LogL($"Leaving: ret:{ret}");
-         return ret;
-      }
-
-      //------------------------------------------ end of tests ------------------------------
-
-      #endregion tests
-
-      #region test support
-/*
-      protected bool ChkContains(string script, string clause, string filePath, int expCount = 1, int actCount = -1)
-      {
-         try
-         {
-            // check existance or non existence of clause in str
-            if(expCount>0)
-               Assert.IsTrue (script.ContainsIgnoreCase(clause), $"script should contain '{clause}' ");
-            else
-               Assert.IsFalse(script.ContainsIgnoreCase(clause), $"script should not contain'{clause}' ");
-
-            // check counts
-            if(actCount >-1)
-               Assert.AreEqual(expCount, actCount, $"expected {expCount} hits for clause:[{clause}], but got {actCount}");
-
-         }
-         catch(Exception e)
-         { 
-            var msgs = e.GetAllMessages();
-            Logger.Log(msgs);
-            Process.Start("notepad++.exe", filePath);
-            throw;
-         }
-
-         return true;
-      }
-* /
-
-      protected bool HandleExportFilePathHlpr( DbScripterTestable sc
-                                             , string exportFilePath
-                                             , bool addTimestamp
-                                             , string exp
-                                             , out string exp2
-                                             , out string act)
-      { 
-         exp2 = exp;
-         act = sc.HandleExportFilePath(exportFilePath, addTimestamp);
-         return exp == act;
-      }
-
-      /// <summary>
-      /// 
-      /// </summary>
-      /// <param name="expColl"></param>
-      /// <param name="matches"></param>
-      /// <param name="expFile">@"C:\Temp\T007_exp.dat"</param>
-      /// <param name="actFile">@"C:\Temp\T007_act.dat"</param>
-      private void LogExpAct(ICollection expColl, MatchCollection matches, string expFile, string actFile)
-      { 
-         // hdr
-         int numExp = expColl.Count;
-         int numAct = matches.Count;
-         Console.WriteLine();
-         Console.WriteLine($"(numFnsExp: {numExp} != numFnsAct: {numAct} listing\r\n EXP:");
-
-         // Log the Expected
-         using (StreamWriter file =  new System.IO.StreamWriter(expFile))
-         { 
-            LogExpected( expColl, file);
-         }
-
-         // Log the Actual
-         using (StreamWriter file =  new System.IO.StreamWriter(actFile))
-         { 
-            LogActual( matches, file);
-         }
-      }
-
-      /// <summary>
-      /// Log the Expected  scriptor.ExportedProcedures.Values
-      /// </summary>
-      /// <param name="scriptor"></param>
-      /// <param name="file"></param>
-      private void LogExpected(ICollection expColl, StreamWriter file)
-      { 
-         LogDetail("TEST EXP:", file);
-
-         foreach(var exp in expColl)
-            LogDetail(exp as string, file);
-
-         Console.WriteLine();
-       }
-
-      /// <summary>
-      /// Log the Actual
-      /// </summary>
-      /// <param name="matches"></param>
-      /// <param name="file"></param>
-      private void LogActual(MatchCollection matches, StreamWriter file)
-      { 
-         LogDetail("TEST ACT:", file);
-
-         foreach (System.Text.RegularExpressions.Match m in matches)
-            LogMatchDetails( m, file);
-
-         Console.WriteLine();
-       }
-
-      private string GetMatchDetails(System.Text.RegularExpressions.Match m )
-      {
-         var v = m.Groups[1].Value;
-         var t = v.Split(new [] { '[', ']', '.', '\r'}); //, '.', '\r'});
-         StringBuilder sb = new StringBuilder();
-         var schema = t[0];
-         var rtn =  string.IsNullOrEmpty(t[1]) ? 
-                   (string.IsNullOrEmpty(t[2]) ? t[3] : t[2]) : t[1];
-
-         sb.Append($"{schema}.{rtn}");
-         return sb.ToString();
-      }
-
-      private void LogMatchDetails(System.Text.RegularExpressions.Match m, StreamWriter file)
-      {
-         var s = GetMatchDetails(m);
-         LogDetail(s, file);
-      }
-
-      private void LogDetail(string s, StreamWriter file)
-      { 
-         file.WriteLine(s);
-         Console.WriteLine(s);
-      }
-
-
-      // ParseSchemas: <summary>
-      // Handles strings like:
-      //   "{test, [dbo]", "dbo",  "", null}
-      //   "   {   dbo    }   ", "" null
-      // 
-      // PRECONDITIONS : scriptor is intialised
-      // POSTCONDITIONS: 
-      //   POST 1: returns null if rs is null, empty
-      //   POST 2: returns null if rs contains no schemas
-      //   POST 3: returns all schemas in rs in the returned arry
-      // Method:
-      //   trim
-      //   remove surrounding {}
-      //   split on ,
-      //   for each schema: remove any []and trim
-      // </summary>
-      // <param name="rs">required_schemas</param>
-      // <returns>string array of the unwrapped schemas in rs</returns>
-     protected bool HelperParseSchemas(DbScripterTestable scriptor, string inpSchemas, string [] expSchemas, out string msg)
-      { 
-         // PRECONDITIONS:  P pop
-         var actSchemas = scriptor.P.ParseRequiredSchemas(inpSchemas);
-
-         // check exp Null
-         if(expSchemas == null)
-         { 
-            if (actSchemas!= null)
-            { 
-               msg = $"expected null schema but got [{actSchemas}]";
-               return false;
-            }
-
-            msg = "";
-            return true;
-         }
-
-         // ASSERTION expSchemas is not null
-         // compare arrays
-         if(expSchemas.Length != actSchemas.Count)
-         {
-            msg = $"mismatch on array length exp:{expSchemas.Length} act: {actSchemas.Count}";
-            return false;
-         }
-
-         // Compare contents
-         foreach( var schema in expSchemas)
-         {
-            if(!actSchemas.Contains(schema))
-            { 
-               msg = $"expected shema:[{schema}] not found";
-               return false;
-            }
-         }
-
-        msg = "";
-        return true;
-      }
-
-      // IEnumerable
-      // ICollection has a CopyTo(art, start) - needs ary sized first
-      //protected bool HelperChkListCount<Ty>(System.Collections.Generic.IEnumerable<Ty> expColl, int act_count) where Ty : ScriptSchemaObjectBase
-      protected bool HelperChkListCount<Ty>( ICollection expColl, string schemaName, int act_count) where Ty: ScriptSchemaObjectBase
-      { 
-         //var rtnColl = expColl.Where(f=>f.Schema == schemaName);
-         var rtnColl = new List<Ty>(expColl.Count);
-
-         foreach(var item in expColl)
-         { 
-            var schemaObj = item as Ty;
-
-            if(schemaObj.Schema == schemaName)
-                rtnColl.Add(schemaObj);
-         }
-
-         return rtnColl.Count() == act_count;
-     }
-*/
       #endregion test support
       #region test setup
+      [AssemblyInitialize]
+      public new static void AssemblySetup( TestContext ctx)
+      {
+         LogS();
+         UnitTestBase.AssemblySetup( ctx);
+         LogL();
+      }
+
+      [AssemblyCleanup]
+      public new static void AssemblyCleanup( )
+      {
+         LogS();
+         UnitTestBase.AssemblyCleanup();
+         LogL();
+      }
+
+
       /// <summary>
       /// Use ClassInitialize to run code before running the first test in the class
       /// </summary>
@@ -1888,34 +1069,34 @@ var sc = new DbScripter();
       [ClassInitialize()]
       public new static void ClassSetup(TestContext testContext)
       {
+         LogS();
          UnitTestBase.ClassSetup(testContext); // use app config@"D\tmp\DbScriptor.log");
+         LogL();
       }
       
       /// <summary>
       /// Use ClassCleanup to run code after all tests in a class have run
       /// </summary>
       [ClassCleanup()]
-      public static void ClassCleanup()
+      public new static void ClassCleanup()
       {
-         UnitTestBase.ClassCleanup("CbScriptorTests");
+         LogS();
+         UnitTestBase.ClassCleanup();
+         LogL();
       }
 
       /// <summary>
-      /// Use TestInitialize to run code before running each test
+      /// Display the Script if failed and DisplayScriptAfterTestFailure is true
       /// </summary>
-      [TestInitialize()]
-      public override void TestSetup()
+      public override void TestCleanup_()
       {
-         base.TestSetup();
-      }
-      
-      /// <summary>
-      /// Use TestCleanup to run code after each test has run
-      /// </summary>
-      [TestCleanup()]
-      public override void TestCleanup()
-      {
-         base.TestCleanup();
+         LogS();
+         var res = TestContext?.CurrentTestOutcome ?? UnitTestOutcome.Unknown;
+
+         base.TestCleanup_();
+         //DisplayLogAfterTestFailure    = false;
+         //DisplayScriptAfterTestFailure = false;
+         LogL();
       }
 
       #endregion test setup
@@ -1923,10 +1104,11 @@ var sc = new DbScripter();
 
       public Params CovidBaseParams{ get; set;} = new Params
       (
-         serverName:        @"DESKTOP-UAULS0U\SQLEXPRESS"
-        ,instanceName:      "SQLEXPRESS"
-        ,databaseName:      "Covid_T1"
+         serverName:    @"DESKTOP-UAULS0U\SQLEXPRESS"
+        ,instanceName:  "SQLEXPRESS"
+        ,databaseName:  "Covid_T1"
       );
+ 
 
       #endregion properties
    }
