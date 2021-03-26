@@ -3,8 +3,8 @@ using System;
 using DbScripterLibNS;
 using RSS.Common;
 using System.IO;
-//using static RSS.Common.Logger;
-//using static RSS.Common.Utils;
+using static RSS.Common.Logger;
+using static RSS.Common.Utils;
 
 namespace RSS.Test
 {
@@ -174,18 +174,8 @@ namespace RSS.Test
             ,databaseName      : "P21 db"          // replaces "Covid_T2"
             ,exportScriptPath  : "P21 export path" // replaces null
          );
-         // Params Equals failed: a ServerName      :DESKTOP-UAULS0U\SQLEXPRESS b servername      :
-         //
+
          ChkEquals(P21_overlap_exp, P21_overlap_act, "OverlappingTest");
-/*
-         if(!P21_overlap_exp.Equals(P21_overlap_act))
-         { 
-            Console.WriteLine("P21_overlap_exp.Equals(P21_overlap_act) failed\r\nexp:");
-            Console.WriteLine(P21_overlap_exp.ToString());
-            Console.WriteLine("\r\nact:");
-            Console.WriteLine(P21_overlap_act.ToString());
-            Assert.IsTrue(P21_overlap_exp.Equals(P21_overlap_act));
-         }*/
       }
     
 /*      
@@ -206,9 +196,8 @@ p11_ source                                           P21_overlap_inp : p11_exp 
       [TestMethod()]
       public void Overlapping2Test()
       {
-         // D:\Dev\Repos\DbScripter\TestResults
-         // @"..\..\..\TestResults"
          var dir = Directory.GetCurrentDirectory();
+
          // overwrite will replace all specified parameters even those that are defaults not supplied**
          Params P21_overlap_ovrwrt_exp = new Params  (
              name              : "P21_overlap_ovrwrt_exp"
@@ -220,7 +209,6 @@ p11_ source                                           P21_overlap_inp : p11_exp 
             ,newSchemaName     : null                    // was null
             ,requiredSchemas   : null                    // was null                     
             ,requiredTypes     : null                    // was null                     
-//          ,dbOpType          : DbOpTypeEnum.Undefined  // was DbOpTypeEnum.CreateSchema
             ,sqlType           : SqlTypeEnum.Undefined   // was SqlTypeEnum.Undefined    
             ,createMode        : CreateModeEnum.Undefined// was CreateModeEnum.Alter     
             ,scriptUseDb       : true                    // was false                    
@@ -254,10 +242,12 @@ p11_ source                                           P21_overlap_inp : p11_exp 
 
          var act = p.ParseRequiredTypes("t,F,P,v,s");
 
-         Console.WriteLine("------------- ParseRequiredTypesTest --------------");
+         LogDirect("------------- ParseRequiredTypesTest --------------");
+
          foreach(SqlTypeEnum item in act)
-            Console.WriteLine($"got req ty: {item.GetAlias()}");
-         Console.WriteLine("---------------------------------------------------");
+            LogDirect($"got req ty: {item.GetAlias()}");
+
+         LogDirect("---------------------------------------------------");
 
          Assert.AreEqual(5, act.Count);
          Assert.AreEqual(SqlTypeEnum.Table      , act[0], act[0].GetAlias());
@@ -268,7 +258,7 @@ p11_ source                                           P21_overlap_inp : p11_exp 
       }
 
       [TestMethod()]
-      [ExpectedException((typeof(ArgumentException)))]
+      [ExpectedException((typeof(Exception)), AllowDerivedTypes =true)]
       public void ParseRequiredTypesBadInputTest()
       {
          Params p = new Params();

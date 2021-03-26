@@ -3,6 +3,7 @@ using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Diagnostics;
 using RSS.Common;
+using TestHelpers;
 //using static RSS.Common.Logger;
 
 namespace RSS.Test
@@ -11,56 +12,57 @@ namespace RSS.Test
    /// Summary description for UnitTest1
    /// </summary>
    [TestClass]
-   public class CountsTests : UnitTestBase
+   public class CountsTests : ScriptableUnitTestBase
    {
       #region tests
            public Params CovidBaseParams {get;set; } = new Params
            (
-             prms              : null // Use this state to start with and update with the subsequent parameters
-            ,serverName        : @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName      : "SQLEXPRESS"
-            ,databaseName      : "Covid_T1"
-            ,exportScriptPath  : @"C:\tmp\T002_InitTest_export.sql"
-            ,newSchemaName     : "New Schema Name"
-            ,requiredSchemas   : "{dbo, [tEst]}"
-            ,requiredTypes     : "S"
-            ,sqlType           : SqlTypeEnum.Undefined
-            ,createMode        : CreateModeEnum.Undefined
-            ,scriptUseDb       : false
-            ,addTimestamp      : true
+             prms             : null // Use this state to start with and update with the subsequent parameters
+            ,serverName       : @"DESKTOP-UAULS0U\SQLEXPRESS"
+            ,instanceName     : "SQLEXPRESS"
+            ,databaseName     : "Covid_T1"
+            ,newSchemaName    : "New Schema Name"
+            ,requiredSchemas  : "{dbo, [tEst]}"
+            ,requiredTypes    : "S"
+            ,sqlType          : SqlTypeEnum.Undefined
+            ,createMode       : CreateModeEnum.Undefined
+            ,scriptUseDb      : false
+            ,addTimestamp     : false
            );
  
+      /// <summary>
+      /// When exporting a schema we should be able to specift which types are exported
+      /// the default should be all types
+      /// but if we define a set of types then that should take precidence
+      /// </summary>
       [TestMethod]
-      public void Count1CrtSTableTest()
+      public void Count_Crt_Export_Tables_only_Schemas_dbo_tst_Test()
       {
          Logger.LogS();
          DbScripter sc = new DbScripter();
-         var exportScriptPath = @"C:\temp\Count1CrtSchemaTest.sql";
 
          Params p = Params.PopParams(
-             name             : "Count1CrtSchemaTest Params"
+             name             : "Count_Crt_Export_Tables_only_Schemas_dbo_tst_Test Params"
             ,prms             : CovidBaseParams
-            ,exportScriptPath : exportScriptPath
+            ,exportScriptPath : ScriptFile
             ,sqlType          : SqlTypeEnum.Table
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{dbo, [ teSt]}"// should handle more than 1 schema and crappy formatting
             ,requiredTypes    : "t"             // this is overridden in Export schema as it exports all the child objects
+            ,addTimestamp     : false
             );
 
          try
          { 
-            Console.WriteLine(p);
-            var script = sc.Export(ref p);
-
-            Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[dbo\]\..*)"     , 21, out var msg), msg);
-            Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[test\]\..*)"    ,  3, out msg), msg);
+            Logger.Log(p);
+            Assert.IsTrue(sc.Export(ref p, out var script, out var msg), msg);
+            Assert.IsTrue(ChkContains(script, @"^([ \t]*CREATE[ \t]+TABLE[ \t\[]+dbo[^\.[ \t\[]+)" , 21, out msg), msg);
+            Assert.IsTrue(ChkContains(script, @"^([ \t]*CREATE[ \t]+TABLE[ \t\[]+test[^\.[ \t\[]+)",  3, out msg), msg);
             Logger.LogL("All subtests passed");
          }
          catch(Exception e)
          {
             Logger.LogException(e);
-            //Logger.DisplayLog();
-            //Process.Start("notepad++.exe", exportScriptPath);
             throw;
          }
 
@@ -70,12 +72,14 @@ namespace RSS.Test
       public override void TestSetup_()
       {
          Logger.LogS();
+         base.TestSetup_();
          Logger.LogL();
       }
 
       public override void TestCleanup_()
       {
          Logger.LogS();
+         base.TestCleanup_();
          Logger.LogL();
       }
 

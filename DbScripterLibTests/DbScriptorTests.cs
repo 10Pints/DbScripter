@@ -20,51 +20,7 @@ namespace RSS.Test
    public class DbScriptorTests : ScriptableUnitTestBase
    {
       #region tests
-/*      [TestMethod]
-      public void ScripterPlayTest()
-      {
-         LogS();
-         string sql;
 
-         Params p = Params.PopParams
-         (
-             name             : "ExportDatabase Params"
-            ,databaseName     : "ut"
-            ,prms             : CovidBaseParams
-            ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Schema
-            ,createMode       : CreateModeEnum.Alter
-            ,requiredSchemas  : "{dbo}"
-            ,requiredTypes    : null
-            ,logFile          : @"D:\Logs\DbScripter.log"
-            ,scriptUseDb      : true
-         );
-
-         StringBuilder sb     = new();
-         ScriptingOptions so  = new();
-         so.IncludeHeaders    = true;
-         so.ScriptBatchTerminator =true;
-         so.ScriptSchema      = true;
-         so.ScriptOwner       = true;
-         so.AppendToFile      = true;
-         so.FileName          = @"D:\logs\ScripterPlayTest1.sql";
-         DbScripter tsc       = new DbScripterTestable(p);
-         var fn               = tsc.Database?.UserDefinedFunctions["fnIsNumber"];
-         var txns             = fn?.Script(so) ?? new();
-
-         foreach(var txn in txns)
-           sb.AppendLine(txn);
-
-         sql = sb.ToString();
-         File.WriteAllText(@"D:\logs\ScripterPlayTest2.sql", sql);
-
-         Console.WriteLine(sql);
-         Process.Start($"Notepad++.exe", @"D:\logs\ScripterPlayTest1.sql");
-         Process.Start($"Notepad++.exe", @"D:\logs\ScripterPlayTest2.sql");
-         Log(sql);
-         LogL();
-      }
-*/
       /// <summary>
       /// NOTE there is a similar requirement for Script Dir
       /// 
@@ -91,7 +47,7 @@ namespace RSS.Test
       public void GetLogFileFromConfigTest()
       {
          LogS();
-         var logKey = "Log File";
+         var logKey = "Log Dir";
          // Get the config appsettings and default log file values
          // Ensure are non empty and different
          var origConfigLogFileProperty  = ConfigurationManager.AppSettings.Get(logKey);
@@ -273,7 +229,136 @@ namespace RSS.Test
       /// should only convert the  first instance of ^[ \t]*Create
       /// </summary>
       [TestMethod]
-      public void ExportSchemasAlter1DboTest()
+      public void ExportSchemas_Alter_1_ut_dbo_Test()
+      {
+         LogS();
+         string msg;
+         DbScripter sc = new DbScripter();
+         // 1 off for this test - reset in test cleanup_
+         DisplayLogAfterTestFailure    = true;
+         DisplayScriptAfterTestFailure = true;
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,databaseName     : "ut"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : ScriptFile
+            ,sqlType          : SqlTypeEnum.Schema
+            ,createMode       : CreateModeEnum.Alter
+            ,requiredSchemas  : "{dbo}"
+            ,requiredTypes    : null
+            ,logFile          : @"D:\Logs\DbScripter.log"
+            ,scriptUseDb      : true
+         );
+
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
+
+         Assert.IsNotNull(script, $"export script not defined");
+         Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "PROCEDURE"     , ""    , 0,  53,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "FUNCTION"      , ""    , 0,  70,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "TABLE"         , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "VIEW"          , ""    , 0,  10,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "DATATYPE"      , ""    , 0,   0,  0, out msg), msg);
+         LogL();
+      }
+
+      /// <summary>
+      /// Bugs:
+      /// 1: ALTER FUNCTION [dbo].[fnALTERTrendSql]
+      /// 1: ALTER FUNCTION [dbo].[fnCreateTrendSql]
+      /// should only convert the  first instance of ^[ \t]*Create
+      /// </summary>
+      [TestMethod]
+      public void ExportSchemas_Alter_2_ut_dbo_tst_Test()
+      {
+         LogS();
+         string msg;
+         DbScripter sc = new DbScripter();
+         // 1 off for this test - reset in test cleanup_
+         DisplayLogAfterTestFailure    = true;
+         DisplayScriptAfterTestFailure = true;
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,databaseName     : "ut"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : ScriptFile
+            ,sqlType          : SqlTypeEnum.Schema
+            ,createMode       : CreateModeEnum.Alter
+            ,requiredSchemas  : "{dbo,test}"
+            ,requiredTypes    : null
+            ,logFile          : @"D:\Logs\DbScripter.log"
+            ,scriptUseDb      : true
+         );
+
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
+
+         Assert.IsNotNull(script, $"export script not defined");
+         Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "PROCEDURE", ""    , 0,  53,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "FUNCTION" , ""    , 0,  70,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "TABLE"    , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "VIEW"     , ""    , 0,  10,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "DATATYPE" , ""    , 0,   0,  0, out msg), msg);
+
+         Assert.IsTrue(CheckForSchema( script, "test" , "PROCEDURE", ""    , 0, 100,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test" , "FUNCTION" , ""    , 0,  29,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test" , "TABLE"    , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test" , "VIEW"     , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test" , "DATATYPE" , ""    , 0,   0,  0, out msg), msg);
+         LogL();
+      }
+
+      /// <summary>
+      /// Bugs:
+      /// 1: ALTER FUNCTION [dbo].[fnALTERTrendSql]
+      /// 1: ALTER FUNCTION [dbo].[fnCreateTrendSql]
+      /// should only convert the  first instance of ^[ \t]*Create
+      /// </summary>
+      [TestMethod]
+      public void ExportSchemas_Alter_1_ut_tst_Test()
+      {
+         LogS();
+         string msg;
+         DbScripter sc = new DbScripter();
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,databaseName     : "ut"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : ScriptFile
+            ,sqlType          : SqlTypeEnum.Schema
+            ,createMode       : CreateModeEnum.Alter
+            ,requiredSchemas  : "{test}"
+            ,requiredTypes    : null
+            ,logFile          : @"D:\Logs\DbScripter.log"
+            ,scriptUseDb      : true
+         );
+
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
+
+         Assert.IsNotNull(script, $"export script not defined");
+         Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
+         Assert.IsTrue(CheckForSchema( script, "test" , "PROCEDURE", ""    , 0, 100,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test" , "FUNCTION" , ""    , 0,  29,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test" , "TABLE"    , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test" , "VIEW"     , ""    , 0,   0,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test" , "DATATYPE" , ""    , 0,   0,  0, out msg), msg);
+         LogL();
+      }
+
+      /// <summary>
+      /// Bugs:
+      /// 1: ALTER FUNCTION [dbo].[fnALTERTrendSql]
+      /// 1: ALTER FUNCTION [dbo].[fnCreateTrendSql]
+      /// should only convert the  first instance of ^[ \t]*Create
+      /// </summary>
+      [TestMethod]
+      public void ExportSchemas_Alter_1_cvdT1_dbo_Test()
       {
          LogS();
          string msg;
@@ -296,7 +381,7 @@ namespace RSS.Test
             ,scriptUseDb      : true
          );
 
-         var script = sc.Export(ref p);
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
 
          Assert.IsNotNull(script, $"export script not defined");
          Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
@@ -329,7 +414,7 @@ namespace RSS.Test
       /// should only convert the  first instance of ^[ \t]*Create
       /// </summary>
       [TestMethod]
-      public void ExportSchemasAlter1Test_Covid_T1_Test()
+      public void ExportSchemas_Alter_1_cvdT1_1_test_Test()
       {
          LogS();
          string msg;
@@ -350,7 +435,7 @@ namespace RSS.Test
             ,scriptUseDb      : true
          );
 
-         var script = sc.Export(ref p);
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
 
          Assert.IsNotNull(script, $"export script not defined");
          Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
@@ -375,7 +460,7 @@ namespace RSS.Test
       /// should only convert the  first instance of ^[ \t]*Create
       /// </summary>
       [TestMethod]
-      public void ExportSchemasAlter2Test_Covid_4_REAL_Test()
+      public void ExportSchemas_Alter_2_cvd_dbo_tst_Test()
       {
          LogS();
          string msg;
@@ -395,17 +480,17 @@ namespace RSS.Test
             ,scriptUseDb      : true
          );
 
-         var script = sc.Export(ref p);
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
 
-         Assert.IsTrue(CheckForSchema( script, "dbo" , "PROCEDURE", ""    , 0,   49,     0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "PROCEDURE", ""    , 0,   48,     0, out msg), msg);
          Assert.IsTrue(CheckForSchema( script, "dbo" , "FUNCTION" , ""    , 0,   21,     0, out msg), msg);
          Assert.IsTrue(CheckForSchema( script, "dbo" , "TABLE"    , ""    , 0,    0,     0, out msg), msg); // 3 tables for drop or creat - 0 for alter
-         Assert.IsTrue(CheckForSchema( script, "dbo" , "VIEW"     , ""    , 0,   20,     0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "VIEW"     , ""    , 0,   15,     0, out msg), msg);
          Assert.IsTrue(CheckForSchema( script, "dbo" , "DATATYPE" , ""    , 0,    0,     0, out msg), msg);
 
          Assert.IsNotNull(script, $"export script not defined");
          Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
-         Assert.IsTrue(CheckForSchema( script, "test", "PROCEDURE", ""    , 0,  48,  0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "test", "PROCEDURE", ""    , 0,  47,  0, out msg), msg);
          Assert.IsTrue(CheckForSchema( script, "test", "FUNCTION" , ""    , 0,   0,  0, out msg), msg);
          Assert.IsTrue(CheckForSchema( script, "test", "TABLE"    , ""    , 0,   0,  0, out msg), msg);
          Assert.IsTrue(CheckForSchema( script, "test", "VIEW"     , ""    , 0,   0,  0, out msg), msg);
@@ -533,7 +618,8 @@ namespace RSS.Test
       public void ExportProceduresDropTest()
       {
          LogS();
-         DbScripter sc = new DbScripter();
+          string msg;
+        DbScripter sc = new DbScripter();
 
          Params p = Params.PopParams
          (
@@ -546,10 +632,9 @@ namespace RSS.Test
             ,requiredTypes    : null
          );
 
-         var script = sc.Export(ref p);
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
          Assert.IsNotNull(script, $"export script not defined");
          Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
-         string msg;
 
          Assert.IsTrue(ChkContains(script, @"^(DROP PROCEDURE \[dbo\].*)",   40,  out msg), msg);  // dbo   : 39/39
          Assert.IsTrue(ChkContains(script, @"^(DROP PROCEDURE \[test\].*)",  37 , out msg), msg);  // test  : 45
@@ -563,6 +648,7 @@ namespace RSS.Test
       public void ExportProceduresCreateTest()
       {
          LogS();
+         string msg;
          DbScripter sc = new DbScripter();
 
          Params p = Params.PopParams
@@ -576,9 +662,8 @@ namespace RSS.Test
             ,requiredTypes    : "P"
          );
 
-         Console.WriteLine(p);
-         var script = sc.Export(ref p);
-         string msg;
+         Log(p);
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
          Assert.IsNotNull(script, "Null script");
          Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE.*)",           134, out msg), msg);
          Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[dbo\].*)",   40 , out msg), msg);
@@ -591,6 +676,7 @@ namespace RSS.Test
       public void ExportFunctionsTest()
       {
          LogS();
+         string msg;
          DbScripter sc = new DbScripter();
 
          Params p = Params.PopParams
@@ -604,8 +690,7 @@ namespace RSS.Test
             ,requiredTypes    : "F"
          );
 
-         var script = sc.Export(ref p);
-         string msg;
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
          Assert.IsNotNull(script, "Null script");
          Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION.*)",           57, out msg), msg);
          Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION \[dbo\].*)",   20, out msg), msg);
@@ -619,6 +704,7 @@ namespace RSS.Test
       public void ExportDatabaseTest()
       {
          LogS();
+         string msg;
          DbScripter sc = new DbScripter();
 
          Params p = Params.PopParams
@@ -632,13 +718,13 @@ namespace RSS.Test
             ,requiredTypes    : null
          );
 
-         var script = sc.Export(ref p);
-         Assert.IsTrue(ChkContains(script, @"^(CREATE Database.*)", 1, out var msg), msg);
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE Database.*)", 1, out msg), msg);
          LogL();
       }
 
       [TestMethod]
-      public void ExportSchemasCreate1Test()
+      public void ExportSchemas_Create_cvd_1_tst_Test()
       {
          LogS();
          string msg;
@@ -652,6 +738,7 @@ namespace RSS.Test
          (
              name             : "Count1CrtSchemaTest Params"
             ,prms             : CovidBaseParams
+            ,databaseName     :  "Covid_T1"
             ,exportScriptPath : ScriptFile
             ,sqlType          : SqlTypeEnum.Schema
             ,createMode       : CreateModeEnum.Create
@@ -659,7 +746,7 @@ namespace RSS.Test
             ,requiredTypes    : null
          );
 
-         var script = sc.Export(ref p);
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
 
          Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[dbo\].*)"      , 0 , out msg), msg);
          Assert.IsTrue(ChkContains(script, @"^([ \t]*EXEC[ \t]+tSQLt\.NewTestClass[ \t]+'test')", 1 , out msg), msg);
@@ -669,8 +756,48 @@ namespace RSS.Test
          LogL();
       }
 
+
+      // DependencyWalker.DiscoverDependencies This can fail in MS code if there is more than 1 reference to a an unresolved item like a missing stored procedure
+      // as was the case in ut / when commonly used sp name was changed and not all references were updated
+      // {"Item has already been added. Key in dictionary:
+      // 'Server[@Name='DESKTOP-UAULS0U\\SQLEXPRESS']/Database[@Name='ut']
+      // /UnresolvedEntity[@Name='sp_tst_hlpr_chk' and @Schema='test']'
+      // Key being added: 'Server[@Name='DESKTOP-UAULS0U\\SQLEXPRESS']/Database[@Name='ut']/UnresolvedEntity[@Name='sp_tst_hlpr_chk' and @Schema='test']'"}
       [TestMethod]
-      public void ExportSchemasAlter2Test()
+      public void ExportSchemas_Create_ut_1_tst_Test()
+      {
+         LogS();
+         string msg;
+         DbScripter sc = new DbScripter();
+
+         // Exception thrown opening server twice: 
+         // Microsoft.Data.SqlClient.resources, Version=2.0.20168.4, Culture=en-GB, PublicKeyToken=23ec7fc2d6eaa4a5' or one of its dependencies. 
+         // The system cannot find the file specified."
+
+         Params p = Params.PopParams
+         (
+             name             : "Count1CrtSchemaTest Params"
+            ,prms             : CovidBaseParams
+            ,databaseName     : "ut"
+            ,exportScriptPath : ScriptFile
+            ,sqlType          : SqlTypeEnum.Schema
+            ,createMode       : CreateModeEnum.Create
+            ,requiredSchemas  : "{test}" // should handle more than 1 schema and crappy formatting
+            ,requiredTypes    : null
+         );
+
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
+
+         Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[dbo\].*)"      , 0 , out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^([ \t]*EXEC[ \t]+tSQLt\.NewTestClass[ \t]+'test')", 1 , out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE.*)",                   1 , out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE.*)",              100, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE FUNCTION.*)",               29 , out msg), msg);
+         LogL();
+      }
+
+      [TestMethod]
+      public void ExportSchemas_Alter_2_cvdT1_dbo_tst_Test()
       {
          LogS();
          string msg;
@@ -678,7 +805,7 @@ namespace RSS.Test
 
          Params p = Params.PopParams
          (
-             name             : "ExportSchemasAlter2 Params"
+             name             : "ExportSchemas_Alter_2_cvdT1_dbo_tst Params"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
             ,sqlType          : SqlTypeEnum.Schema
@@ -687,7 +814,7 @@ namespace RSS.Test
             ,requiredTypes    : null
          );
 
-         var script = sc.Export(ref p);
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
 
          // Alter schema should not create or drop the schema - it merely alters the child entities
          Assert.IsTrue(ChkContains(script, @"^(EXEC[ \t\[]+tSQLt.*NewTestClass 'test';)",       0 , out msg), msg);
@@ -747,7 +874,7 @@ namespace RSS.Test
       {
          cmd = cmd.ToUpper();
          ty = ty.ToUpper();
-         string s = $@"^({cmd}[ \t]+{ty}[ \t\[]+{schema}[ \t\]]+\.{optional}.*)";
+         string s = $@"^[ \t]*({cmd}[ \t]+{ty}[ \t\[]+{schema}[ \t\]]+\.{optional}.*)";
          return s;
       }
 
@@ -755,7 +882,7 @@ namespace RSS.Test
        Expect a script generated that will drop 1 or more schema and its children in dependency order
        */
       [TestMethod]
-      public void ExportSchemasDrop1Test()
+      public void ExportSchemas_Drop_1_tst_Test()
       {
          LogS();
          DbScripter sc = new DbScripter();
@@ -774,7 +901,7 @@ namespace RSS.Test
 
          Logger.Log($"params: \r\n {p}");
          
-         var script = sc.Export(ref p);
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
 
          Assert.IsTrue(ChkContains(script, @"^(DROP TABLE.*)",          3 , out msg), msg);
          Assert.IsTrue(ChkContains(script, @"^(DROP PROCEDURE.*)",      37, out msg), msg);
@@ -790,6 +917,7 @@ namespace RSS.Test
       public void ExportFunctionsCreateTest()
       {
          LogS();
+         string msg;
          DbScripter sc = new DbScripter();
 
          Params p = Params.PopParams
@@ -805,8 +933,8 @@ namespace RSS.Test
             ,isExprtngSchema  : true
          );
 
-         var script = sc.Export(ref p);
-         Assert.IsTrue(ChkContains(script, @"^(CREATE Function.*)", 20, out var msg), msg);
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE Function.*)", 20, out msg), msg);
          LogL();
       }
 
@@ -814,6 +942,7 @@ namespace RSS.Test
       public void ExportFunctionsDropTest()
       {
          LogS();
+         string msg;
          DbScripter sc = new DbScripter();
 
          Params p = Params.PopParams
@@ -828,8 +957,8 @@ namespace RSS.Test
             ,isExprtngSchema  : true
          );
 
-         var script = sc.Export(ref p);
-         Assert.IsTrue(ChkContains(script, @"^(DROP Function.*)", 20, out var msg), msg);
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(DROP Function.*)", 20, out msg), msg);
          LogL();
       }
 
@@ -839,6 +968,7 @@ namespace RSS.Test
       {
          LogS();
          DbScripter sc = new DbScripter();
+         string msg;
 
          Params p = Params.PopParams(
              name             : "Count1CrtSchemaTest Params"
@@ -850,8 +980,7 @@ namespace RSS.Test
             ,requiredTypes    : "t"              // this is overridden in Export schema as it exports all the child objects
             );
 
-         var script = sc.Export(ref p);
-         string msg;
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
          Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[dbo\]\..*)"     , 21, out msg), msg);
          Assert.IsTrue(ChkContains(script, @"^(CREATE TABLE \[test\]\..*)"    ,  3, out msg), msg);
          LogL();
@@ -864,6 +993,7 @@ namespace RSS.Test
       public void InitTableExportTest()
       {
          LogS();
+         string msg = "";
          // PRE 1: P is valid
          // POST 1: if exporting tables dont specify alter - or the Microsoft scripter will silently fail to emit the script
          Params p = Params.PopParams( 
@@ -875,17 +1005,17 @@ namespace RSS.Test
               );
 
          // Create and initise the scripter
-         var sc   = new DbScripterTestable(p);
+         var sc   = new DbScripterTestable();
+         Assert.IsTrue(sc.Init(p, out msg), msg);
          var orig = Utils.ShallowClone( sc.ScriptOptions);
-         var msg  = "";
 
          // Run the rtn
          var so = sc.InitTableExport();
          Assert.IsFalse(so.ScriptForAlter);
          Assert.IsFalse(so.ScriptForCreateOrAlter);
          Assert.IsNotNull(orig);
-         Logger.LogDirect($"orig:\r\n{sc.OptionsToString(orig)}");
-         Logger.LogDirect($"sc.ScriptOptions:\r\n{sc.OptionsToString(sc?.ScriptOptions )}");
+         LogDirect($"orig:\r\n{sc.OptionsToString(orig)}");
+         LogDirect($"sc.ScriptOptions:\r\n{sc.OptionsToString(sc?.ScriptOptions )}");
          Assert.IsTrue(sc?.OptionEquals(orig, sc?.ScriptOptions ?? new(), out msg) ?? false, msg);
          LogL();
       }
@@ -898,6 +1028,7 @@ namespace RSS.Test
       public void InitTableExportTestEx()
       {
          LogS();
+         string msg;
          // PRE 1: P is valid
          // POST 1: if exporting tables dont specify alter - or the Microsoft scripter will silently fail to emit the script
          Params p = Params.PopParams( 
@@ -909,7 +1040,8 @@ namespace RSS.Test
               );
 
          // Create and initise the scripter
-         var sc = new DbScripterTestable(p);
+         var sc = new DbScripterTestable();
+          Assert.IsTrue(sc.Init(p, out msg), msg);
          // Run the rtn
          var so = sc.InitTableExport();
          LogL();
@@ -932,6 +1064,7 @@ namespace RSS.Test
       public void InitScriptingOptionsTestExpEx()
       {
          LogS();
+         string msg;
          // PRE 1: P is valid
          // POST 1: if exporting tables dont specify alter - or the Microsoft scripter will silently fail to emit the script
          Params p = Params.PopParams( 
@@ -942,7 +1075,8 @@ namespace RSS.Test
                ,requiredSchemas  : "tEst,tSqlt"
               );
        
-         var sc = new DbScripterTestable(p);
+         var sc = new DbScripterTestable();
+         Assert.IsTrue(sc.Init(p, out msg), msg);
          LogL();
       }
 
@@ -960,7 +1094,8 @@ namespace RSS.Test
                ,requiredSchemas  : "tEst,tSqlt"
               );
        
-         var sc = new DbScripterTestable(p);
+         var sc = new DbScripterTestable();
+         Assert.IsTrue(sc.Init(p, out var msg), msg);
          LogL();
       }
 
@@ -969,14 +1104,15 @@ namespace RSS.Test
       {
          LogS();
          Params p = Params.PopParams( 
-                prms             :            CovidBaseParams
-               ,exportScriptPath :@"C:\temp\MapTypeToSqlTypeTest.sql"
+                prms             : CovidBaseParams
+               ,exportScriptPath : @"C:\temp\MapTypeToSqlTypeTest.sql"
                ,createMode       : CreateModeEnum.Create
                ,sqlType          : SqlTypeEnum.Procedure
                ,requiredSchemas  : "tEst,tSqlt"
               );
        
-         var sc = new DbScripterTestable(p);
+         var sc = new DbScripterTestable();
+         Assert.IsTrue(sc.Init(p, out var msg), msg);
          Assert.AreEqual(SqlTypeEnum.Database , DbScripterTestable.MapTypeToSqlType(sc?.Database));
 
          Assert.AreEqual(SqlTypeEnum.Function , DbScripterTestable.MapTypeToSqlType(new UserDefinedFunction()));
@@ -998,11 +1134,12 @@ namespace RSS.Test
                    prms             : CovidBaseParams
                   ,exportScriptPath : @"C:\temp\MapTypeToSqlTypeTestUnknownTypeTest.sql"
                   ,sqlType          : SqlTypeEnum.Schema
-                  ,createMode       :  CreateModeEnum.Create
+                  ,createMode       : CreateModeEnum.Create
                   ,requiredSchemas  : "tEst,tSqlt"
                  );
        
-            var sc = new DbScripter(p);
+            var sc = new DbScripterTestable();
+            Assert.IsTrue( sc.Init(p, out var msg), msg);
             // expect throw here
             IgnoreThisThrow = true;
             var unexpected = DbScripterTestable.MapTypeToSqlType(new UserDefinedDataType(sc.Database, "unexpected", "dbo"));
@@ -1021,9 +1158,10 @@ namespace RSS.Test
 
 
      [TestMethod]
-      public void ExportSchemasCreate2Test()
+      public void ExportSchemas_Create_2_cvdT1_dbo_tst_Test()
       {
          LogS();
+         string msg;
          DbScripter sc = new DbScripter();
 
          Params p = Params.PopParams(
@@ -1037,9 +1175,9 @@ namespace RSS.Test
             ,createMode       : CreateModeEnum.Create
             );
 
-         var script = sc.Export(ref p);
-         Assert.IsTrue(ChkContains(script, @"^(CREATE SCHEMA.*)"                  , 1, out var msg), msg);
-         Assert.IsTrue(ChkContains(script, @"^(EXEC tSQLt\.NewTestClass 'test';)" , 1, out     msg), msg);
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(CREATE SCHEMA.*)"                  , 1, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^(EXEC tSQLt\.NewTestClass 'test';)" , 1, out msg), msg);
          LogL();
       }
 
@@ -1091,11 +1229,7 @@ namespace RSS.Test
       public override void TestCleanup_()
       {
          LogS();
-         var res = TestContext?.CurrentTestOutcome ?? UnitTestOutcome.Unknown;
-
          base.TestCleanup_();
-         //DisplayLogAfterTestFailure    = false;
-         //DisplayScriptAfterTestFailure = false;
          LogL();
       }
 

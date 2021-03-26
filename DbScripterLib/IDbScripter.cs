@@ -6,7 +6,7 @@ namespace DbScripterLibNS
 {
    public interface IDbScripter
    { 
-      string? Export( ref Params p);
+      bool Export( ref Params p, out string script, out string msg);
       string GetTimestamp();
    }
 }

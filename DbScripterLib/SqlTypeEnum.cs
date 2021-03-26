@@ -1,40 +1,35 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿
 using RSS.Common;
 
 namespace DbScripterLibNS
 {
+   /// <summary>
+   /// FUNCTION,PROCEDURE,SCHEMA,TABLE,TABLE TYPE,VIEW
+   /// </summary>
    public enum SqlTypeEnum
    {
       [EnumAlias("Undefined")]
       Undefined = 0,
 
-      [EnumAlias("Database")]
+      [EnumAlias("Database"  , "D")]
       Database,
 
- //     [EnumAlias("FKey")]
- //     FKey,
-
-      [EnumAlias("Function")]
+      [EnumAlias("Function"  , "F")]
       Function,
 
-      [EnumAlias("Procedure")]
+      [EnumAlias("Procedure" , "P")]
       Procedure,
 
-      [EnumAlias("Schema")]
+      [EnumAlias("Schema"    , "S")]
       Schema,
 
-      [EnumAlias("Table")]
+      [EnumAlias("Table"     , "T")]
       Table,
 
-      // Key2: TTy
-      [EnumAlias("TableType")]
+      [EnumAlias("Table Type", "TTy")]
       TableType,
 
-      [EnumAlias("View")]
+      [EnumAlias("View"      , "V")]
       View
    }
 }

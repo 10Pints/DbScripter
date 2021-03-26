@@ -24,20 +24,21 @@ namespace RSS.Test
          set => DbScripter.DefaultScriptDir = value;
       }
 
-      public DbScripterTestable(Params? p = null)
-         : base(p)
+      public DbScripterTestable()
+         : base()
       { 
       }
 
-      public new StringBuilder Init( Params? p, bool append = false)
+      public new bool Init( Params p, out string msg, StringBuilder? sb = null, bool append = false)
       {
-         return base.Init(p, append);
+         return base.Init(p, out msg, sb, append);
       }
 
       public new string HandleExportFilePath(string exportFilePath, bool addTimestamp)
       {
          return base.HandleExportFilePath(exportFilePath, addTimestamp);
       }
+
       public override string GetTimestamp()
       { 
          return DateTime.Now.ToString("210101-0000");
@@ -47,12 +48,7 @@ namespace RSS.Test
       { 
          base.ClearState();
       }
-/*
-      public new Server? CreateAndOpenServer( string serverName, string instance)// string databaseName )
-      { 
-         return base.CreateAndOpenServer(serverName, instance);//, databaseName);
-      }
-*/
+
       public new void InitWriter()
       {
          base.InitWriter();
@@ -91,9 +87,9 @@ namespace RSS.Test
          return DbScripter.MapTypeToSqlType(smo);
       }
 
-      public new void InitScriptingOptions()
+      public new void InitScriptingOptions(out string msg)
       {
-         base.InitScriptingOptions();
+         base.InitScriptingOptions( out msg);
       }
 
       public new ScriptingOptions InitTableExport()

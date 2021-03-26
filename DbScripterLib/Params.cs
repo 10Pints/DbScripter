@@ -117,7 +117,14 @@ namespace DbScripterLibNS
       public string? NewSchemaName
       {
          get => _newSchemaName;
-         set =>_newSchemaName = value;
+         set => _newSchemaName = value;
+      }
+
+      private bool? _displayScript = null;
+      public bool? DisplayScript
+      {
+         get => _displayScript;
+         set => _displayScript = value;
       }
 
       private List<string> _requiredSchemas = new();
@@ -197,9 +204,9 @@ namespace DbScripterLibNS
       /// 
       /// </summary>
       /// <returns></returns>
-      public bool IsValid(out string? msg)
+      public bool IsValid(out string msg)
       {
-         msg = null;
+         msg = "";
          bool ret = false;
 
          // -------------------------
@@ -344,7 +351,7 @@ namespace DbScripterLibNS
 
       public override string ToString()
       {
-         string Line = new string('-', 200);
+         string Line = new string('-', 80);
          StringBuilder s = new StringBuilder();
 
          s.Append("\r\n");
@@ -478,6 +485,7 @@ namespace DbScripterLibNS
          IsExprtngTTys     = false;
          IsExprtngVws      = false;
          LogFile           = null;
+         DisplayScript        = null;
       }
 
       /// <summary>
@@ -499,47 +507,26 @@ namespace DbScripterLibNS
       /// </summary>
       /// <param name="rs">like:  'FTPV'</param>
       /// <returns></returns>
-      public List<SqlTypeEnum>? ParseRequiredTypes( string rs )
+      public List<SqlTypeEnum>? ParseRequiredTypes( string? rts )
       {
         LogS();
 
-        if(string.IsNullOrEmpty(rs))
+        if(string.IsNullOrEmpty(rts))
             return null;
 
-         var validTypes  = "F,P,S,T,TTY,V".Split(',').ToList();
-         var validTypes2 = "FUNCTION,PROCEDURE,SCHEMA,TABLE,TABLE TYPE,VIEW".Split(',').ToList();
-         rs = rs.ToUpper();
+         rts = rts.ToUpper();
 
          // trim and remove surrounding {}
-         rs = rs.Trim(new[] { ' ', '{', '}' });
-         var reqTypes = rs.Split(',');
+         rts = rts.Trim(new[] { ' ', '{', '}' });
+         var reqTypes = rts.Split(',');
 
          List<SqlTypeEnum> list = new List<SqlTypeEnum>();
-         int ndx = -1;
 
-         // get the types, chk if valid
+         // get the types, throw if not found
          foreach (var item in reqTypes)
-         {
-            ndx = validTypes.IndexOf(item);
+            list.Add(item.FindEnumByAlias2Exact<SqlTypeEnum>( true));
 
-            if(ndx == -1)
-               ndx = validTypes2.IndexOf(item);
-
-            switch(ndx)
-            {
-            case 0: list.Add(SqlTypeEnum.Function) ; break;
-            case 1: list.Add(SqlTypeEnum.Procedure); break;
-            case 2: list.Add(SqlTypeEnum.Schema)   ; break;
-            case 3: list.Add(SqlTypeEnum.Table)    ; break;
-            case 4: list.Add(SqlTypeEnum.TableType); break;
-            case 5: list.Add(SqlTypeEnum.View)     ; break;
-
-            default:
-               throw new ArgumentException($"Unrecognised SQL type {item}");
-            }
-         }
-
-         LogL();
+         LogL($"Found {list.Count} items");
          return list;
       }
 
@@ -813,11 +800,12 @@ namespace DbScripterLibNS
          ExportScriptPath  = p.ExportScriptPath;
          NewSchemaName     = p.NewSchemaName;
          RequiredSchemas   = p.RequiredSchemas;
-         TargetChildTypes     = p.TargetChildTypes;
-         RootType           = p.RootType;
+         TargetChildTypes  = p.TargetChildTypes;
+         RootType          = p.RootType;
          CreateMode        = p.CreateMode;
          ScriptUseDb       = p.ScriptUseDb;
          AddTimestamp      = p.AddTimestamp;
+         DisplayScript        = p.DisplayScript;
          LogFile           = p.LogFile;
          IsExprtngData     = p.IsExprtngData;
          IsExprtngDb       = p.IsExprtngDb;
