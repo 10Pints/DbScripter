@@ -46,9 +46,12 @@ namespace DbScripterLibNS
       #region IDbScripter Impl
       /// <summary>
       /// Description: Main Export entry point
-      /// 
-      /// 
-      /// When exporting a schema we should be able to specift which types are exported
+      ///
+      /// DESIGN
+      ///   Export Requirements
+      ///   Export Activity Diagram
+      ///
+      /// When exporting a schema we should be able to specify which types are exported
       /// the default should be all types
       /// but if we define a set of types then that should take precidence
       ///
@@ -67,6 +70,28 @@ namespace DbScripterLibNS
       /// <param name="writerFilePath"></param>
       /// <param name="staticDataTables">can configure the static data tables now</param>
       /// <returns></returns>
+      ///
+      /// Tests:
+      ///   Count_Crt_Export_Tables_only_Schemas_dbo_tst_Test
+      ///   ExportSchemas_Alter_1_ut_dbo_Test
+      ///   ExportSchemas_Alter_2_ut_dbo_tst_Test
+      ///   ExportSchemas_Alter_1_ut_tst_Test
+      ///   ExportSchemas_Alter_1_cvdT1_dbo_Test
+      ///   ExportSchemas_Alter_1_cvdT1_1_test_Test
+      ///   ExportSchemas_Alter_1_cvd_dbo_Test
+      ///   ExportSchemas_Alter_2_cvd_dbo_tst_Test
+      ///   ExportProceduresDropTest
+      ///   ExportProceduresDropTest
+      ///   ExportFunctionsTest
+      ///   ExportDatabaseTest
+      ///   ExportSchemas_Create_cvd_1_tst_Test
+      ///   ExportSchemas_Create_ut_1_tst_Test
+      ///   ExportSchemas_Alter_2_cvdT1_dbo_tst_Test
+      ///   ExportSchemas_Drop_1_tst_Test
+      ///   ExportFunctionsCreateTest
+      ///   ExportFunctionsDropTest
+      ///   Count1CrtSTableTestBothExpSchemaAndExpDataNotDefinedTest
+      ///   ExportSchemas_Create_2_cvdT1_dbo_tst_Test
       public bool Export( ref Params p, out string script, out string msg)
       {
          LogS();
@@ -94,7 +119,7 @@ namespace DbScripterLibNS
                case SqlTypeEnum.Procedure : ret = ExportProcedures(sb, out script, out msg); break;
                case SqlTypeEnum.Table     : ret = ExportTables    (sb, out script, out msg); break;
 
-               case SqlTypeEnum.Undefined:  msg = "RootType must be defined"; break;
+//               case SqlTypeEnum.Undefined:  msg = "RootType must be defined"; break;
                default:  msg = $"{p.RootType.GetAlias()} notimplemented"; ;break;
                }
             
@@ -106,7 +131,7 @@ namespace DbScripterLibNS
                ScriptLine($"/*\r\n{sb.ToString()}\r\n*/");
 
                if(!string.IsNullOrEmpty(msg))
-                  ScriptLine($"/*\r\nError : {msg}\r\n*/");
+                  ScriptLine($"/*\r\n {msg}\r\n*/");
 
                // Return updated parameters to the client
                p.CopyFrom(P);
@@ -114,25 +139,138 @@ namespace DbScripterLibNS
          }
          catch(Exception e)
          {
-            Logger.LogException(e);
+            LogException(e);
          }
          finally
          {
             Writer?.Close();
          }
 
-         Logger.LogL($"Ret: {ret}");
+         LogL($"Ret: {ret}");
          return ret;
       }
 
-      public virtual string GetTimestamp()
-      { 
-         return DateTime.Now.ToString("yyMMdd-HHmm");
+      /// <summary>
+      /// This will script all required schemas
+      /// create or drop the schemas and script in dependnency order
+      /// if altering dont create the schemas
+      /// 
+      /// When exporting a schema we should be able to specift which types are exported
+      /// the default should be all types
+      /// but if we define a set of types then that should take precidence
+      /// PRE: Init called
+      /// 
+      /// Design:
+      ///   Model.Use Case Model.UC01: Export schema.UC01: Export schema_ActivityGraph.UC01: Export schema_ActivityGraph
+      /// 
+      /// POST: 
+      /// sb
+      /// </summary>
+      public bool ExportSchemas(StringBuilder sb, out string script, out string msg)
+      {
+         LogC("DbScripter.ExportSchemas starting...");
+         bool   ret  = false;
+         string key  = "";
+         string op   = P.CreateMode.GetAlias();
+
+         try
+         {
+            do
+            {
+               // Check IsValid
+               LogC("DbScripter.Export Stage 1: init...");
+               Precondition(IsValid(out msg), msg);
+
+               // Specialise the Options config for this op
+               ExportSchemaScriptInit();
+               List<Schema> schemas = new List<Schema>();
+
+               // Add the required Schema smo objects to schema obj list
+               foreach( var schemaName in P.RequiredSchemas)
+               {
+                  LogDirect($"Adding {schemaName} to the schema list");
+                  schemas.Add(Database.Schemas[schemaName]);
+               }
+
+               // Assertion we have a list of children
+               if(P.ScriptUseDb ?? false)
+                  ScriptUse(sb);
+
+               // If creating then create the schemas now
+               // test schemas need to be registerd with the tSQLt framework
+               // if altering dont create the schemas
+               if(P.CreateMode == CreateModeEnum.Create)
+                  ScriptCreateSchemas(schemas, sb);
+
+               LogC("DbScripter.Export Stage 3: Get Schema Dependencies Walk...");
+
+               // Get the schema dependency walk
+               GetSchemaDependencyWalk( P.RequiredSchemas, (P.CreateMode == CreateModeEnum.Create || P.CreateMode == CreateModeEnum.Alter), out List<Urn> walk);
+
+               int i = 0;
+               msg = $"Stage 4: scripting {walk.Count} schema objects";
+               LogC(msg);
+
+               // Script each smo item in walk order
+               foreach(Urn urn in walk)
+                  ScriptChildItem(sb, ++i, urn);
+
+               // If dropping then drop schemas now
+               if(P.CreateMode == CreateModeEnum.Drop)
+                  ScriptDropSchemas( schemas, sb);
+
+               ret = true;
+               LogDirect($"Stage 5: all completed successfully");
+            }
+            while(false);
+         }
+         catch(Exception e)
+         {
+            msg = e.Message;
+            LogC($"DbScripter.Export caught exception {e}");
+            LogException(e, $"key: {key}");
+         }
+
+         LogC("DbScripter.Export completed");
+         script = sb.ToString();
+         LogL($"ret: {ret}");
+         return ret;
       }
+
+      protected void ScriptCreateSchemas(List<Schema> schemas, StringBuilder sb)
+      {
+         // If creating then create the schemas now
+         // test schemas need to be registerd with the tSQLt framework
+         // if altering dont create the schemas
+         LogC("DbScripter.Export Stage 2: scripting schema create sql...");
+
+         foreach(var schema in schemas)
+         {
+            if(IsTestSchema(schema.Name))
+               ScriptLine( $"EXEC tSQLt.NewTestClass '{schema.Name}';", sb);
+            else
+               ExportSchemaStatement(schema, sb);
+         }
+      }
+
+      protected void ScriptDropSchemas(List<Schema> schemas, StringBuilder sb)
+      {
+         LogDirect($"Stage 5: scripting drop schema sql");
+         LogC("DbScripter.Export Stage 5: scripting drop schema sql...");
+
+         foreach(var schema in schemas)
+         {
+            if(IsTestSchema(schema.Name))
+               ScriptLine( $"EXEC tSQLt.DropClass '{schema.Name}';", sb);
+            else
+               ExportSchemaStatement(schema, sb);
+         }
+      }
+
 
       public DbScripter(/*Params? p = null*/)
       {
-         Logger.LogS();
+         LogS();
          //Init(p);
       }
 
@@ -143,8 +281,6 @@ namespace DbScripterLibNS
       // Primary properties
       // are set by the constructor
       public Params P {get;set; } = new Params();
-      public static string DefaultLogFile {get; protected set;} = @"D:\Logs\DbScripter.log";
-      public static string DefaultScriptDir {get; protected set;} = @"D:\Dev\Repos\C#\Db\Scripts";
       public string ScriptFile{get; protected set;} = "";
       
 
@@ -168,6 +304,7 @@ namespace DbScripterLibNS
       #region scripter info cache
 
       // These properties are info caches for the scripted items
+      public SortedList<string, string> BadBin                 { get; protected set; } = new ();
       public SortedList<string, string> ExportedDatbases       { get; protected set; } = new ();
       public SortedList<string, string> ExportedSchemas        { get; protected set; } = new ();
       public SortedList<string, string> ExportedTables         { get; protected set; } = new ();
@@ -178,7 +315,7 @@ namespace DbScripterLibNS
 
       // dependency eval
       public SortedList<string, string> WantedItems            { get; protected set; } = new();
-      public SortedList<string, string> ConsisideredEntities   { get; protected set; } = new ();
+      public SortedList<string, string> ConsisderedEntities    { get; protected set; } = new ();
       public SortedList<string, string> DifferentDatabases     { get; protected set; } = new();
       public SortedList<string, string> DuplicateDependencies  { get; protected set; } = new();
       public SortedList<string, string> SystemObjects          { get; protected set; } = new();
@@ -189,6 +326,11 @@ namespace DbScripterLibNS
 
       #endregion properties
       #region    public methods
+
+      public virtual string GetTimestamp()
+      { 
+         return DateTime.Now.ToString("yyMMdd-HHmm");
+      }
 
       /// <summary>
       /// Initialize state, deletes the writerFilePath file if it exists
@@ -224,7 +366,7 @@ namespace DbScripterLibNS
       /// <returns>true if successful, false and msg populated otherwise</returns>
       protected bool Init( Params p, out string msg, StringBuilder? sb = null, bool append = false)
       {
-         Logger.LogS();
+         LogS();
          bool ret = false;
          msg = "";
 
@@ -237,77 +379,30 @@ namespace DbScripterLibNS
             {
                // ---------------------------------------------------------------
                // Validate Preconditions
-               // ---------------------------------------------------------------
-               // PRE: the following export parameters must be defined:
-               // PRE 1: the params struct must not be null
-               // PRE 2: Sql Type
-               // PRE 3: Create   Mode
-               // PRE 4: Server   Name
-               // PRE 5: Instance Name
-               var defMsg = "must be specified";
-
-               if(p == null)
-               {
-                  msg = $"Params arg {defMsg}";          // PRE 1
+               if(!ValidateInit(p, out msg))
                   break;
-               }
-
-               if((p.RootType   ?? SqlTypeEnum   .Undefined) == SqlTypeEnum.Undefined)
-               {
-                  msg = $"RootType {defMsg}";            // PRE 2
-                  break;
-               }
-               if((p.CreateMode ?? CreateModeEnum.Undefined) == CreateModeEnum.Undefined)
-               {
-                  msg = $"CreateMode {defMsg}";          // PRE 3
-                  break;
-               }
-
-               if(string.IsNullOrEmpty(p.ServerName))
-               {
-                  msg =$"server {defMsg}";               // PRE 4
-                  break;
-               }
-
-               if(string.IsNullOrEmpty(p.InstanceName))
-               {
-                  msg = $"instance {defMsg}";            // PRE 5
-                  break;
-               }
 
                // -----------------------------------------
                // ASSERTION: Utils.Preconditions validated
                // -----------------------------------------
 
-               // First clear all
+               // ClearState if not appending
                if(!append)
                   ClearState();
 
-               P.PopFrom(p);      // 1: Initialise the initial state, SqlTypeEnum.Undefined will cause exception
-               Normalise(P);
-               P.TargetChildTypes = CorrectRequiredTypes(P.RootType ?? SqlTypeEnum.Undefined, P.CreateMode ?? CreateModeEnum.Undefined, P.TargetChildTypes);
+               // Initialise the initial state, SqlTypeEnum.Undefined will cause exception
+               P.PopFrom(p);
 
+               // Set the IsExporting flags based on the root type
                // Defaults:
-               if(string.IsNullOrEmpty(P.LogFile))
-                  P.LogFile = GetLogFileFromConfig();
-
-               if(string.IsNullOrEmpty(P.ExportScriptPath))
-                  P.ExportScriptPath = @$"{GetScriptDirFromConfig()}\{P.DatabaseName}_{GetTimestamp()}.sql";
-
-               // Add timespamp if required
-               if(P.AddTimestamp ?? false)
-               { 
-                  // change <path><fiemname>.<ext> to <path><fiemname>_<ts>.<ext>
-                  var x = P.ExportScriptPath;
-                  var tmp = $@"{Path.GetDirectoryName(x)}\{Path.GetFileNameWithoutExtension(x)}_{GetTimestamp()}{Path.GetExtension(x)}";
-                  P.ExportScriptPath = tmp;
-               }
-
-               //   2: server and makes a connection, throws exception otherwise
-               if(!InitServer(P.ServerName ?? "", P.InstanceName ?? "", out msg))
+               if(!P.Normalise( out msg))
                   break;
 
-               if(!InitDatabase(P.DatabaseName, out msg))
+               //   2: server and makes a connection, throws exception otherwise
+               if(!InitServer(P.Server ?? "", P.Instance ?? "", out msg))
+                  break;
+
+               if(!InitDatabase(P.Database, out msg))
                   break;
 
                if(!InitScriptingOptions( out msg))
@@ -317,7 +412,9 @@ namespace DbScripterLibNS
                // NOTE: can continue if not all initialised so long as the final init is performed before any write op
                // PRE:  P pop with export path
                // POST: Writer open
-               InitWriter();
+               if(!InitWriter(out msg))
+                  break;
+
                ScriptLine($"/*\r\n\r\nLog    file {Logger.LogFile}\r\n", sb);
                ScriptLine($"\r\n\r\nScript file {ScriptFile}\r\n", sb);
                ScriptLine($"\r\nParameters:", sb);
@@ -351,171 +448,82 @@ namespace DbScripterLibNS
          if(!ret)
             Postcondition(msg.Length > 0, "if there is an error then there must be a suitable error message");
 
-         Logger.LogL($"ret: {ret}");
+         LogL($"ret: {ret}");
          return ret;
       }
 
       /// <summary>
-      /// Description:
-      /// Makes params secondary state consistent 
-      /// with the primary (user set) state
-      /// especially the IsExporting flags
-      /// Based on the Root type
-      /// 
-      /// NB: if the value is already set then it is not altered
-      ///     this only updates the undefiend (null( state
+      /// Validation at the start of initialisation
+      /// The following parameters must be specified:
+      /// p, p.database
       /// </summary>
       /// <param name="p"></param>
-      protected static void Normalise( Params p)
+      /// <param name="msg"></param>
+      /// <returns></returns>
+      protected bool ValidateInit(Params p, out string msg)
       {
          LogS();
+         bool ret = false;
+         // ---------------------------------------------------------------
+         // Validate Preconditions
+         // ---------------------------------------------------------------
+         // PRE: the following export parameters must be defined:
+         // PRE 1: the params struct must not be null
+         // PRE 2: Sql Type
+         // PRE 3: Create   Mode
+         // PRE 4: Server   Name
+         // PRE 5: Instance Name
+         var defMsg  = "must be specified";
+         string msg2 = "";
+         msg         = "";
 
-         switch(p.RootType)
+         do
          {
-          case SqlTypeEnum.Database:
-            p.IsExprtngDb     ??= true;
-            p.IsExprtngSchema ??= false;
-            p.IsExprtngProcs  ??= false;
-            p.IsExprtngFns    ??= false;
-            p.IsExprtngVws    ??= false;
-            p.IsExprtngTbls   ??= false;
-            p.IsExprtngTTys   ??= false;
-            p.IsExprtngFKeys  ??= false;
-            p.IsExprtngData   ??= false;
-            break;
+            if(p == null)
+            {
+               msg2 = "Params arg";          // PRE 1
+               break;
+            }
 
-        case SqlTypeEnum.Schema:
-            p.IsExprtngDb     ??= false;
-            p.IsExprtngSchema ??= true;
-            p.IsExprtngProcs  ??= true;
-            p.IsExprtngFns    ??= true;
-            p.IsExprtngVws    ??= true;
-            p.IsExprtngTbls   ??= false;
-            p.IsExprtngTTys   ??= false;
-            p.IsExprtngFKeys  ??= false;
-            p.IsExprtngData   ??= false;
-            break;
+            if(p.Database == null)
+            {
+               msg2 = "database";            // PRE 2
+               break;
+            }
+/*
+            if((p.RootType   ?? SqlTypeEnum.Undefined) == SqlTypeEnum.Undefined)
+            {
+               msg2 = "RootType";            // PRE 2
+               break;
+            }
 
-         case SqlTypeEnum.Procedure:
-            p.IsExprtngDb     ??= false;
-            p.IsExprtngSchema ??= false;
-            p.IsExprtngProcs  ??= true;
-            p.IsExprtngFns    ??= false;
-            p.IsExprtngVws    ??= false;
-            p.IsExprtngTbls   ??= false;
-            p.IsExprtngTTys   ??= false;
-            p.IsExprtngFKeys  ??= false;
-            p.IsExprtngData   ??= false;
-            break;
+            if((p.CreateMode ?? CreateModeEnum.Undefined) == CreateModeEnum.Undefined)
+            {
+               msg2 = "CreateMode";          // PRE 3
+               break;
+            }
 
-         case SqlTypeEnum.Function:
-            p.IsExprtngDb     ??= false;
-            p.IsExprtngSchema ??= false;
-            p.IsExprtngProcs  ??= false;
-            p.IsExprtngFns    ??= true;
-            p.IsExprtngVws    ??= false;
-            p.IsExprtngTbls   ??= false;
-            p.IsExprtngTTys   ??= false;
-            p.IsExprtngFKeys  ??= false;
-            p.IsExprtngData   ??= false;
-            break;
+            if(string.IsNullOrEmpty(p.Server))
+            {
+               msg2 ="server";               // PRE 4
+               break;
+            }
 
-         case SqlTypeEnum.View:
-            p.IsExprtngDb     ??= false;
-            p.IsExprtngSchema ??= false;
-            p.IsExprtngProcs  ??= false;
-            p.IsExprtngFns    ??= false;
-            p.IsExprtngVws    ??= true;
-            p.IsExprtngTbls   ??= false;
-            p.IsExprtngTTys   ??= false;
-            p.IsExprtngFKeys  ??= false;
-            p.IsExprtngData   ??= false;
-            break;
+            if(string.IsNullOrEmpty(p.Instance))
+            {
+               msg2 = "instance";            // PRE 5
+               break;
+            }
+*/
+            ret = true;
+         } while(false);
 
-         case SqlTypeEnum.Table:
-            p.IsExprtngDb     ??= false;
-            p.IsExprtngSchema ??= false;
-            p.IsExprtngProcs  ??= false;
-            p.IsExprtngFns    ??= false;
-            p.IsExprtngVws    ??= false;
-            p.IsExprtngTbls   ??= true;
-            p.IsExprtngTTys   ??= false;
-            p.IsExprtngFKeys  ??= true;
-            p.IsExprtngData   ??= false;
-            break;
+         if(!ret)
+            msg = $"{msg2} {defMsg}";
 
-         case SqlTypeEnum.TableType:
-            p.IsExprtngDb     ??= false;
-            p.IsExprtngSchema ??= false;
-            p.IsExprtngProcs  ??= false;
-            p.IsExprtngFns    ??= false;
-            p.IsExprtngVws    ??= false;
-            p.IsExprtngTbls   ??= false;
-            p.IsExprtngTTys   ??= true;
-            p.IsExprtngFKeys  ??= false;
-            p.IsExprtngData   ??= false;
-            break;
-
-         default:
-            AssertFail($"Unrecognised export type: {p.RootType.GetAlias()}");
-            break;
-         }
-
-         p.ScriptUseDb        ??= true;
-         p.AddTimestamp       ??= false;
-         LogS();
+         LogL($"ret: {ret}");
+         return ret;
       }
-
-      /// <summary>
-      /// Description: returns the standard log file
-      /// use this when the Params config does not specify a Log
-      /// NOTE there is a similar requirement for Script Dir: GetScriptDirFromConfig()
-      ///
-      /// PRECONDITIONS:
-      ///   none
-      ///
-      /// POSTCONDITIONS:
-      ///   returns:
-      ///      if appconfig app settings contains the key: "Log File" then value
-      ///      else the DbScripter.DefaultLogFile property
-      ///
-      /// THROWS: none
-      /// METHOD:
-      ///   if appconfig app settings contains the key: "Log File" then return it
-      ///   else return the DbScripter.DefaultLogFile property
-      /// </summary>
-      /// <returns></returns>
-      protected static string GetLogFileFromConfig()
-      { 
-         //   if appconfig app settings contains the key: "Log File" then return it
-         //   else return the DbScripter.DefaultLogFile property
-         return ConfigurationManager.AppSettings.Get("Log File") ?? DefaultLogFile;
-      }
-
-      /// <summary>
-      /// Description: returns the standard Script Directory
-      /// use this when the Params config does not specify a Script Dir
-      /// NOTE there is a similar requirement for Script Dir: GetLogFileFromConfig()
-      ///
-      /// PRECONDITIONS:
-      ///   none
-      ///
-      /// POSTCONDITIONS:
-      ///   returns:
-      ///      if appconfig app settings contains the key: "Script Dir" then value
-      ///      else the DbScripter.DefaultScriptDir property
-      ///
-      /// THROWS: none
-      /// METHOD:
-      ///   if appconfig app settings contains the key: "Log File" then return it
-      ///   else return the DbScripter.DefaultLogFile property
-      /// </summary>
-      /// <returns></returns>
-      protected static string GetScriptDirFromConfig()
-      {
-         return ConfigurationManager.AppSettings.Get("Script Dir") ?? DefaultScriptDir;
-      }
-
       /// <summary>
       /// Required types depends on the export type
       /// For example if Exporting procedures then required types should be procedures only
@@ -524,7 +532,7 @@ namespace DbScripterLibNS
       /// If the export type is not schema or database then only the same 1 export type is required
       /// 
       /// PRECONDITIONS:
-      ///   PRE 1: required_type not SqlTypeEnum.Undefined
+      ///   PRE 1: root_type not SqlTypeEnum.Undefined
       ///
       /// POSTCONDITIONS:
       ///   POST 1: If the export type is schema then the following are required:
@@ -533,56 +541,79 @@ namespace DbScripterLibNS
       ///            if other mode: throw exception
       ///            
       ///   POST 2: If the export type is not schema or database then only the same 1 export type is required
+      /// <param name="rootType"></param>
+      /// <param name="createMode"></param>
+      /// <param name="specReqTypes">the user specified required types</param>
+      /// <param name="reqTypesOut">updated to be consistent with the other state</param>
       /// </summary>
-      protected static List<SqlTypeEnum> CorrectRequiredTypes( SqlTypeEnum required_type, CreateModeEnum createMode, List<SqlTypeEnum>? requiredTypesIn)
+      protected static bool CorrectRequiredTypes( SqlTypeEnum rootType, CreateModeEnum createMode, List<SqlTypeEnum>? specReqTypes, out List<SqlTypeEnum> reqTypesOut, out string msg)
       {
-         Logger.LogS($"required_type: {required_type.GetAlias()}, createMode: {createMode.GetAlias()}");
-         List<SqlTypeEnum> requiredTypesOut;
+         LogS($"required_type: {rootType.GetAlias()}, createMode: {createMode.GetAlias()}");
+         bool ret = false;
+         msg = "";
+         reqTypesOut = new();
 
-         // PRE 1: required_type not SqlTypeEnum.Undefined
-         Utils.Precondition(required_type != SqlTypeEnum.Undefined, $"SqlTypeEnum.Undefined is not allowed here");
-
-         switch(required_type)
+         do
          {
-         case SqlTypeEnum.Schema:
-            // set to all types not Db and schema
-            switch(createMode)
+            // Validate RootType and CreateMode are defined
+/*            if((rootType==SqlTypeEnum.Undefined))
             {
+               msg = "root type must be defined";
+               break;
+            }
+
+            if((createMode==CreateModeEnum.Undefined))
+            {
+               msg = "create mode must be defined";
+               break;
+            }
+*/
+            // Switch on root type
+            switch(rootType)
+            {
+            case SqlTypeEnum.Schema:
+               // Set to all types not Db and schema
+               switch(createMode)
+               {
                case CreateModeEnum.Create:
                case CreateModeEnum.Drop:
-                  requiredTypesOut = new List<SqlTypeEnum>() { SqlTypeEnum.Table, SqlTypeEnum.Function, SqlTypeEnum.Procedure, SqlTypeEnum.TableType, SqlTypeEnum.View};
+                  reqTypesOut = new List<SqlTypeEnum>() { SqlTypeEnum.Table, SqlTypeEnum.Function, SqlTypeEnum.Procedure, SqlTypeEnum.TableType, SqlTypeEnum.View};
+                  ret = true;
                   break;
 
                case CreateModeEnum.Alter:
-                  requiredTypesOut = new List<SqlTypeEnum>() { SqlTypeEnum.Function, SqlTypeEnum.Procedure, SqlTypeEnum.TableType, SqlTypeEnum.View};
+                  reqTypesOut = new List<SqlTypeEnum>() { SqlTypeEnum.Function, SqlTypeEnum.Procedure, SqlTypeEnum.TableType, SqlTypeEnum.View};
+                  ret = true;
                   break;
+               }
+               break;
 
-               default:
-                  throw new Exception($"CorrectRequiredTypes({createMode.GetAlias()}): Unhandled create mode");
+            default:
+               AssertFail("Only schema root nodes are supported");
+               // For all types not schema:
+               if((specReqTypes != null)  && (specReqTypes.Count == 1) && specReqTypes.Contains(rootType))
+                  reqTypesOut = specReqTypes;
+               else
+                  reqTypesOut = new List<SqlTypeEnum>() { rootType};
+
+               ret = true;
+               break;
             }
-            break;
-
-         default: 
-            // For all types not schema:
-            if((requiredTypesIn != null)  && (requiredTypesIn.Count == 1) && requiredTypesIn.Contains(required_type))
-               requiredTypesOut = requiredTypesIn;
-            else
-               requiredTypesOut = new List<SqlTypeEnum>() { required_type};
-            break;
-         }
+         } while(false);
 
          // POSTCONDITION chk:
          // POST 1: If the export type is schema and mode = create or drop then { Table, Function, Procedure, Table, TableType, View} are required
          // POST 2: If the export type is schema and mode = alter          then { Function, Procedure, Table, TableType, View}        are required
          // POST 3: If the export type is not schema or database then only the same 1 export type is required
-         Utils.Postcondition(
-            ((required_type == SqlTypeEnum.Schema) && (requiredTypesOut.Count == 5))  && ((createMode == CreateModeEnum.Create) || (createMode == CreateModeEnum.Drop )) || // POST 1
-            ((required_type == SqlTypeEnum.Schema) && (requiredTypesOut.Count == 4))  && (createMode == CreateModeEnum.Alter )  ||                                          // POST 2
-            ((required_type != SqlTypeEnum.Schema) && (requiredTypesOut.Count == 1))                                                                                        // POST 3
-            );
+         Postcondition
+         (
+            ((rootType == SqlTypeEnum.Schema) && (reqTypesOut.Count == 5))  && ((createMode == CreateModeEnum.Create) || (createMode == CreateModeEnum.Drop )) || // POST 1
+            ((rootType == SqlTypeEnum.Schema) && (reqTypesOut.Count == 4))  && ( createMode == CreateModeEnum.Alter ) ||                                          // POST 2
+            ((rootType != SqlTypeEnum.Schema) && (reqTypesOut.Count == 1))                                                                                        // POST 3
+         );
 
-         Logger.LogL();
-         return requiredTypesOut;
+         LogL($"ret: {ret}");
+         return ret;
       }
 
       /// <summary>
@@ -603,7 +634,7 @@ namespace DbScripterLibNS
       /// <param name="instanceName"></param>
       protected bool InitServer( string serverName, string instanceName, out string msg)
       {
-         Logger.LogS();
+         LogS();
          bool ret = false;
          msg = "";
 
@@ -665,7 +696,7 @@ namespace DbScripterLibNS
          }
          catch(Exception e)
          { 
-            Logger.LogException(e);
+            LogException(e);
             throw;
          }
 
@@ -673,7 +704,7 @@ namespace DbScripterLibNS
          if(!ret)
             Postcondition(msg.Length > 0, "if there is an error then there must be a suitable error message");
 
-         Logger.LogL($"ret: {ret}");
+         LogL($"ret: {ret}");
          return ret;
       }
 
@@ -692,7 +723,7 @@ namespace DbScripterLibNS
       /// <param name="databaseName"></param>
       protected bool InitDatabase(string? databaseName, out string msg)
       { 
-         Logger.LogS();
+         LogS();
          bool ret = false;
          msg = "";
 
@@ -769,7 +800,7 @@ namespace DbScripterLibNS
          }
          catch(Exception e)
          { 
-            Logger.LogException(e);
+            LogException(e);
             msg = e.ToString();
          }
 
@@ -777,7 +808,7 @@ namespace DbScripterLibNS
          if(!ret)
             Postcondition(msg.Length > 0, "if there is an error then there must be a suitable error message");
 
-         Logger.LogL($"ret: {ret}");
+         LogL($"ret: {ret}");
          return ret;
      }
 
@@ -801,7 +832,7 @@ namespace DbScripterLibNS
       /// <param name="dbOpType"></param>
       protected bool InitScriptingOptions(out string msg)
       {
-         Logger.LogS();
+         LogS();
          bool ret = false;
          msg = "";
 
@@ -891,8 +922,8 @@ namespace DbScripterLibNS
          if(!ret)
             Postcondition(msg.Length > 0, "if there is an error then there must be a suitable error message");
 
-         Logger.Log( OptionsToString(Scripter.Options));
-         Logger.LogL( $"ret: {ret}");
+         Log( OptionsToString(Scripter.Options));
+         LogL( $"ret: {ret}");
          return ret;
       }
 
@@ -902,61 +933,74 @@ namespace DbScripterLibNS
       /// if the file exists prior to this call then it is deleted - exception if not possible to delete
       /// calls IsValid at end
       /// 
-      /// Utils.PreconditionS: exportScriptPath is not null
+      /// Utils.PreconditionS: exportScript path is not null
       ///   
       /// POSTCONDITIONS:
       /// POST 1: writer open pointing to the export file AND
       ///       writer file same as ExportFilePath and both equal exportFilePath parameter
-      /// POST 2: sets ScriptFile from P.ExportScriptPath or error if not specified
+      /// POST 2: sets ScriptFile from P.ExportScript path or error if not specified
       /// </summary>
       /// <param name="exportFilePath"></param>
       /// <param msg="possible error/warning message"></param>
       /// <returns>success of the writer initialisation</returns>
-      protected void InitWriter()
+      protected bool InitWriter(out string msg)
       {
+         LogS();
+         bool ret = false;
+
          try
          {
-            Logger.LogS();
-            // Close the writer
-            Writer?.Close();
-            ScriptFile = P.ExportScriptPath ?? "";
+            do
+            {
+               // Close the writer
+               Writer?.Close();
+               ScriptFile = P.ScriptPath ?? "";
 
-            // POST 2
-            Utils.Precondition(!string.IsNullOrEmpty(ScriptFile), "xportScriptPath must be specified");
+               // POST 2
+               Utils.Precondition(!string.IsNullOrEmpty(ScriptFile), "xportScriptPath must be specified");
 
-            if(string.IsNullOrEmpty(P.ExportScriptPath))
-               P.ExportScriptPath = $"{Directory.GetCurrentDirectory()}{Database.Name}_export.sql";  //$"{Path.GetTempPath()}{Database.Name}_export.sql";
+               if(string.IsNullOrEmpty(P.ScriptPath))
+                  P.ScriptPath = $"{Directory.GetCurrentDirectory()}{Database.Name}_export.sql";  //$"{Path.GetTempPath()}{Database.Name}_export.sql";
 
-            P.ExportScriptPath = Path.GetFullPath(P.ExportScriptPath);
+               P.ScriptPath = Path.GetFullPath(P.ScriptPath);
  
-            // ASSERTION: writer intialised
+               // ASSERTION: writer intialised
 
-            if(File.Exists(P.ExportScriptPath))
-               File.Delete(P.ExportScriptPath);
+               if(File.Exists(P.ScriptPath))
+                  File.Delete(P.ScriptPath);
 
-            var fs = new FileStream(P.ExportScriptPath, FileMode.CreateNew);
-            Writer = new StreamWriter(fs){ AutoFlush = true }; // writerFilePath AutoFlush = true debug to dump cache immediately
+               var fs = new FileStream(P.ScriptPath, FileMode.CreateNew);
+               Writer = new StreamWriter(fs){ AutoFlush = true }; // writerFilePath AutoFlush = true debug to dump cache immediately
 
-            // POST 1: writer open pointing to the export file AND
-            //         writer file same as ExportFilePath and both equal exportFilePath parameter
-            Utils.Postcondition((Writer != null) && 
-                      ((FileStream)(Writer.BaseStream)).Name.Equals(P.ExportScriptPath, StringComparison.OrdinalIgnoreCase)
-                      , "Writer not initialised properly");
+               // POST 1: writer open pointing to the export file AND
+               //         writer file same as ExportFilePath and both equal exportFilePath parameter
+               if((Writer == null) ||
+                         !((FileStream)(Writer.BaseStream)).Name.Equals(P.ScriptPath, StringComparison.OrdinalIgnoreCase))
+               { 
+                  msg = "Writer not initialised properly";
+                  break;
+               }
+
+               // ASSERTION: writer intialised and target file has been created and is empty
+               ret = true;
+               msg = "";
+            } while(false);
  
-            // ASSERTION: writer intialised and target file has been created and is empty
-            Logger.LogL();
          }
          catch(Exception e)
          {
-            Logger.LogException(e);
+            msg = e.Message;
+            LogException(e);
             Writer?.Close();
-            throw;
          }
+
+         LogL($"ret: {ret}");
+         return ret;
       }
 
       protected void ClearState()
       {
-         Logger.LogS();
+         LogS();
          // primary properties
          P.ClearState();
 
@@ -969,14 +1013,15 @@ namespace DbScripterLibNS
 
          // info cache
          ClearCaches();
-         Logger.LogL();
+         LogL();
       }
 
       protected void ClearCaches()
       {
-         Logger.LogS();
+         LogS();
 
          // info cache
+         BadBin               .Clear();
          ExportedDatbases     .Clear();
          ExportedSchemas      .Clear();
          ExportedTables       .Clear();
@@ -985,7 +1030,7 @@ namespace DbScripterLibNS
          ExportedViews        .Clear();
          ExportedTableTypes   .Clear();
 
-         ConsisideredEntities .Clear();
+         ConsisderedEntities  .Clear();
          DifferentDatabases   .Clear();
          DuplicateDependencies.Clear();
          SystemObjects        .Clear();
@@ -994,7 +1039,7 @@ namespace DbScripterLibNS
          UnwantedTypes        .Clear();
          WantedItems          .Clear();
 
-         Logger.LogL();
+         LogL();
       }
 
       #endregion public methods
@@ -1019,7 +1064,7 @@ namespace DbScripterLibNS
             string x = (((FileStream)Writer.BaseStream)?.Name ?? "not defined");
 
             // ((FileStream)(Writer.BaseStream)).Name.Equals(P.ExportScriptPath, StringComparison.OrdinalIgnoreCase)	D:\Dev\Repos\DbScripter\DbScripterLib\DbScripter.cs	493	37	DbScripterLib	Read	InitWriter	DbScripter	
-            if(!x.Equals(P?.ExportScriptPath ?? "xxx", StringComparison.OrdinalIgnoreCase))
+            if(!x.Equals(P?.ScriptPath ?? "xxx", StringComparison.OrdinalIgnoreCase))
             {
                msg = "Writer not initialised properly";
                break;
@@ -1049,9 +1094,9 @@ namespace DbScripterLibNS
          return MapTypeToSqlType(smo?.GetType()?.Name ?? "Undefined");
       }
 
-      protected  static SqlTypeEnum MapTypeToSqlType(string typeName)
+      protected static SqlTypeEnum MapTypeToSqlType(string sqlTypeNm)
       {
-         var sty = typeName switch
+         SqlTypeEnum? sty = sqlTypeNm switch
          {
             "Database"              => SqlTypeEnum.Database,
             "UserDefinedFunction"   => SqlTypeEnum.Function,
@@ -1060,13 +1105,12 @@ namespace DbScripterLibNS
             "Table"                 => SqlTypeEnum.Table,
             "View"                  => SqlTypeEnum.View,
             "UserDefinedTableType"  => SqlTypeEnum.TableType,
-            _                       => SqlTypeEnum.Undefined,
+            _                       => null
          };
 
-         if(sty == SqlTypeEnum.Undefined)
-            Postcondition<ArgumentException>(sty != SqlTypeEnum.Undefined, $"MapTypeToSqlType failed for {typeName}");
-
-         return sty;
+ //        if(sty == SqlTypeEnum.Undefined)
+         Postcondition<ArgumentException>(sty != null, $"MapTypeToSqlType failed for string'{sqlTypeNm}'");
+         return sty ?? SqlTypeEnum.Error;
       }
 
       /// <summary>
@@ -1076,9 +1120,10 @@ namespace DbScripterLibNS
       /// </summary>
       /// <param name="transactions"></param>
       /// <param name="sb"></param>
-      protected void ScriptTransactions( StringCollection transactions, StringBuilder sb, Urn urn, bool wantGo)
+      protected void ScriptTransactions( StringCollection? transactions, StringBuilder sb, Urn urn, bool wantGo)
       {
-         var key = GetUrnKeyFromUrn(urn, out var smoType, out var dbNm, out var schemaNm, out var entityNm);
+         Precondition(transactions != null, "oops: null transactions parameter");
+         var key = GetUrnDetails(urn, out var smoType, out var dbNm, out var schemaNm, out var entityNm);
 
          if(transactions.Count> 0)
          { 
@@ -1163,7 +1208,7 @@ namespace DbScripterLibNS
                ScriptGo(sb);
 
             // if scripted here add to exported lists
-            AddToExportedLists( key);
+            //AddToExportedLists( key);
          }
          else
          {
@@ -1179,212 +1224,337 @@ namespace DbScripterLibNS
       /// </summary>
       /// <param name="transactions"></param>
       /// <param name="sb"></param>
-      protected void ScriptTransactionsHandleAlter( SqlSmoObject? smo, ScriptingOptions? so, StringBuilder sb, string op, string type, string name)
+      protected void ScriptItem( SqlSmoObject? smo, ScriptingOptions? so, string sqlType, StringBuilder sb)//, string op, string type, string name)
       {
          string action;
-         StringCollection transactions;
-         var    urn = smo.Urn;
-         string key = GetUrnKeyFromUrn(urn, out var expType, out var dbNm, out var expSchema, out var expEntity);
-         expType = MapSmoTypeToSqlType(expType);
-         LogS($"[ScriptTransactionsHandleAlterCnt][{_scripted_cnt++}]{key}");
-         bool bAddEntityToXprtLsts = false;
-         MatchCollection? matches = null;
-         var regOptns = RegexOptions.Multiline | RegexOptions.IgnoreCase;
+         var    urn  = smo.Urn;
+         string key  = GetUrnDetails(urn, out var expType, out var dbNm, out var expSchema, out var expEntity);
+         LogS($"[{_scripted_cnt++}]{key}");
 
-         do
+         // if mode IS NOT alter then script normally
+         if(P.CreateMode != CreateModeEnum.Alter)
+            action = ScriptItemNormally(smo, so, sb);
+         else
+            action = ScriptItemHandleAlter(smo, so, sqlType, sb);
+
+         RegisterResult(key, sqlType, action);
+         LogL();
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="key"></param>
+      /// <param name="sqlType"></param>
+      protected void RegisterResult(string key, string sqlType, string action)
+      {
+         bool bAddEntityToXprtLsts;
+
+         switch(sqlType)
          {
-            // if mode IS NOT alter then script normally
-            if(P.CreateMode != CreateModeEnum.Alter)
-            {
-               Log("P.CreateMode != CreateModeEnum.Alter");
-               action = $"script {P.CreateMode.GetAlias()} {key} normally";
-               transactions = ((dynamic)smo).Script(so);
-               ScriptTransactions( transactions, sb, urn, true);
-               bAddEntityToXprtLsts = false;
-               break;
-            }
+         // Do not script Alter Table - ignore it
+         case "TABLE":
+            action = $"Not scripting ALTER {key}]";
+            bAddEntityToXprtLsts = false;
+            break;
 
-            Utils.Assertion(P.CreateMode == CreateModeEnum.Alter);
+         case "PROCEDURE":
+         case "FUNCTION":
+         case "VIEW":
+            // Handle here
+            // Change create to alter for Prcedures and functions
+            Log($"scripting with mod: CREATE -> ALTER {sqlType} for {key}");
+            
 
-            //------------------------------------------------------------
-            // ASSERTION: ALTER MODE
-            //------------------------------------------------------------
+            bAddEntityToXprtLsts = true;
+            break;
 
-            Logger.Log($"ASSERTION: ALTER MODE for {key}");
+         default:
+            // Script normally
+/*            Log(action);
+            action = $"scripting normally: {key}";
+            transactions = ((dynamic)smo).Script(so);
 
-            // if mode IS     alter then modify statements here
-   //#pragma warning disable CS8600 // Converting null literal or possible null value to non-nullable type.
-   //         ScriptingOptions soDrop = Utils.ShallowClone(so);
-   //#pragma warning restore CS8600 // Converting null literal or possible null value to non-nullable type.
+            if(transactions.Count==0)
+               Utils.Assertion(transactions.Count>0, $"no script produced for {expEntity}");
 
-            switch(expType)
-            {
-            // Do not script Alter Table - ignore it
-            case "TABLE":
-               action = $"Not scripting ALTER {key}]";
-               bAddEntityToXprtLsts = false;
-               break;
-
-            case "PROCEDURE":
-            case "FUNCTION":
-            case "VIEW":
-               // Handle here
-               // Change create to alter for Prcedures and functions
-               Log($"scripting with mod: CREATE -> ALTER {expType} for {key}");
-               action       = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 1";
-               transactions = ((dynamic)smo).Script(so);
-               bool found = false;
-
-               if(transactions.Count> 0)
-               { 
-                  foreach(string transaction_ in transactions)
-                  {
-                     // Make a copy
-                     string transaction = transaction_;
-                     int pos = transaction.IndexOf("CREATE", StringComparison.OrdinalIgnoreCase);
-                     string line;
-
-                     if(!found)
-                     {
-                        //Regex regex = new Regex($@"^[ \t]*CREATE[ \t]*([^ \[]*)([ \[]+)([^\]]*)([\[\.\]]+)([^\]]*)");
-                        Regex regex = new Regex($@"^[ \t]*CREATE[ \t]+{expType}", regOptns);
-                        matches = regex.Matches(transaction);
-                        var nMatches = matches.Count;
-
-                        if(nMatches == 0)
-                           continue;
-
-                        if(nMatches > 1)
-                        {
-                           // Found more than 1 match
-                           // This can happen if there is a CREATE in a blok comment
-                           // or a create in the code body of an sp
-                           // Look for the first transaction with a line beginning with 0 or more wsp and CREATE
-                           matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]*", regOptns);
-                           nMatches = matches.Count;
-                           action       = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 2";
-
-                           matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]*([^ \[]*)", regOptns);
-                           nMatches = matches.Count;
-
-                           matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]*([^ \[]*)([ \[]+)", regOptns);
-                           nMatches = matches.Count;
-
-                           matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]*([^ \[]*)([ \[]+)([^\]]*)", regOptns);
-                           nMatches = matches.Count;
-                         
-                           matches= Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]*([^ \[]*)([ \[]+)([^\]]*)([\[\.\]]+)", regOptns);
-                           nMatches = matches.Count;
-                         
-                           matches= Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]*([^ \[]*)([ \[]+)([^\]]*)([\[\.\]]+)([^\]]*)", regOptns);
-                           nMatches = matches.Count;
-                        }
-                        else
-                        {
-                            action       = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 3";
-                            // Found exactly 1 match
-                            matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]+{expType}[ \t]*([^ \[]*)([ \[]+)([^\]]*)([\[\.\]]+)([^\]]*)", regOptns);
-                            nMatches = matches.Count;
-                        }
-
-                        if(nMatches != 1)
-                           Assertion(nMatches == 1, $"ScriptTransactionsHandleAlter: failed to get match for ^create");
-
-                        // Plan is to add a go before the CREATE|ALTER|DROP statement
-                        if(matches.Count>0)
-                        {
-                           action = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 4";
-                           // Got the Create mode: {CREATE|ALTER|DROP}
-                           line = $"{matches[0].Groups[1].Value}";
-                           var actType   = expType; //matches[0].Groups[1].Value;
-                           var actSchema = matches[0].Groups[3].Value;
-                           var actEntity = matches[0].Groups[5].Value;
-
-                           // Signatures must have [] for this to work
-                           if(expType.Equals(actType, StringComparison.OrdinalIgnoreCase))
-                           {
-                              action = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 5";
-
-                              if(expSchema.Equals(actSchema, StringComparison.OrdinalIgnoreCase))
-                              {
-                                 action = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 5";
-
-                                 if(expEntity.Equals(actEntity, StringComparison.OrdinalIgnoreCase))
-                                 {
-                                    action = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 6 modifying";
-                                    // Add a go after the set ansi nulls on etc but before the alter statement
-                                    ScriptGo(sb);
-                                    // Replace the first occurrence of of ^[ \t*]Create case insensitive"
-                                    //var matches2 = Regex.Match(transaction,"^[ \t]*(CREATE)", RegexOptions.IgnoreCase | RegexOptions.Multiline);
-                                    var ndx = matches[0].Index;
-
-                                    if(ndx == -1)
-                                       Assertion(ndx>-1);
-
-                                    // Fianlly we can do the 'CREATE' -> 'ALTER' substitution
-                                    transaction = transaction.Substring(0, ndx) + "ALTER" + transaction.Substring(ndx+6);
-                                    action = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 7 modified at ndx:{ndx}";
-                                    LogDirect($"{action}:\r\n{transaction}");
-                                    found = true;
-                                 }
-                                 else
-                                 {
-                                    AssertFail($"oops Entity mismatch, key: {key}");
-                                 }
-                              }
-                              else
-                              {
-                                 AssertFail($"oops Schema mismatch, key: {key}");
-                              }
-                           }
-                           else
-                           {
-                             continue;//Sometimes there is a ^ *Create etc in the block comments AssertFail($"oops Type mismatch, key: {key}");
-                           }
-                        }
-                     }
-
-                     ScriptLine( transaction, sb);
-
-                     if(WantBlankLineBetweenTransactions())
-                        ScriptBlankLine(sb);
-                  }
-
-                  ScriptGo(sb);
-               }
-               else
-               {
-                  AssertFail($"no script produced for {key}");
-               }
-
-               if(!found)
-                  Assertion(found, $"Failed to replace create with alter, key: {key}");
-
-
-               bAddEntityToXprtLsts = true;
-               break;
-
-            default:
-               // Script normally
-               action = $"scripting normally: {key}";
-               Logger.Log(action);
-               transactions = ((dynamic)smo).Script(so);
-
-               if(transactions.Count==0)
-                  Utils.Assertion(transactions.Count>0, $"no script produced for {expEntity}");
-
-               // N.B.: this will add the entity to export lists , string op, string type, string name
-               ScriptTransactions( transactions, sb, urn, wantGo: true);
-               bAddEntityToXprtLsts = false;
-               break;
-            }
-         } while(false);
+            // N.B.: this will add the entity to export lists , string op, string type, string name
+            ScriptTransactions( transactions, sb, urn, wantGo: true);
+*/
+            bAddEntityToXprtLsts = false;
+            break;
+         }
 
          // if scripted here add to exported lists
          if(bAddEntityToXprtLsts)
             AddToExportedLists( key);
 
-         Logger.LogL(action);
+         LogL(action);
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="smo"></param>
+      /// <param name="so"></param>
+      /// <param name="sb"></param>
+      protected string ScriptItemHandleAlter(SqlSmoObject? smo, ScriptingOptions? so, string sqlType, StringBuilder sb)
+      {
+         string key = GetUrnDetails(smo.Urn, out var expSqlType, out var dbNm, out var expSchema, out var expEntity);
+         LogS(key);
+         bool found = false;
+
+         // Script the transactions
+         var transactions = ((dynamic)smo).Script(so);
+
+         // Chk we got a script from the smo scripter
+         Assertion(transactions.Count> 0, $"no script produced for {key}");
+
+         // Iterate the script transactions looking for the create xxx to replace with alter xxx
+         foreach(string transaction in transactions)
+            ReplaceCreateWithAlter(transaction, sb,  key, sqlType, expSchema, expEntity, ref found);
+
+         ScriptGo(sb);
+         LogL();
+         return $"scripting ALTER:[{_scripted_cnt}] {key}] stg 1";;
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="transaction"></param>
+      /// <param name="sb"></param>
+      /// <param name="key"></param>
+      /// <param name="expSqlType"></param>
+      /// <param name="expSchema"></param>
+      /// <param name="expEntity"></param>
+      /// <param name="found"></param>
+      protected void ReplaceCreateWithAlter(string transaction, StringBuilder sb, string key, string expSqlType, string expSchema, string expEntity, ref bool found)
+      {
+         LogS();
+         var regOptns = RegexOptions.Multiline | RegexOptions.IgnoreCase;
+
+         if(!found)
+         {
+            do
+            {
+               // Look for Create type ...
+               MatchCollection? matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]+{expSqlType}", regOptns);
+               var nMatches = matches.Count;
+
+               // the first 2 transaction dont usually have the main SQL command (create) e,g "SET ANSI NULLS ON" or "SET QUOTED_IDENTIFIER ON"
+               if(nMatches == 0)
+                  break;
+
+               if(nMatches > 1)
+               {
+                  // Found more than 1 match
+                  // This can happen if there is a CREATE in a blok comment
+                  // or a create in the code body of an sp
+                  // Look for the first transaction with a line beginning with 0 or more wsp and CREATE
+                  matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]*([^ \[]*)([ \[]+)([^\]]*)([\[\.\]]+)([^\]]*)", regOptns);
+               }
+               else
+               {
+                  // Found exactly 1 match
+                  //matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]+{expType}[ \t]*([^ \[]*)([ \[]+)([^\]]*)([\[\.\]]+)([^\]]*)", regOptns);
+                  matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]+{expSqlType}[ \t]*([^ \[]*)([ \[]+)([^\]]*)([\[\.\]]+)([^\]]*)", regOptns);
+               }
+
+               nMatches = matches.Count;
+               // Assert 1 match found
+               Assertion(nMatches == 1, $"ScriptTransactionsHandleAlter: failed to get match for ^create");
+
+               // Plan is to add a go before the CREATE|ALTER|DROP statement
+               // Got the Create mode: {CREATE|ALTER|DROP}
+               var actType   = matches[0].Groups[1].Value; // ??
+               var actSchema = matches[0].Groups[3].Value;
+               var actEntity = matches[0].Groups[5].Value;
+
+               // ?? Signatures must have [] for this to work
+               if(/*expSqlType.Equals(actType,   StringComparison.OrdinalIgnoreCase) &&*/
+                  expSchema .Equals(actSchema, StringComparison.OrdinalIgnoreCase) &&
+                  expEntity .Equals(actEntity, StringComparison.OrdinalIgnoreCase))
+               {
+                  // Add a go after the set ansi nulls on etc but before the alter statement
+                  ScriptGo(sb);
+                  var ndx = matches[0].Index;
+                  Assertion(ndx>-1);
+
+                  // Substitute 'CREATE' with 'ALTER' 
+                  transaction = transaction.Substring(0, ndx) + "ALTER" + transaction.Substring(ndx+6);
+                  found = true;
+               }
+               // else
+               // Sometimes there is a ^ *Create etc in the block comments AssertFail($"oops Type mismatch, key: {key}");
+            } while(false);
+         } // end if not found
+
+         // Always script the transaction
+         ScriptLine( transaction, sb);
+
+         if(WantBlankLineBetweenTransactions())
+            ScriptBlankLine(sb);
+
+         //Assertion(found, $"Failed to replace create with alter, key: {key}");
+         LogL();
+       }
+
+      /*      protected string ScriptItemHandleAlter(SqlSmoObject? smo, ScriptingOptions? so, StringBuilder sb)
+      { 
+         bool found = false;
+         string action;
+         var regOptns = RegexOptions.Multiline | RegexOptions.IgnoreCase;
+
+         //
+         string key = GetUrnDetails(smo.Urn, out var expType, out var dbNm, out var expSchema, out var expEntity);
+         var expSqlType = MapSmoTypeToSqlType(expType);
+         MatchCollection? matches = null;
+
+         // Script the transactions
+         var transactions = ((dynamic)smo).Script(so);
+
+         // Chk we got a script from the smo scripter
+         Assertion(transactions.Count> 0, $"no script produced for {key}");
+
+         // Iterate the script transactions
+         foreach(string transaction_ in transactions)
+         {
+            // Make a copy
+            string transaction = transaction_;
+            //int pos = transaction.IndexOf("CREATE", StringComparison.OrdinalIgnoreCase);
+            string line;
+
+            if(!found)
+            {
+               //Regex regex = new Regex($@"^[ \t]*CREATE[ \t]*([^ \[]*)([ \[]+)([^\]]*)([\[\.\]]+)([^\]]*)");
+               Regex regex = new Regex($@"^[ \t]*CREATE[ \t]+{expType}", regOptns);
+               matches = regex.Matches(transaction);
+               var nMatches = matches.Count;
+
+               if(nMatches == 0)
+                  continue;
+
+               if(nMatches > 1)
+               {
+                  // Found more than 1 match
+                  // This can happen if there is a CREATE in a blok comment
+                  // or a create in the code body of an sp
+                  // Look for the first transaction with a line beginning with 0 or more wsp and CREATE
+                  matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]*", regOptns);
+                  nMatches = matches.Count;
+                  action       = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 2";
+
+                  matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]*([^ \[]*)", regOptns);
+                  nMatches = matches.Count;
+
+                  matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]*([^ \[]*)([ \[]+)", regOptns);
+                  nMatches = matches.Count;
+
+                  matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]*([^ \[]*)([ \[]+)([^\]]*)", regOptns);
+                  nMatches = matches.Count;
+                         
+                  matches= Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]*([^ \[]*)([ \[]+)([^\]]*)([\[\.\]]+)", regOptns);
+                  nMatches = matches.Count;
+                         
+                  matches= Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]*([^ \[]*)([ \[]+)([^\]]*)([\[\.\]]+)([^\]]*)", regOptns);
+                  nMatches = matches.Count;
+               }
+               else
+               {
+                     action       = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 3";
+                     // Found exactly 1 match
+                     matches = Regex.Matches(transaction, $@"^[ \t]*CREATE[ \t]+{expType}[ \t]*([^ \[]*)([ \[]+)([^\]]*)([\[\.\]]+)([^\]]*)", regOptns);
+                     nMatches = matches.Count;
+               }
+
+               if(nMatches != 1)
+                  Assertion(nMatches == 1, $"ScriptTransactionsHandleAlter: failed to get match for ^create");
+
+               // Plan is to add a go before the CREATE|ALTER|DROP statement
+               if(matches.Count>0)
+               {
+                  action = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 4";
+                  // Got the Create mode: {CREATE|ALTER|DROP}
+                  line = $"{matches[0].Groups[1].Value}";
+                  var actType   = expType; //matches[0].Groups[1].Value;
+                  var actSchema = matches[0].Groups[3].Value;
+                  var actEntity = matches[0].Groups[5].Value;
+
+                  // Signatures must have [] for this to work
+                  if(expType.Equals(actType, StringComparison.OrdinalIgnoreCase))
+                  {
+                     action = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 5";
+
+                     if(expSchema.Equals(actSchema, StringComparison.OrdinalIgnoreCase))
+                     {
+                        action = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 5";
+
+                        if(expEntity.Equals(actEntity, StringComparison.OrdinalIgnoreCase))
+                        {
+                           action = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 6 modifying";
+                           // Add a go after the set ansi nulls on etc but before the alter statement
+                           ScriptGo(sb);
+                           // Replace the first occurrence of of ^[ \t*]Create case insensitive"
+                           //var matches2 = Regex.Match(transaction,"^[ \t]*(CREATE)", RegexOptions.IgnoreCase | RegexOptions.Multiline);
+                           var ndx = matches[0].Index;
+
+                           if(ndx == -1)
+                              Assertion(ndx>-1);
+
+                           // Fianlly we can do the 'CREATE' -> 'ALTER' substitution
+                           transaction = transaction.Substring(0, ndx) + "ALTER" + transaction.Substring(ndx+6);
+                           action = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 7 modified at ndx:{ndx}";
+                           LogDirect($"{action}:\r\n{transaction}");
+                           found = true;
+                        }
+                        else
+                        {
+                           AssertFail($"oops Entity mismatch, key: {key}");
+                        }
+                     }
+                     else
+                     {
+                        AssertFail($"oops Schema mismatch, key: {key}");
+                     }
+                  }
+                  else
+                  {
+                     continue;//Sometimes there is a ^ *Create etc in the block comments AssertFail($"oops Type mismatch, key: {key}");
+                  }
+               }
+            }
+
+            ScriptLine( transaction, sb);
+
+            if(!found)
+               Assertion(found, $"Failed to replace create with alter, key: {key}");
+
+
+            if(WantBlankLineBetweenTransactions())
+               ScriptBlankLine(sb);
+         }
+
+         ScriptGo(sb);
+
+         action       = $"scripting ALTER:[{_scripted_cnt}] {key}] stg 1";
+         return action;
+      }
+*/
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="smo"></param>
+      /// <param name="so"></param>
+      /// <param name="sb"></param>
+      /// <returns>action string </returns>
+      protected string ScriptItemNormally(SqlSmoObject? smo, ScriptingOptions? so, StringBuilder sb)
+      {
+         StringCollection? transactions = ((dynamic?)smo)?.Script(so);
+         ScriptTransactions( transactions, sb, smo.Urn, true);
+         var key = GetUrnKey(smo.Urn);
+         var action = $"script {P.CreateMode.GetAlias()} {key} normally";;
+         return action;
       }
 
       protected void AddToExportedLists( string key)
@@ -1499,131 +1669,53 @@ namespace DbScripterLibNS
       }
 
       /// <summary>
-      /// This will script all required schemas
-      /// create or drop the schemas and script in dependnency order
-      /// if altering dont create the schemas
-      /// 
-      /// When exporting a schema we should be able to specift which types are exported
-      /// the default should be all types
-      /// but if we define a set of types then that should take precidence
-      /// PRE: Init called
-      /// 
-      /// POST: 
-      /// sb
+      /// Desc: scripts an item
+      /// if not an UnresolvedEntity or required
+      /// Design: Model.Use Case Model.UC01: Export schema.UC01: Export schema_ActivityGraph.ScriptChildItem.Script Child Item act.Script Child Item act
       /// </summary>
-      public bool ExportSchemas(StringBuilder sb, out string script, out string msg)
+      /// <param name="urn"></param>
+      /// <returns>true if scripted, false if not</returns>
+      protected bool ScriptChildItem(StringBuilder sb, int i, Urn urn)
       {
-         LogC("DbScripter.ExportSchemas starting...");
-         bool   ret  = false;
-         string key  = "";
-         string type = "";
-         string op   = P.CreateMode.GetAlias();
+         LogS();
+         bool ret = false;
+         string? msg = null;
 
-         try
+         do
          {
-            do
+            var key  = GetUrnDetails(urn, out var ty, out var dbName, out var schemaName, out var entityName);
+
+            // Dont script unresolved items
+            //if(urn.Type == "UnresolvedEntity")
+            //{
+            //   msg = $"Not Scripting  [{i}] {key}: UnresolvedEntity";
+            //   break;//continue;
+            //}
+
+            // Map smo type to sql type
+            string sqlType = MapSmoTypeToSqlType(ty);
+
+            // Get smo object from server
+            var smo  = Server.GetSmoObject(urn);
+
+            // If both the database and the schema are required then script this item
+            if(P.Database.Equals(dbName, StringComparison.OrdinalIgnoreCase) && P.RequiredSchemas.Contains(schemaName))
             {
-               Precondition(IsValid(out msg), msg);
-               // determine id schema is a test
-               // Specialise the Options config for this op
-               LogC("DbScripter.Export Stage 1: init...");
-               ExportSchemaScriptInit();
-               List<Schema> schemas = new List<Schema>();
-
-               foreach( var schemaName in P.RequiredSchemas)
-               {
-                  LogDirect($"Adding {schemaName} to the schema list");
-                  schemas.Add(Database.Schemas[schemaName]);
-               }
-
-               LogC("DbScripter.Export Stage 2: Get Schema Dependencies Walk...");
-
-               // This can fail if thre are references to non existent procedures in the stored procedure definitions
-               // if MS dependency code fails then we need to do it without the dependency tree
-               if(!GetSchemaDependencyWalk( P.RequiredSchemas, (P.CreateMode == CreateModeEnum.Create || P.CreateMode == CreateModeEnum.Alter), out List<Urn> walk))
-                  Assertion(GetSchemaChildren( P.RequiredSchemas, out walk) == true);
-
-               // Assertion we have a list of children
-               if(P.ScriptUseDb ?? false)
-                  ScriptUse(sb);
-
-               // If creating then create the schemas now
-               // test schemas need to be registerd with the tSQLt framework
-               // if altering dont create the schemas
-               if(P.CreateMode == CreateModeEnum.Create)
-               {
-                  LogC("DbScripter.Export Stage 3: scripting schema create sql...");
-
-                  foreach(var schema in schemas)
-                  {
-                     if(IsTestSchema(schema.Name))
-                        ScriptLine( $"EXEC tSQLt.NewTestClass '{schema.Name}';", sb);
-                     else
-                        ExportSchemaStatement(schema, sb);
-                  }
-               }
-
-               int i = 0;
-               LogDirect($"Stage 4: scripting the schema objects");
-               LogC("DbScripter.Export Stage 4: scripting schema objects");
-
-               foreach(Urn urn in walk)
-               {
-                  i++;
-
-                  if(urn.Type == "UnresolvedEntity")
-                  {
-                     Logger.LogDirect($"Not Scripting [{i}]: {key}");
-                     continue;
-                  }
-
-                  key = GetUrnKeyFromUrn(urn, out var ty, out var dbName, out var schemaName, out var entityName);
-                  type = MapSmoTypeToSqlType(ty);
-
-                  SqlSmoObject smo = Server.GetSmoObject(urn);
-
-                  // If the database and the schema is required then script 
-                  if(P.DatabaseName.Equals(dbName, StringComparison.OrdinalIgnoreCase) && P.RequiredSchemas.Contains(schemaName))
-                  {
-                     // Handle alter
-                     LogDirect($"Scripting handling alter [{i}]: {key}");
-                     ScriptTransactionsHandleAlter(smo, ScriptOptions, sb, op: op, type, name: entityName);
-                  }
-                  else
-                  {
-                     LogDirect($"Not Scripting [{i}]: {key}");
-                  }
-               }
-
-               // If dropping then drop schemas now
-               if(P.CreateMode == CreateModeEnum.Drop)
-               {
-                  LogDirect($"Stage 5: scripting drop schema sql");
-                  LogC("DbScripter.Export Stage 5: scripting drop schema sql...");
-
-                  foreach(var schema in schemas)
-                  {
-                     if(IsTestSchema(schema.Name))
-                        ScriptLine( $"EXEC tSQLt.DropClass '{schema.Name}';", sb);
-                     else
-                        ExportSchemaStatement(schema, sb);
-                  }
-               }
-
+               // Script the item
+               msg = $"Scripting item [{i}]: {key}";
+               ScriptItem(smo, ScriptOptions, sqlType, sb); // op: P.CreateMode.GetAlias(),  , type, name: entityName
                ret = true;
-               LogDirect($"Stage 6: all completed successfully");
             }
-            while(false);
-         }
-         catch(Exception e)
-         {
-            msg = e.Message;
-            LogC($"DbScripter.Export caught exception {e}");
-            LogException(e, $"key: {key}");
-         }
+            else
+            {
+               msg = $"Not Scripting unrequired item: {key}";
+               break;
+            }
+         } while(false);
 
-         LogC("DbScripter.Export completed");
-         script = sb.ToString();
+         if(msg != null)
+            LogDirect(msg);
+
          LogL($"ret: {ret}");
          return ret;
       }
@@ -1667,7 +1759,7 @@ namespace DbScripterLibNS
 
          foreach(Urn urn in urns)
          {
-            key = GetUrnKeyFromUrn(urn, out type, out dbNm, out schemaNm, out entityNm);
+            key = GetUrnDetails(urn, out type, out dbNm, out schemaNm, out entityNm);
 
             if(mn_map.ContainsKey(type))
             {
@@ -1762,7 +1854,7 @@ namespace DbScripterLibNS
       /// </summary>
       public string ExportSchemaStatement(Schema schema, StringBuilder sb)
       {
-         Logger.LogS($"schema: {schema.Name}");
+         LogS($"schema: {schema.Name}");
          Utils.Precondition<ArgumentException>((P.IsExprtngSchema ?? false) == true, "Inconsistent state P.IsExprtngSchema is not true");
          var sb_ = new StringBuilder(); 
 
@@ -1778,11 +1870,11 @@ namespace DbScripterLibNS
          }
          catch(Exception e)
          { 
-            Logger.LogException(e);
+            LogException(e);
             throw;
          }
 
-         Logger.LogL();
+         LogL();
          return sb_.ToString();
       }
 
@@ -1791,10 +1883,14 @@ namespace DbScripterLibNS
          return $"{dbName}.{schemaName}.{entityName, -25}: {ty}";
       }
 
+      protected static string GetUrnKey(Urn urn)
+      {
+         return GetUrnDetails(urn, out string ty, out string dbName, out string schemaName, out string entityName);
+      }
 
 
       /// <summary>
-      /// gets the attributes for an urn at level 3 - this is usually what we need
+      /// Gets the urn key and details
       ///
       /// Levels: 
       ///   0: Server
@@ -1814,7 +1910,7 @@ namespace DbScripterLibNS
       /// <param name="urn"></param>
       /// <param name="attr_map">map of the attribute name/value paurs for this level</param>
       /// <returns>true if found level, false otherwise</returns>
-      public static string GetUrnKeyFromUrn(Urn urn, out string ty, out string dbName, out string schemaName, out string entityName)
+      public static string GetUrnDetails(Urn urn, out string ty, out string dbName, out string schemaName, out string entityName)
       { 
          string name;
          string type = urn.Type;
@@ -1930,7 +2026,7 @@ namespace DbScripterLibNS
          var xpath  = urn.XPathExpression;
 
          if(xpath.Length<=level)
-            return Logger.LogW($"urn error: did not find level {level}");
+            return LogW($"urn error: did not find level {level}");
 
          // Assertion: we have the level
 
@@ -1950,7 +2046,7 @@ namespace DbScripterLibNS
             }
             catch(Exception e)
             {
-               Logger.LogException(e);
+               LogException(e);
             }
 
             i++;
@@ -2001,7 +2097,7 @@ namespace DbScripterLibNS
       /// </summary>
       public string ExportSchema(Schema schema, StringBuilder sb)
       {
-         Logger.LogS($"schema: {schema.Name}");
+         LogS($"schema: {schema.Name}");
          Utils.Precondition<ArgumentException>((P.IsExprtngSchema ?? false) == true, "Inconsistent state P.IsExprtngSchema is not true");
          var sb_ = new StringBuilder(); 
 
@@ -2014,11 +2110,11 @@ namespace DbScripterLibNS
          }
          catch(Exception e)
          { 
-            Logger.LogException(e);
+            LogException(e);
             throw;
          }
 
-         Logger.LogL();
+         LogL();
          return sb_.ToString();
       }
 
@@ -2047,15 +2143,14 @@ namespace DbScripterLibNS
       /// 
       /// Rules all types required that are children* of a schema
       /// schema, table, view, proc, fn, fkey, tty
-
       /// </summary>
       private void ExportSchemaScriptInit()
       {
-         Logger.LogS();
+         LogS();
          // Pre 1: Init() called, P DbOpType configured
          Utils.Precondition(IsValid(out var msg), $"{msg}");
          // Pre 2: Create type is not alter
-         Utils.Precondition(P.CreateMode != CreateModeEnum.Undefined , $"create mode must be defined");
+         Utils.Precondition(P.CreateMode != CreateModeEnum.Error , $"create mode must be defined");
 
          // Process
          // Set the export schema flags
@@ -2092,11 +2187,11 @@ namespace DbScripterLibNS
          ScriptOptions.PrimaryObject            = true;
 
          // Wrap up
-         Logger.LogL();
+         LogL();
       }
 
 
-      /// <summary>
+      /*// <summary>
       /// To script tables in dependency order (avoiding the issue of a newly created table having a FK referencing 
       /// a non existent primary table)
       /// Get the tables list - i.e. all the tables in Database.Tables
@@ -2107,9 +2202,9 @@ namespace DbScripterLibNS
       /// </summary>
       /// <param name="isStaticData"></param>
       /// <param name="exportFilePath"></param>
-      private string ScriptDependencyWalk( string currentSchemaName, bool isStaticData, string exportFilePath )
+      /*private string ScriptDependencyWalk( string currentSchemaName, bool isStaticData, string exportFilePath )
       {
-         Logger.LogS();
+         LogS();
          var tables = new List<Table>();
          string? script = null;
 
@@ -2122,11 +2217,11 @@ namespace DbScripterLibNS
          }
          catch(Exception e)
          { 
-            Logger.LogException(e);
+            LogException(e);
             throw;
          }
 
-         Logger.LogL();
+         LogL();
          return script;
       }
 
@@ -2136,9 +2231,9 @@ namespace DbScripterLibNS
       /// <param name="tables"></param>
       /// <param name="exportFilePath"></param>
       /// <returns></returns>
-      private string ScriptTables( string currentSchemaName, List<Table> tables, string exportFilePath )
+      /*private string ScriptTables( string currentSchemaName, List<Table> tables, string exportFilePath )
       {
-         Logger.LogS();
+         LogS();
          var sb = new StringBuilder();
          string? script = null;
 
@@ -2174,13 +2269,13 @@ namespace DbScripterLibNS
          catch(Exception e)
          {
             var msgs = e.GetAllMessages();
-            Logger.Log(msgs);
+            Log(msgs);
             throw;
          }
 
-         Logger.LogL();
+         LogL();
          return script;
-      }
+      }*/
 
       /// <summary>
       /// Script 1 table
@@ -2190,7 +2285,7 @@ namespace DbScripterLibNS
       /// <param name="sb"></param>
       string ScriptTable( string tableName, ScriptingOptions options, StringBuilder sb )
       {
-         Logger.LogS();
+         LogS();
          StringBuilder sb_ = new();
 
          try
@@ -2212,12 +2307,12 @@ namespace DbScripterLibNS
          catch(Exception e)
          {
             var msgs = e.GetAllMessages();
-            Logger.Log(msgs);
+            Log(msgs);
             throw;
          }
 
          sb.Append(sb_);
-         Logger.LogL();
+         LogL();
          return sb.ToString();
       }
 
@@ -2239,11 +2334,11 @@ namespace DbScripterLibNS
       public string ExportDropDatabaseScript( Params p)
       {
          // PRE: p pop
-         Logger.LogS();
+         LogS();
          Init(p);
          StringBuilder sb = new();
          ExportDropDatabaseScript( sb);
-         Logger.LogL();
+         LogL();
          return sb.ToString();
       }*/
 
@@ -2261,7 +2356,7 @@ namespace DbScripterLibNS
       /// <returns></returns>
       public bool ExportDatabase(StringBuilder sb, out string script, out string msg)
       {
-         Logger.LogS();
+         LogS();
          bool ret = false;
 
          do
@@ -2280,7 +2375,7 @@ namespace DbScripterLibNS
             msg = "";
          } while(false);
 
-         Logger.LogL($"ret: {ret}");
+         LogL($"ret: {ret}");
          return ret;
       }
 
@@ -2299,7 +2394,7 @@ namespace DbScripterLibNS
       /// <returns></returns>
       public bool ExportDatabase( Database? db, StringBuilder sb, out string script, out string msg)
       {
-         Logger.LogS();
+         LogS();
          bool ret = false;
          msg = "";
 
@@ -2351,7 +2446,7 @@ namespace DbScripterLibNS
          }
          catch(Exception e)
          { 
-            Logger.LogException(e);
+            LogException(e);
             throw;
          }
 
@@ -2366,7 +2461,7 @@ namespace DbScripterLibNS
       /// </summary>
       public bool ExportViews( Params p, out string script, out string msg)
       {
-         Logger.LogS();
+         LogS();
          StringBuilder sb = new StringBuilder();
          bool ret = false;
 
@@ -2386,11 +2481,11 @@ namespace DbScripterLibNS
          catch(Exception e)
          {
             script = "";
-            Logger.LogException(e);
+            LogException(e);
             msg = e.Message;
          }
 
-         Logger.LogL($"ret:{ret}");
+         LogL($"ret:{ret}");
          return ret;
       }
 
@@ -2400,7 +2495,7 @@ namespace DbScripterLibNS
       /// </summary>
       public string ExportViews( string currentSchemaName, StringBuilder sb )
       {
-         Logger.LogS();
+         LogS();
          // Local script
          StringBuilder sb_ = new StringBuilder();
 
@@ -2421,11 +2516,11 @@ namespace DbScripterLibNS
          }
          catch(Exception e)
          {
-            Logger.LogException(e);
+            LogException(e);
             throw;
          }
 
-         Logger.LogL();
+         LogL();
          return sb_.ToString();
       }
 
@@ -2439,7 +2534,7 @@ namespace DbScripterLibNS
       /// <returns></returns>
       protected string? ExportView(View view, StringBuilder sb)
       { 
-         Logger.LogS();
+         LogS();
          StringBuilder sb_ = new StringBuilder();
 
          try
@@ -2455,11 +2550,11 @@ namespace DbScripterLibNS
          }
          catch(Exception e)
          {
-            Logger.LogException(e);
+            LogException(e);
             throw;
          }
 
-         Logger.LogL();
+         LogL();
          return sb_.ToString();
      }
 
@@ -2477,7 +2572,7 @@ namespace DbScripterLibNS
       /// <param name="sb"></param>
       public bool ExportTables(StringBuilder sb, out string script, out string msg)
       {
-         Logger.LogS();
+         LogS();
          bool ret = false;
          script   = "";
          StringBuilder sb_ = new();
@@ -2506,7 +2601,7 @@ namespace DbScripterLibNS
             throw;
          }
 
-         Logger.LogL($"ret: {ret}");
+         LogL($"ret: {ret}");
          return ret;
       }
 
@@ -2527,7 +2622,7 @@ namespace DbScripterLibNS
       /// <returns>so </returns>
       protected ScriptingOptions InitTableExport()
       { 
-         Logger.LogS();
+         LogS();
          // -------------------------
          // Validate Utils.Preconditions
          // -------------------------
@@ -2553,8 +2648,8 @@ namespace DbScripterLibNS
          //  POST 2: the original config is not changed
          if(!OptionEquals(ScriptOptions, orig, out msg))
          {
-            Logger.Log("was\r\n",     OptionsToString(orig));
-            Logger.Log("\r\nnow\r\n", OptionsToString(ScriptOptions));
+            Log("was\r\n",     OptionsToString(orig));
+            Log("\r\nnow\r\n", OptionsToString(ScriptOptions));
             var resultsDir = TestHelper.ResultsDir;
             var exp_file   = @$"{resultsDir}\InitTableExport_exp.txt";
             var act_file   = @$"{resultsDir}\InitTableExport_act.txt";
@@ -2569,7 +2664,7 @@ namespace DbScripterLibNS
          // -----------------------------------------
          // ASSERTION: postconditions validated
          // -----------------------------------------
-         Logger.LogL();
+         LogL();
          return so;
       }
 
@@ -2584,7 +2679,7 @@ namespace DbScripterLibNS
       /// <param name="sb"></param>
       public void ExportTables( Schema? schema, ScriptingOptions so, StringBuilder sb )
       {
-         Logger.LogS(schema.Name);
+         LogS(schema.Name);
 
          try
          { 
@@ -2635,11 +2730,11 @@ namespace DbScripterLibNS
          }
          catch(Exception e)
          {
-            Logger.LogException(e);
+            LogException(e);
             throw;
          }
 
-         Logger.LogL();
+         LogL();
       }
 
       /// <summary>
@@ -2650,7 +2745,7 @@ namespace DbScripterLibNS
       /// <param name="sb"></param>
       public bool ExportTable( string? tableName, Params p, StringBuilder sb, out string msg)
       {
-         Logger.LogS();
+         LogS();
          bool ret = false;
 
          try
@@ -2669,11 +2764,11 @@ namespace DbScripterLibNS
          }
          catch(Exception e)
          { 
-            Logger.LogException(e);
+            LogException(e);
             msg = e.Message;
          }
 
-         Logger.LogL($"ret: {ret}");
+         LogL($"ret: {ret}");
          return ret;
       }
 
@@ -2690,7 +2785,7 @@ namespace DbScripterLibNS
       /// <param name="sb"></param>
       public void ExportTable( Table? table, ScriptingOptions so, StringBuilder sb )
       {
-         Logger.LogS();
+         LogS();
          // PRE 1: table exists
          Utils.Precondition(table != null);
          // PRE 2: this.IsValid() == true
@@ -2709,12 +2804,12 @@ namespace DbScripterLibNS
          catch(Exception e)
          {
             var msgs = e.GetAllMessages();
-            Logger.Log(msgs);
+            Log(msgs);
             ScriptLine($"{table.Name} error: {msgs}", sb);
             throw;
          }
 
-         Logger.LogL();
+         LogL();
       }
 
       /// <summary>
@@ -2722,12 +2817,12 @@ namespace DbScripterLibNS
       /// </summary>
       protected void ExportForeignKeys( string currentSchemaName, StringBuilder sb )
       {
-         Logger.LogS();
+         LogS();
 
          foreach(Table table in Database.Tables)
             ExportForeignKeys( currentSchemaName, table, sb);
 
-         Logger.LogL();
+         LogL();
       }
 
       /// <summary>
@@ -2737,7 +2832,7 @@ namespace DbScripterLibNS
       /// <param name="sb">string builder to populate the serialisation all the table's ForeignKeys as a set of SQL statements</param>
       protected void ExportForeignKeys( string currentSchemaName, Table table, StringBuilder sb )
       {
-         Logger.LogS();
+         LogS();
 
          try
          { 
@@ -2749,11 +2844,11 @@ namespace DbScripterLibNS
          catch(Exception e)
          {
             var msgs = e.GetAllMessages();
-            Logger.Log(msgs);
+            Log(msgs);
             throw;
          }
 
-         Logger.LogL();
+         LogL();
       }
 
       /// <summary>
@@ -2768,7 +2863,7 @@ namespace DbScripterLibNS
       /// </summary>
       protected bool ExportProcedures(StringBuilder sb, out string script, out string msg)
       { 
-         Logger.LogS();
+         LogS();
          bool ret = false;
          script = "";
 
@@ -2801,7 +2896,7 @@ namespace DbScripterLibNS
       /// </summary>
       protected bool ExportFunctions(StringBuilder sb, out string script, out string msg)
       {
-         Logger.LogS();
+         LogS();
          bool ret = false;
          script = "";
 
@@ -2831,7 +2926,7 @@ namespace DbScripterLibNS
       /// <param name="sb">string builder to populate the serialisation all the user defined functions as a set of SQL statements</param>
       protected void ExportFunctions( string? currentSchemaName, StringBuilder sb)
       {
-         Logger.LogS();
+         LogS();
 
          try
          { 
@@ -2901,7 +2996,7 @@ namespace DbScripterLibNS
       /// <param name="required_schemas"></param>
       protected bool ExportProcedures( Params p, out string script, out string msg)
       {
-         Logger.LogS();
+         LogS();
          bool ret = false;
          script   = "";
 
@@ -2946,7 +3041,7 @@ namespace DbScripterLibNS
       /// <param name="sb">string builder to populate the serialisation as a set of SQL statements</param>
       protected string ExportProcedures( string? currentSchemaName, StringBuilder sb)
       {
-         Logger.LogS();
+         LogS();
          StringBuilder sb_ = new StringBuilder();
 
          try
@@ -2971,28 +3066,28 @@ namespace DbScripterLibNS
          }
          catch(Exception e)
          {
-            Logger.LogException(e);
+            LogException(e);
             var msgs = e.GetAllMessages();
-            Logger.Log(msgs);
+            Log(msgs);
             throw;
          }
 
-         Logger.LogL();
+         LogL();
          return sb_.ToString();
       }
 
       protected void ExportProcedure( StoredProcedure proc, StringBuilder sb )
       {
-         Logger.LogS();
+         LogS();
          try
          { 
-            Logger.LogS($" exporting procedure: {proc.Name}");
+            LogS($" exporting procedure: {proc.Name}");
             ScriptTransactions(proc.Script(ScriptOptions), sb, proc.Urn, wantGo: true);
-            Logger.LogL();
+            LogL();
          }
          catch(Exception e)
          {
-            Logger.LogException(e);
+            LogException(e);
             throw;
          }
       }
@@ -3004,7 +3099,7 @@ namespace DbScripterLibNS
       /// <returns>Serialisation of all the user defined types as a set of SQL statements</returns>
       protected string ExportTableTypes( string currentSchemaName, StringBuilder sb )
       {
-         Logger.LogS();
+         LogS();
          StringBuilder sb_ = new StringBuilder();
 
          try
@@ -3017,30 +3112,30 @@ namespace DbScripterLibNS
          }
          catch(Exception e)
          {
-            Logger.LogException(e);
+            LogException(e);
             throw;
          }
 
          sb.Append(sb_);
-         Logger.LogL();
+         LogL();
          return sb_.ToString();
       }
 
       protected void ExportTableType( UserDefinedTableType tbl_ty, StringBuilder sb )
       {
-         Logger.LogS();
+         LogS();
          try
          { 
             ScriptTransactions(tbl_ty.Script(ScriptOptions), sb, tbl_ty.Name, wantGo: true);
          }
          catch(Exception e)
          {
-            Logger.LogException(e);
+            LogException(e);
             throw;
          }
 
-         Logger.LogL();
-     }
+         LogL();
+      }
 
       /// <summary>
       /// Scripts the line USE database
@@ -3050,28 +3145,30 @@ namespace DbScripterLibNS
       /// </summary>
       protected void ScriptUseDatabaseStatement( StringBuilder sb )
       {
-         Logger.LogS();
+         LogS();
 
          if(ScriptOptions.IncludeDatabaseContext)
             ScriptUse(sb, true);
 
-         Logger.LogL();
+         LogL();
       }
 
       protected void ScriptUse( StringBuilder sb, bool onlyOnce = false )
       {
-         Logger.LogS();
+         LogS();
          ScriptLine($"USE [{Database.Name}]", sb);
          //ScriptGo(sb); // new way of scripting adds gos at the start of teh next of the next statement
-         // so we ar3e getting 2 gos
+         // so we are getting 2 gos
 
          if(onlyOnce)
             ScriptOptions.IncludeDatabaseContext = false;
-      }
+
+          LogL();
+     }
 
       private SchemaCollectionBase? GetSchemaCollectionForType( Type type )
       {
-         Logger.LogS();
+         LogS();
          SchemaCollectionBase collection; // SchemaCollectionBase
 
          switch(type.Name)
@@ -3101,43 +3198,8 @@ namespace DbScripterLibNS
          }
 
          Utils.Assertion(collection != null);
-         Logger.LogL();
+         LogL();
          return collection;
-      }
-
-      /// <summary>
-      /// 
-      /// </summary>
-      /// <param name="tables"></param>
-      /// <returns></returns>
-      public List<string> GetDependencyWalk( List<Table> tables )
-      {
-         Logger.LogS();
-         var walk = new List<string>();
-         string name;
-         var dw = new DependencyWalker(Server);
-         var smoTables = new SqlSmoObject[tables.Count];
-
-         for(int i = 0; i < tables.Count; i++)
-            smoTables[i] = tables[i];
-
-         var tree = dw.DiscoverDependencies(smoTables, DependencyType.Parents);
-         var coll = dw.WalkDependencies(tree);
-
-         foreach(DependencyCollectionNode node in coll)
-         {
-            var ty = node.Urn.Type;
-
-            if(String.Compare(ty, "Table", StringComparison.Ordinal) == 0)
-            {
-               name = node.Urn.GetAttribute("Name");
-               walk.Add(name);
-               Debug.WriteLine($"table: {name}");
-            }
-         }
-
-         Logger.LogL();
-         return walk;
       }
 
       /// <summary>
@@ -3153,121 +3215,185 @@ namespace DbScripterLibNS
       /// Key being added: 'Server[@Name='DESKTOP-UAULS0U\\SQLEXPRESS']/Database[@Name='ut']/UnresolvedEntity[@Name='sp_tst_hlpr_chk' and @Schema='test']'"}
       /// 1 public DependencyTree DiscoverDependencies( Urn[] urns, DependencyType dependencyType );
       ///
-      // in which case this rtn will return false and we do it without using MS dependencies
+      /// in which case this rtn will return false and we do it without using MS dependencies
       /// </summary>
       /// <param name="schemas"></param>
       /// <param name="mostDependentFirst"></param>
-      /// <returns></returns>
-      public bool GetSchemaDependencyWalk( IEnumerable<string> schemaNames, bool mostDependentFirst, out List<Urn> walk)
+      /// <returns>true if succeeded, false otherwise</returns>
+      public void GetSchemaDependencyWalk( IEnumerable<string> schemaNames, bool mostDependentFirst, out List<Urn> walk)
       {
-         Logger.LogS();
-         string ty = "", name = "", schemaName, key;
-         int cnsidrd_cnt      = 0;
-         int selctd_cnt       = 0;
-         int nw_cnt           = 0;
-         int nw_dup_dep_cnt   = 0;
-         int nw_alien_cnt     = 0;
-         int nw_sch_cnt       = 0;
-         int nw_unres_cnt     = 0;
-         var dw               = new DependencyWalker(Server);
-         var sb               = new StringBuilder("\r\n\r\nItems to be scripted:\r\n");
+         LogS();
+         var sb = new StringBuilder("\r\n\r\nItems to be scripted:\r\n");
          Dictionary<string, Urn> map = new();
          walk = new List<Urn>();
-         Urn[] child_ary      = GetFilteredItems(schemaNames);
-         DependencyTree? depTree = null;
-         bool ret = false;
-         DependencyType depTy = mostDependentFirst ? DependencyType.Parents : DependencyType.Children;
-         UrnCollection urnCollList = new();
-         SqlSmoObject[] smos = new SqlSmoObject[child_ary.Length];
+
+         // Pass 1:
+         // Get list of Schema items filter for is system object, wanted type, duplicates etc.
+         Urn[] schemaWantedChildItems = GetWantedChildren(schemaNames);
+         List<Urn> candidates = GetSchemaDependencyWalk2( schemaWantedChildItems, mostDependentFirst);
+         ConsisderedEntities.Clear();
+         WantedItems.Clear();
+
+         // Pass 2:
+         // Filter candidates again for any outside of the wanted schema or database
+         foreach( Urn candidate in candidates)
+            if(ConsiderCandidate(candidate, filterUnwantedTypes: true, sb, schemaNames, map))
+               walk.Add(candidate);
+
+         LogDirect($"{sb.ToString()}");
+         LogL($"Final walk of schema items: count: {walk.Count}");
+         return;
+      }
+
+      /// <summary>
+      /// 
+      /// </summary>
+      /// <param name="childUrn"></param>
+      /// <param name="filterUnwantedTypes"> set true if want to filter unewanted types e.g. when in alter mode then a table is NOT wanted</param>
+      /// <param name="sb"></param>
+      /// <param name="schemaNames"></param>
+      /// <param name="map"></param>
+      /// <returns>true if child is wanted</returns>
+      protected bool ConsiderCandidate( Urn childUrn, bool filterUnwantedTypes, StringBuilder sb, IEnumerable<string> schemaNames, Dictionary<string, Urn> map)
+      {
+         bool ret    = false;
+         string key  = GetUrnDetails( childUrn, out string ty, out var dbName, out string schemaName, out string name);
+         var sqlType = MapSmoTypeToSqlType(ty);
+         RegisterAction(key, SelectionRuleEnum.Considering);
+         int i = ConsisderedEntities.Count;
+         LogS($"Considering [{i}]: {key} fuwtypes: {filterUnwantedTypes}");
 
          try
-         {
-            // DependencyTree.DiscoverDependencies() can fail in MS code if there is more than 1 reference to a an unresolved item
-            // like a missing stored procedure
-            depTree = dw.DiscoverDependencies(child_ary, depTy);
-            var walk1 = dw.WalkDependencies(depTree);
-
-            foreach( DependencyCollectionNode node in walk1)
+         { 
+            do
             {
-               Urn urn = node.Urn;
-               cnsidrd_cnt++;
-               key = GetUrnKeyFromUrn( urn, out ty, out var dbName, out schemaName, out name);
-
-               RegisterAction(key, SelectionRuleEnum.Considering);
+               if(!ConsisderedEntities.ContainsKey(key))
+               {
+                  ConsisderedEntities.Add(key, key);
+               }
+               else
+               {
+                  //  Unwanted duplicate
+                  RegisterAction(key, SelectionRuleEnum.DuplicateDependency);
+                  break;
+               }
 
                if(ty == "UnresolvedEntity")
                {
                   RegisterAction(key, SelectionRuleEnum.UnresolvedEntity);
-                  continue;
+                  break;
                }
 
                if(!Database.Name.Equals(dbName, StringComparison.OrdinalIgnoreCase))
                {
-                  nw_cnt++;
                   RegisterAction(key, SelectionRuleEnum.DifferentDatabase);
-                  continue;
+                  break;
                }
 
-               var smo = Server.GetSmoObject(urn);
-               
-               if(smo.Properties.Contains("IsSystemObject"))
+               SqlSmoObject? childSmo = null;
+               // Can throw if a wierd o
+                  childSmo = Server.GetSmoObject(childUrn);
+
+               if(childSmo.Properties.Contains("IsSystemObject"))
                { 
-                  var property = smo.Properties["IsSystemObject"];
+                  var property = childSmo.Properties["IsSystemObject"];
 
                   if(((bool)property.Value) == true)
                   { 
-                     nw_cnt++;
-                     // Log and store the entity and the exclusion rule
-                     RegisterAction(key, SelectionRuleEnum.UnwantedSchema);
-                     continue;
+                     // Unwanted system object
+                     RegisterAction(key, SelectionRuleEnum.SystemObject);
+                     break;
                   }
                }
 
                // Only add if the item is in a required schema
-               if( !schemaNames.Contains(schemaName))
+               if(!schemaNames.Contains(schemaName))
                {
-                  nw_cnt++;
-                  // Log and store the entity and the exclusion rule
+                  //  Unwanted Schema
                   RegisterAction(key, SelectionRuleEnum.UnwantedSchema);
-                  continue;
+                  break;
                }
-               
+
+               // if filtering unwanted types
+               if(filterUnwantedTypes)
+               {
+                  if(!IsTypeWanted(ty))
+                  {
+                     //  Unwanted type
+                     RegisterAction(key, SelectionRuleEnum.UnwantedType);
+                     break;
+                  }
+               }
+
                if(!map.ContainsKey(key))
                {
-                  map.Add(key, urn);
+                  map.Add(key, childUrn);
                   ty = ty.PadRight(20);
                   Assertion(!string.IsNullOrEmpty(schemaName));
                   sb.AppendLine($"{ty}: {schemaName}.{name}");
-                  walk.Add(node.Urn);
-                  // Log and store the entity in the candidate list
+
+                  // OK we want this one
                   RegisterAction(key, SelectionRuleEnum.Wanted);
+                  ret = true;
+                  break;
                }
                else
                {
-                  nw_cnt++;
                   // Log and store the entity and the exclusion rule: Duplicate Dependency
                   RegisterAction(key, SelectionRuleEnum.DuplicateDependency);
-                  continue;
                }
-            }
-
-            ret = true;
+            } while(false);
          }
          catch(Exception e)
          {
-            LogException(e, $"{ty}: {name}");
-            return false;
+            LogException(e, $"item:  [{i}]: {GetUrnKey(childUrn)}");
+            BadBin.Add(key, e.Message);
          }
 
-         LogDirect($"{sb.ToString()}");
-         Log($"{cnsidrd_cnt} deps considrd, {selctd_cnt} selctd, {nw_cnt} not wanted: {nw_dup_dep_cnt} dups, {nw_unres_cnt} unres ents {nw_alien_cnt} aliens {nw_sch_cnt} nwntd schemas");
          LogL($"ret: {ret}");
          return ret;
       }
 
+      protected List<Urn> GetSchemaDependencyWalk2( Urn[] child_ary, bool mostDependentFirst)
+      {
+         LogS();
+         List<Urn> walk = new();
+         var dw         = new DependencyWalker(Server);
+         DependencyTree depTree;
+         DependencyType depTy = mostDependentFirst ? DependencyType.Parents : DependencyType.Children;
+
+         try
+         {
+            depTree = dw.DiscoverDependencies(child_ary, depTy);
+            var walk1 = dw.WalkDependencies(depTree);
+
+            foreach(var item in walk1)
+               walk.Add(item.Urn);
+         }
+         catch(Exception e)
+         {
+            // MS code can do raise exception if dangling references to non existent procedures exist in db routines
+            LogException(e, $"GetSchemaDependencyWalk");
+            LogC($@"GetSchemaDependencyWalk failed:
+MS code can do raise exception if dangling references to non existent procedures exist in db routines
+Trying to script schema dependnecies in order tables, functions procedures
+Script may need manual rearranging to get dependency order correct.
+{e}");
+            Assertion(GetSchemaChildren( P.RequiredSchemas, out walk), "GetSchemaChildren failed");
+         }
+
+         // ASSERTION walk populated
+         LogL($"walk contains: {walk.Count} items");
+         return walk;
+      }
+
       /// <summary>
-      /// desc: Produces a unique list of items in the required schemas
-      /// 
+      /// Desc: Produces a unique list of wanted items in the required schemas
+      ///   filters:
+      ///      1: is a wanted type {View, UserDefinedFunction, StoredProcedure, DataType}
+      ///      2: Is not a System Object
+      ///      3: is not already on the wanted list
+      ///
       /// PRECONDITIONS:
       ///   PRE 1: P.RootType == SqlTypeEnum.Schema
       ///   
@@ -3276,89 +3402,88 @@ namespace DbScripterLibNS
       /// </summary>
       /// <param name="schemaNames"></param>
       /// <returns></returns>
-      protected Urn[] GetFilteredItems(IEnumerable<string> schemaNames)
+      protected Urn[] GetWantedChildren(IEnumerable<string> schemaNames)
       {
-         Logger.LogS();
-         Utils.Assertion(P.RootType == SqlTypeEnum.Schema);
-         List<Urn> children= new List<Urn>();
+         LogS();
+         Assertion(P.RootType == SqlTypeEnum.Schema);
+         StringBuilder sb = new();
+         List<Urn> wantedChildren= new List<Urn>();
          string key, ty, dbNm, schemaNm, entityNm;
          int cnsidrd_cnt   = 0;
          int i             = 0;
-         int sel_cnt       = 0;
-         int duplicateCount= 0;
-         int sysObjCount   = 0;
+         int duplicateCount= DuplicateDependencies.Count;
          bool ret          = false;
          var smoSchemas    = new SqlSmoObject[schemaNames.Count()];
          Set<string> set   = new Set<string>();
          Dictionary<string, Urn> map = new();
-         List<string> wanted = new () { "View", "UserDefinedFunction", "StoredProcedure", "DataType"};
+         List<string> wantedTypes = new () { "View", "UserDefinedFunction", "StoredProcedure", "DataType"};
 
+         // Add table type if not alter mode
          if(P.CreateMode != CreateModeEnum.Alter)
-            wanted.Add("Table");
+            wantedTypes.Add("Table");
 
-         Logger.LogDirect($"Stage 1: Get the objects owned by the schemas");
+         LogDirect($"Stage 1: Get the objects owned by the schemas");
 
+         // Iterate each required schema
          foreach( var schemaName_ in schemaNames)
          {
             var schema = Database.Schemas[schemaName_];
             smoSchemas[i++] = schema;
-            Logger.LogDirect($"Stage 1: [{i}] - get the objects owned by the schema: {schemaName_}");
+            LogDirect($"Stage 1: [{i}] - get the objects owned by the schema: {schemaName_}");
 
-            foreach(Urn urn in schema.EnumOwnedObjects())
+            // Iterate each item in the schema
+            foreach(Urn childUrn in schema.EnumOwnedObjects())
             {
-               ret = false;
                cnsidrd_cnt++;
-               key = GetUrnKeyFromUrn( urn, out ty, out dbNm, out schemaNm, out entityNm);
-               RegisterAction(key, SelectionRuleEnum.Considering);
+               key = GetUrnDetails(childUrn, out ty, out dbNm, out schemaNm, out entityNm);
 
-               if(!wanted.Contains(urn.Type))
-               {
-                  // Log and store the entity and the exclusion rule
-                  RegisterAction(key, SelectionRuleEnum.UnwantedType);
-                  continue; 
-               }
+               // Conside the candidate: if the child item qualifies add it to the list
+               if( ConsiderCandidate( childUrn, filterUnwantedTypes: false, sb, schemaNames, map))
+                  wantedChildren.Add(childUrn);
 
-               var smo = Server.GetSmoObject(urn);
-
-               if((((dynamic)smo)?.IsSystemObject ?? true))
-               {
-                  sysObjCount++;
-                  RegisterAction(key, SelectionRuleEnum.SystemObject);
-               }
-
-               // Add candidate
-               // Add if not already added
-               if(!map.ContainsKey(key))
-               {
-                  // Log and store the entity in the candidates 2 list
-                  RegisterAction(key, SelectionRuleEnum.Wanted);
-                  ret = true;
-                  map.Add(key, urn);
-                  sel_cnt++;
-               }
-               else
-               {
-                  duplicateCount++;
-                  RegisterAction(key, SelectionRuleEnum.DuplicateDependency);
-               }
-
-               Logger.LogDirect($"item: {key}: {(ret ? "" : "not ")} wanted.");
+               LogDirect($"item: {key}: {(ret ? "" : "not ")} wanted.");
             }
          }
 
-         bool chk = map.Values.Any(x=>x.ToString().IndexOf("Unresolved", StringComparison.OrdinalIgnoreCase) > -1);
-         Assertion(chk == false);
-              chk = map.Values.Any(x=>x.ToString().IndexOf("sp_tst_hlpr_chk", StringComparison.OrdinalIgnoreCase) > -1);
-         Assertion(chk == false);
-         Logger.LogS($"returning {map.Count} items, {cnsidrd_cnt} items considered, {sel_cnt} items selected, {duplicateCount} duplicates, {sysObjCount} system objects");
-
-         // chk using a back map
-         var map2 = new Dictionary<string, string>();
-         foreach(var item in map)
-            map2.Add(item.Value, item.Key);
-
-
+         // Checks
+         Assertion(RunChecks(map , out var msg), msg);
+         duplicateCount = DuplicateDependencies.Count - duplicateCount;
+         LogL($"returning {map.Count} items, {cnsidrd_cnt} items considered, {wantedChildren.Count} items selected, {duplicateCount} duplicates, {SystemObjects.Count} system objects");
          return map.Values.ToArray();
+      }
+
+      protected bool RunChecks(Dictionary<string, Urn> map , out string msg)
+      {
+         bool ret = false;
+
+         do
+         {
+            // Checks
+            bool chk = map.Values.Any(x=>x.ToString().IndexOf("Unresolved", StringComparison.OrdinalIgnoreCase) > -1);
+
+            if(chk)
+            {
+               msg = $"Unresolved item found in candidate list";
+               break;
+            }
+
+            // chk using a back map
+            var map2 = new Dictionary<string, string>();
+
+            foreach(var item in map)
+               map2.Add(item.Value, item.Key);
+
+            if(map.Count != map2.Count)
+            {
+               msg = $"oops Backup map test failed";
+               break;;
+            }
+
+            msg = "";
+            ret = true;
+         } while(false);
+
+         return ret;
       }
 
       /// <summary>
@@ -3562,7 +3687,7 @@ namespace DbScripterLibNS
             msg = "";
          } while (false);
 
-         Logger.LogL($"ret: {ret}");
+         LogL($"ret: {ret}");
          return ret;
       }
 
@@ -3617,7 +3742,7 @@ namespace DbScripterLibNS
          if(P.TargetChildTypes == null || P.TargetChildTypes.Contains(sqlTy))
             ret = true;
 
-         Logger.LogL($"ret: {ret}");
+         LogL($"ret: {ret}");
          return ret;
       }
 
@@ -3631,21 +3756,23 @@ namespace DbScripterLibNS
          // Schema filter
          switch(typeName.ToUpper())
          {
-         case "Data"                : ret = P.IsExprtngData   ?? false; break;
-         case "Database"            : ret = P.IsExprtngDb     ?? false; break;
-         case "ForeignKey"          : ret = P.IsExprtngFKeys  ?? false; break;
-         case "UserDefinedFunction" : ret = P.IsExprtngFns    ?? false; break;
-         case "Procedure"           : ret = P.IsExprtngProcs  ?? false; break;
-         case "Schema"              : ret = P.IsExprtngSchema ?? false; break;
-         case "Table"               : ret = P.IsExprtngTbls   ?? false; break;
-         case "UserDefinedTableType": ret = P.IsExprtngTTys   ?? false; break;
-         case "View"                : ret = P.IsExprtngVws    ?? false; break;
+         case "DATA"                : ret = P.IsExprtngData   ?? false; break;
+         case "DATABASE"            : ret = P.IsExprtngDb     ?? false; break;
+         case "FOREIGNKEY"          : ret = P.IsExprtngFKeys  ?? false; break;
+         case "USERDEFINEDFUNCTION" : ret = P.IsExprtngFns    ?? false; break;
+         case "STOREDPROCEDURE"     : ret = P.IsExprtngProcs  ?? false; break;
+         case "SCHEMA"              : ret = P.IsExprtngSchema ?? false; break;
+         case "TABLE"               : ret = P.IsExprtngTbls   ?? false; break;
+         case "USERDEFINEDTABLETYPE": ret = P.IsExprtngTTys   ?? false; break;
+         case "VIEW"                : ret = P.IsExprtngVws    ?? false; break;
+
+         case "TRIGGER"             : ret = false; break;
 
          default:
             Utils.Postcondition(false, $"IsTypeWanted() unexpected type: [{typeName}]"); break;
          }
 
-         Logger.LogL($"ret: {ret}");
+         LogL($"ret: {ret}");
          return ret;
       }
 
@@ -3656,7 +3783,7 @@ namespace DbScripterLibNS
       /// <returns></returns>
       protected string HandleExportFilePath( string? exportFilePath, bool addTimestamp )
       {
-         Logger.LogS();
+         LogS();
          // Add the file path as a comment in the first line in the script
          // D:\Dev\Db\Ut\Tests\ut_{dbo,test}_FP_210214-0709_export.sql
          string? modifiedExportFilePath = null;
@@ -3683,7 +3810,7 @@ namespace DbScripterLibNS
             modifiedExportFilePath = $@"{ dirs}\{fileName}_{GetTimestamp()}.{ext}";
          }
 
-         Logger.LogL();
+         LogL();
          return modifiedExportFilePath;
       }
 
@@ -3701,15 +3828,13 @@ namespace DbScripterLibNS
          LogExportedList("Views"                   , sb, ExportedViews);
          LogExportedList("Table Types"             , sb, ExportedTableTypes);
          LogExportedList("Wanted Items"            , sb, WantedItems);
-         LogExportedList("Consisidered Entities"   , sb, ConsisideredEntities);
+         LogExportedList("Consisidered Entities"   , sb, ConsisderedEntities);
          LogExportedList("Different Databases"     , sb, DifferentDatabases);
          LogExportedList("Duplicate Dependencies"  , sb, DuplicateDependencies);
          LogExportedList("System Objects"          , sb, SystemObjects);
          LogExportedList("Unresolved Entities"     , sb, UnresolvedEntities);
          LogExportedList("Unwanted Schems"         , sb, UnwantedTypes);
-         LogExportedList("Different Databases"     , sb, DifferentDatabases);
-         LogExportedList("Duplicate Dependencies"  , sb, DuplicateDependencies);
-         LogExportedList("SystemObjects"           , sb, SystemObjects);
+         LogExportedList("Bad bin"                 , sb, BadBin);
          LogDirect($"\r\n{line}\r\n");
          LogL();
       }

@@ -64,12 +64,12 @@ namespace DbScripterLibNS
                   break;
                }
 
-               tmp =  $"Successfully exported to {p.ExportScriptPath}";
+               tmp =  $"Successfully exported to {p.ScriptPath}";
                LogC(tmp);
 
                // Launch notepad++
                if(p.DisplayScript ?? true)
-                  Process.Start("notepad++.exe", p.ExportScriptPath);
+                  Process.Start("notepad++.exe", p.ScriptPath);
 
                ret = 0; // success
             } while(false);
@@ -117,9 +117,9 @@ namespace DbScripterLibNS
                break;
             }
 
-            if(!File.Exists(p.ExportScriptPath))
+            if(!File.Exists(p.ScriptPath))
             {   
-               msg = $"Failed to create export file: {p.ExportScriptPath}";
+               msg = $"Failed to create export file: {p.ScriptPath}";
                break;
             }
 
@@ -144,7 +144,7 @@ namespace DbScripterLibNS
       /// </summary>
       public static bool Init(string[] args, out Params p, out string? msg)
       {
-         LogC("Initialising starting ...");
+         LogC("Initialisation starting ...");
          bool ret = false;
 
          do
@@ -154,13 +154,6 @@ namespace DbScripterLibNS
             Logger.LogProvider = ServiceLocator.Instance.ResolveByType<ILogProvider>();
             Logger.InitLogger();
             LogC($"Log: {Logger.LogFile}");
-
-            if(args == null || (args.Length<1))
-            {
-               msg = "no arguments specified";
-               p = new Params();
-               break;
-            }
 
             if(!ParseArgs(args, out p, out msg))
             {
@@ -173,7 +166,7 @@ namespace DbScripterLibNS
             ret = true;
          } while(false);
 
-         LogC($"Initialisation completed, ret: {ret} {msg}");
+         LogC($"Initialisation completed, ret: {ret}");
          return ret;
       }
 
@@ -229,22 +222,26 @@ namespace DbScripterLibNS
 
          try 
          {
-            Utils.Precondition(args != null, "Args must be supplied");
-            int len           = args?.Length ?? 0;
-            var argsU         = args.Select(s => s.ToUpper()).ToArray();
-
-            LogArgs(argsU);
-
             do
             {//                                                                                 //                default:
-               p.ServerName         = GetArg( args, argsU,        "-S",  p);                    // -S             this machine
-               p.InstanceName       = GetArg( args, argsU,        "-I",  p);                    // -I             SQLEXPRESS
-               p.DatabaseName       = GetArg( args, argsU,        "-D",  p);                    // -d             no default
+               if(args == null || args.Length < 1)
+               {
+                  msg = "arguments must be supplied";
+                  break;
+               }
+
+               int len              = args?.Length ?? 0;
+               var argsU            = args.Select(s => s.ToUpper()).ToArray();
+               LogArgs(argsU);
+               
+               p.Server             = GetArg( args, argsU,        "-S",  p);                    // -S             this machine
+               p.Instance           = GetArg( args, argsU,        "-I",  p);                    // -I             SQLEXPRESS
+               p.Database           = GetArg( args, argsU,        "-D",  p);                    // -d             no default
                p.RootType           = GetArg( args, argsU,        "-rt", p).FindEnumByAlias<SqlTypeEnum>();// -rt schema
                p.RequiredSchemas    = p.ParseRequiredSchemas( GetArg( args, argsU, "-rs", p));  // -rs            dbo
                p.TargetChildTypes   = p.ParseRequiredTypes  ( GetArg( args, argsU, "-tct", p)); // -tct           F,P
                p.CreateMode         = GetArg( args, argsU,        "-cm", p).FindEnumByAlias<CreateModeEnum>();//-cm  ALTER
-               p.ExportScriptPath   = GetArg( args, argsU,        "-E",   p);                   // -E             app config / D:\Scripts
+               p.ScriptPath         = GetArg( args, argsU,        "-E",   p);                   // -E             app config / D:\Scripts
                p.ScriptUseDb        = GetArgT<bool>( args, argsU, "-USE", p);                   // -use           false
                p.AddTimestamp       = GetArgT<bool>( args, argsU, "-TS",  p);                   // -ts            false
                p.LogFile            = GetArg( args, argsU,        "-log", p);                   // -log           {app config/script_dir}\{DatabaseName}_{schemas}_{TimeStamp}_export.sql
@@ -252,18 +249,18 @@ namespace DbScripterLibNS
   
                //  POST 1: all fields of P are specified
                var spec_msg = "must be specified";
-               if( p.CreateMode       == null){ msg = "-cm  (create mode)"          + spec_msg; break;}
-               if( p.DatabaseName     == null){ msg = "-d   (database)"             + spec_msg; break;}
-               if( p.DisplayScript    == null){ msg = "-disp_script (true/false)"   + spec_msg; break;}
-               if( p.ExportScriptPath == null){ msg = "-E   (Export Script Path)"   + spec_msg; break;}
-               if( p.InstanceName     == null){ msg = "-i   (instance name)"        + spec_msg; break;}
-               if( p.RequiredSchemas  == null){ msg = "-rs  (required schemas)"     + spec_msg; break;}
-               if( p.RootType         == null){ msg = "-rt  (Root Type)"            + spec_msg; break;}
-               if( p.ServerName       == null){ msg = "-S   (server name)"          + spec_msg; break;}
-               if( p.TargetChildTypes == null){ msg = "-tct (target child types)"   + spec_msg; break;}
-               if( p.AddTimestamp     == null){ msg = "-ts  (add timestamp to SFN)" + spec_msg; break;}
-               if( p.LogFile          == null){ msg = "-log (log file)"             + spec_msg; break;}
-               if( p.ScriptUseDb      == null){ msg = "-use (script usedb)"         + spec_msg; break;}
+               if( p.CreateMode        == null){ msg = "-cm  (create mode)"          + spec_msg; break;}
+               if( p.Database          == null){ msg = "-d   (database)"             + spec_msg; break;}
+               if( p.DisplayScript     == null){ msg = "-disp_script (true/false)"   + spec_msg; break;}
+               if( p.ScriptPath        == null){ msg = "-E   (Export Script Path)"   + spec_msg; break;}
+               if( p.Instance          == null){ msg = "-i   (instance name)"        + spec_msg; break;}
+               if( p.RequiredSchemas   == null){ msg = "-rs  (required schemas)"     + spec_msg; break;}
+               if( p.RootType          == null){ msg = "-rt  (Root Type)"            + spec_msg; break;}
+               if( p.Server            == null){ msg = "-S   (server name)"          + spec_msg; break;}
+               if( p.TargetChildTypes  == null){ msg = "-tct (target child types)"   + spec_msg; break;}
+               if( p.AddTimestamp      == null){ msg = "-ts  (add timestamp to SFN)" + spec_msg; break;}
+               if( p.LogFile           == null){ msg = "-log (log file)"             + spec_msg; break;}
+               if( p.ScriptUseDb       == null){ msg = "-use (script usedb)"         + spec_msg; break;}
 
                ret = true;
                msg = "";
@@ -274,76 +271,15 @@ namespace DbScripterLibNS
             msg = e.Message;
             LogC($"App.ParseArgs caught exception {e}");
             LogException(e);
-            //throw;
          }
 
-         msg = $"error parsing args: {msg}";
+         if(!ret)
+            msg = $"error parsing args: {msg}";
+
          var msg2 = $"App.ParseArgs leaving ret: {ret} {msg}";
          LogC(msg2);
          LogL(msg2);
          return ret;
-      }
-
-      protected static Dictionary<string, string?> DefaultMap
-      { get;set;} = new ()
-      {
-         { "-s"  , "DESKTOP-UAULS0U\\SQLEXPRESS"},
-         { "-i"  , "SQLEXPRESS"},
-         { "-rs" , "dbo"},
-         { "-rt" , "schema"},
-         { "-tct", "F,P"},
-         { "-cm" , "ALTER"},
-         { "-use", "false"},
-         { "-ts" , "false"},
-         { "-disp_script" , "false"},
-      };
-
-      /// <summary>
-      /// Returns the default for a switch based on the current switch state and the app settings
-      /// Only call this if needed
-      /// </summary>
-      /// <param name="key"></param>
-      /// <param name="p"></param>
-      /// <returns></returns>
-      protected static string? GetDefault(string key, Params p)
-      {
-         string? value = null;
-         key = key.ToLower();
-
-         if( DefaultMap.ContainsKey(key))
-         {
-            value = DefaultMap[key];
-         }
-         else
-         { 
-            var schemas    = string.Join("_", p.RequiredSchemas);
-            var script_dir = ConfigurationManager.AppSettings.Get("Script Dir") ?? @"D:\Scripts";
-            var log_dir    = ConfigurationManager.AppSettings.Get("Log Dir") ?? script_dir;
-
-            switch(key)
-            {
-            case "-d": // no default
-               AssertFail("-d database must be specified");
-               break;
-
-            case "-e":
-               // must be called after p.DatabaseName specified
-               Assertion(!string.IsNullOrEmpty(p.DatabaseName), "-d database must be specified");
-               value = @$"{script_dir}\{p.DatabaseName}_{schemas}_{Utils.GetTimeStamp()}.sql";
-               break;
-
-            case "-log":
-               Assertion(!string.IsNullOrEmpty(p.DatabaseName), "-d database must be specified");
-               value = @$"{log_dir}\{p.DatabaseName}_{schemas}_{Utils.GetTimeStamp()}.log";
-               break;
-
-            default:
-               value = null;
-               break;
-            }
-         }
-
-         return value;
       }
 
       /// <summary>
@@ -398,7 +334,7 @@ namespace DbScripterLibNS
 
          if(ndx == -1)
          {
-            str = GetDefault(key, p);
+            str = p.GetDefaultForSwitch(key);
          }
          else
          { 
@@ -482,8 +418,9 @@ namespace DbScripterLibNS
       protected static void PrintHelp(Exception? e = null)
       {
          if(e != null)
-         {   Console.WriteLine($"{e}");
-             LogException(e);
+         {
+            Console.WriteLine($"{e}");
+            LogException(e);
          }
 
          Console.WriteLine(@"

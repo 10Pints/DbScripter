@@ -19,7 +19,7 @@ namespace DbScripterAppTestsNS
       {
          LogS();
          Assert.IsFalse(Program.Init(null, out var p, out var msg), msg);
-         Assert.IsTrue(msg.Equals("no arguments specified"));
+         Assert.IsTrue(msg.Equals("error parsing args: arguments must be supplied"));
          LogL();
       }
 
@@ -260,11 +260,11 @@ namespace DbScripterAppTestsNS
 
          // POSTCONDITIONS
          // ServerName       
-         Assert.AreEqual(svr_nm                 , p.ServerName,            "ServerName -S");
-         Assert.AreEqual("SQLEXPRESS"           , p.InstanceName,          "InstanceName -i");
-         Assert.AreEqual("covid"                , p.DatabaseName,          "DatabaseName -d");
+         Assert.AreEqual(svr_nm                 , p.Server,                "Server -S");
+         Assert.AreEqual("SQLEXPRESS"           , p.Instance,              "Instance -i");
+         Assert.AreEqual("covid"                , p.Database,              "Database -d");
          Assert.AreEqual(SqlTypeEnum.Schema     , p.RootType,              "RootType -rt");
-         Assert.AreEqual(ScriptFile             , p.ExportScriptPath,      "ExportScriptPath -E");
+         Assert.AreEqual(ScriptFile             , p.ScriptPath,            "ScriptPath -E");
          Assert.AreEqual(2                      , p.RequiredSchemas.Count, "RequiredSchemas -rs");
          Assert.AreEqual("dbo"                  , p.RequiredSchemas[0],    "RequiredSchema[0]");
          Assert.AreEqual("test"                 , p.RequiredSchemas[1],    "RequiredSchema[1]");
@@ -310,11 +310,11 @@ namespace DbScripterAppTestsNS
 
          // POSTCONDITIONS
          // ServerName       
-         Assert.AreEqual(svr_nm                 , p.ServerName,            "ServerName -S");
-         Assert.AreEqual("SQLEXPRESS"           , p.InstanceName,          "InstanceName -i");
-         Assert.AreEqual("ut"                   , p.DatabaseName,          "DatabaseName -d");
+         Assert.AreEqual(svr_nm                 , p.Server,                "Server -S");
+         Assert.AreEqual("SQLEXPRESS"           , p.Instance,              "Instance -i");
+         Assert.AreEqual("ut"                   , p.Database,              "Database -d");
          Assert.AreEqual(SqlTypeEnum.Schema     , p.RootType,              "RootType -rt");
-         Assert.AreEqual(ScriptFile             , p.ExportScriptPath,      "ExportScriptPath -E");
+         Assert.AreEqual(ScriptFile             , p.ScriptPath,            "ScriptPath -E");
          Assert.AreEqual(1                      , p.RequiredSchemas.Count, "RequiredSchemas -rs");
          Assert.AreEqual("dbo"                  , p.RequiredSchemas[0],    "RequiredSchema[0]");
          Assert.AreEqual(5                      , p.TargetChildTypes.Count,"TargetChildTypes -tct");
@@ -355,9 +355,9 @@ namespace DbScripterAppTestsNS
          // SETUP:
          var svr_nm        = @"DESKTOP-UAULS0U\SQLEXPRESS";
          var exp_script_dir= @"E:\Backups\iDrive\Dev\Db\Scripts";
-         ScriptFile        = $@"{exp_script_dir}\TPC_dbo_{Utils.GetTimeStamp()}.sql";
+         ScriptFile        = $@"{exp_script_dir}\TPC_dbo_{Utils.GetTimestamp()}.sql";
          // specified in app config and ts added
-         var exp_log       = $@"D:\Logs\TPC_dbo_{Utils.GetTimeStamp()}.log";
+         var exp_log       = $@"D:\Logs\TPC_dbo_{Utils.GetTimestamp()}.log";
 
          string [] args = new string[]
          {
@@ -368,22 +368,22 @@ namespace DbScripterAppTestsNS
          Assert.IsTrue(Program.ParseArgs(args, out Params p, out string msg), msg);
 
          // POSTCONDITIONS
-         Assert.AreEqual(svr_nm                , p.ServerName,            "ServerName       -S"   );
-         Assert.AreEqual("SQLEXPRESS"          , p.InstanceName,          "InstanceName     -i"   );
-         Assert.AreEqual("TPC"                 , p.DatabaseName,          "DatabaseName     -d"   );
-         Assert.AreEqual(SqlTypeEnum.Schema    , p.RootType,              "RootType         -rt"  );
-         Assert.AreEqual(ScriptFile            , p.ExportScriptPath,      "ExportScriptPath -E"   );
-         Assert.AreEqual(1                     , p.RequiredSchemas.Count, "RequiredSchemas  -rs"  );
-         Assert.AreEqual("dbo"                 , p.RequiredSchemas[0],    "RequiredSchema[0]"     );
-         Assert.AreEqual(2                     , p.TargetChildTypes.Count,"TargetChildTypes -tct" );
-         Assert.AreEqual(SqlTypeEnum.Function , p.TargetChildTypes[0],   "TargetChildTypes[1]"   );
-         Assert.AreEqual(SqlTypeEnum.Procedure, p.TargetChildTypes[1],   "TargetChildTypes[0]"   );
-         Assert.AreEqual(CreateModeEnum.Alter  , p.CreateMode,            "CreateMode       -cm"  );
-         Assert.AreEqual(false                 , p.ScriptUseDb,           "ScriptUseDb      -use" );
-         Assert.AreEqual(false                 , p.AddTimestamp,          "AddTimestamp     -ts"  );
-         Assert.AreEqual(exp_log               , p.LogFile,               "AddTimestamp     -ts"  );
-         Assert.AreEqual(false                 , p.DisplayScript,         "DisplayScript    -disp_script true");
-
+         Assert.AreEqual(svr_nm                , p.Server,                 "ServerName       -S"   );
+         Assert.AreEqual("SQLEXPRESS"          , p.Instance,               "InstanceName     -i"   );
+         Assert.AreEqual("TPC"                 , p.Database,               "DatabaseName     -d"   );
+         Assert.AreEqual(SqlTypeEnum.Schema    , p.RootType,               "RootType         -rt"  );
+         Assert.AreEqual(ScriptFile            , p.ScriptPath,             "ExportScriptPath -E"   );
+         Assert.AreEqual(1                     , p.RequiredSchemas.Count,  "RequiredSchemas  -rs"  );
+         Assert.AreEqual("dbo"                 , p.RequiredSchemas[0],     "RequiredSchema[0]"     );
+         Assert.AreEqual(2                     , p.TargetChildTypes.Count, "TargetChildTypes -tct" );
+         Assert.AreEqual(SqlTypeEnum.Function , p.TargetChildTypes[0],     "TargetChildTypes[1]"   );
+         Assert.AreEqual(SqlTypeEnum.Procedure, p.TargetChildTypes[1],     "TargetChildTypes[0]"   );
+         Assert.AreEqual(CreateModeEnum.Alter  , p.CreateMode,             "CreateMode       -cm"  );
+         Assert.AreEqual(false                 , p.ScriptUseDb,            "ScriptUseDb      -use" );
+         Assert.AreEqual(false                 , p.AddTimestamp,           "AddTimestamp     -ts"  );
+         Assert.AreEqual(exp_log               , p.LogFile,                "AddTimestamp     -ts"  );
+         Assert.AreEqual(false                 , p.DisplayScript,          "DisplayScript    -disp_script true");
+                                                                           
        LogL();
    }
 

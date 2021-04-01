@@ -8,28 +8,28 @@ namespace DbScripterLibNS
    /// </summary>
    public enum SqlTypeEnum
    {
-      [EnumAlias("Undefined")]
-      Undefined = 0,
-
-      [EnumAlias("Database"  , "D")]
-      Database,
-
-      [EnumAlias("Function"  , "F")]
-      Function,
-
-      [EnumAlias("Procedure" , "P")]
-      Procedure,
-
-      [EnumAlias("Schema"    , "S")]
-      Schema,
-
-      [EnumAlias("Table"     , "T")]
-      Table,
-
-      [EnumAlias("Table Type", "TTy")]
+      [EnumAlias("Error"     , "E"   )]
+      Error = 0,                     
+                                     
+      [EnumAlias("Database"  , "D",   "Db")]
+      Database,                      
+                                     
+      [EnumAlias("Function"  , "F",   "UserDefinedFunction")]
+      Function,                      
+                                     
+      [EnumAlias("Procedure" , "P",   "StoredProcedure")]
+      Procedure,                     
+                                     
+      [EnumAlias("Schema"    , "S"   )]
+      Schema,                        
+                                     
+      [EnumAlias("Table"     , "T"   )]
+      Table,                         
+                                     
+      [EnumAlias("Table Type", "TTy" )]
       TableType,
 
-      [EnumAlias("View"      , "V")]
+      [EnumAlias("View"      , "V"   )]
       View
    }
 }

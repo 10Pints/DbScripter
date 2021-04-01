@@ -51,7 +51,7 @@ namespace RSS.Test
          // Get the config appsettings and default log file values
          // Ensure are non empty and different
          var origConfigLogFileProperty  = ConfigurationManager.AppSettings.Get(logKey);
-         var origDefaultLogFileProperty = DbScripterTestable.DefaultLogFile; //Property;
+         var origDefaultLogFileProperty = Params.DefaultLogFile; //Property;
          var configuration = System.Configuration.ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 
          try
@@ -59,15 +59,15 @@ namespace RSS.Test
             var configLogFileProperty  = ConfigurationManager.AppSettings.Get(logKey);
             // Cache and replace later
             // Ensure different
-            DbScripterTestable.DefaultLogFile = "test value";
-            var defaultLogFileProperty = DbScripterTestable.DefaultLogFile; //Property;
+            ParamsTestable.DefaultLogFile = "test value";
+            var defaultLogFileProperty = Params.DefaultLogFile; //Property;
             Assert.IsFalse(string.IsNullOrEmpty(configLogFileProperty));
             Assert.IsFalse(string.IsNullOrEmpty(defaultLogFileProperty));
             Assert.IsFalse(configLogFileProperty.Equals(defaultLogFileProperty, StringComparison.OrdinalIgnoreCase));
 
             // 1: Call the method GetLogFileFromConfig via DbScripterTestable and compare its return
             // Should match the config app settings value
-            var act = DbScripterTestable.GetLogFileFromConfig();
+            var act = Params.GetLogFileFromConfig();
             Assert.IsTrue(configLogFileProperty.Equals(act, StringComparison.OrdinalIgnoreCase));
 
             // 2: Remove the app settings value
@@ -81,7 +81,7 @@ namespace RSS.Test
             Assert.IsNull(configLogFileProperty);
 
             // Call the method GetLogFileFromConfig via DbScripterTestable and compare its return
-            act = DbScripterTestable.GetLogFileFromConfig();
+            act = Params.GetLogFileFromConfig();
             // Should match the default log file property
             Assert.IsTrue(defaultLogFileProperty.Equals(act, StringComparison.OrdinalIgnoreCase));
 
@@ -99,7 +99,7 @@ namespace RSS.Test
          }
          finally
          {
-            DbScripterTestable.DefaultLogFile = origDefaultLogFileProperty;
+            ParamsTestable.DefaultLogFile = origDefaultLogFileProperty;
             var currentVal = configuration.AppSettings.Settings[logKey].Value;
 
             if((currentVal == null) || (!currentVal.Equals(origConfigLogFileProperty)))
@@ -153,7 +153,7 @@ namespace RSS.Test
          // Ensure are non empty and different
          var origConfigScriptDirProperty  = ConfigurationManager.AppSettings.Get(logKey);
          Assert.IsFalse(string.IsNullOrEmpty(origConfigScriptDirProperty), $"appSettings does not contain {logKey} stting");
-         var origDefaultScriptDirProperty = DbScripterTestable.DefaultLogFile; //Property;
+         var origDefaultScriptDirProperty = Params.DefaultLogFile; //Property;
          Assert.IsFalse(string.IsNullOrEmpty(origDefaultScriptDirProperty), $"origDefaultScriptDirProperty not specified");
          var configuration = System.Configuration.ConfigurationManager.OpenExeConfiguration(ConfigurationUserLevel.None);
 
@@ -162,15 +162,15 @@ namespace RSS.Test
             var configScriptDirProperty = ConfigurationManager.AppSettings.Get(logKey);
             // Cache and replace later
             // Ensure different
-            DbScripterTestable.DefaultScriptDir = "test value";
-            var defaultScriptDirProperty = DbScripterTestable.DefaultScriptDir; //Property;
+            ParamsTestable.DefaultScriptDir = "test value";
+            var defaultScriptDirProperty = Params.DefaultScriptDir; //Property;
             Assert.IsFalse(string.IsNullOrEmpty(configScriptDirProperty));
             Assert.IsFalse(string.IsNullOrEmpty(defaultScriptDirProperty));
             Assert.IsFalse(configScriptDirProperty.Equals(defaultScriptDirProperty, StringComparison.OrdinalIgnoreCase));
 
             // 1: Call the method GetLogFileFromConfig via DbScripterTestable and compare its return
             // Should match the config app settings value
-            var act = DbScripterTestable.GetScriptDirFromConfig();
+            var act = Params.GetScriptDirFromConfig();
             Assert.IsTrue(configScriptDirProperty.Equals(act, StringComparison.OrdinalIgnoreCase));
 
             // 2: Remove the app settings value
@@ -183,7 +183,7 @@ namespace RSS.Test
             Assert.IsNull(configScriptDirProperty);
 
             // Call the method GetLogFileFromConfig via DbScripterTestable and compare its return
-            act = DbScripterTestable.GetScriptDirFromConfig();
+            act = Params.GetScriptDirFromConfig();
             // Should match the default log file property
             Assert.IsTrue(defaultScriptDirProperty.Equals(act, StringComparison.OrdinalIgnoreCase));
 
@@ -202,7 +202,7 @@ namespace RSS.Test
          }
          finally
          {
-            DbScripterTestable.DefaultScriptDir = origDefaultScriptDirProperty;
+            ParamsTestable.DefaultScriptDir = origDefaultScriptDirProperty;
             var currentVal = configuration.AppSettings.Settings[logKey].Value;
 
             if((currentVal == null) || (!currentVal.Equals(origConfigScriptDirProperty)))
@@ -244,7 +244,7 @@ namespace RSS.Test
             ,databaseName     : "ut"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Schema
+            ,rootType         : SqlTypeEnum.Schema
             ,createMode       : CreateModeEnum.Alter
             ,requiredSchemas  : "{dbo}"
             ,requiredTypes    : null
@@ -286,7 +286,7 @@ namespace RSS.Test
             ,databaseName     : "ut"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Schema
+            ,rootType         : SqlTypeEnum.Schema
             ,createMode       : CreateModeEnum.Alter
             ,requiredSchemas  : "{dbo,test}"
             ,requiredTypes    : null
@@ -331,7 +331,7 @@ namespace RSS.Test
             ,databaseName     : "ut"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Schema
+            ,rootType         : SqlTypeEnum.Schema
             ,createMode       : CreateModeEnum.Alter
             ,requiredSchemas  : "{test}"
             ,requiredTypes    : null
@@ -373,7 +373,7 @@ namespace RSS.Test
             ,databaseName     : "Covid_T1"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Schema
+            ,rootType         : SqlTypeEnum.Schema
             ,createMode       : CreateModeEnum.Alter
             ,requiredSchemas  : "{dbo}"
             ,requiredTypes    : null
@@ -427,7 +427,7 @@ namespace RSS.Test
             ,databaseName     : "Covid_T1"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Schema
+            ,rootType         : SqlTypeEnum.Schema
             ,createMode       : CreateModeEnum.Alter
             ,requiredSchemas  : "{test}"
             ,requiredTypes    : null
@@ -460,6 +460,46 @@ namespace RSS.Test
       /// should only convert the  first instance of ^[ \t]*Create
       /// </summary>
       [TestMethod]
+      public void ExportSchemas_Alter_1_cvd_dbo_Test()
+      {
+         LogS();
+         string msg;
+         DbScripter sc = new DbScripter();
+
+         Params p = Params.PopParams
+         (
+             name             : "ExportDatabase Params"
+            ,databaseName     : "Covid"
+            ,prms             : CovidBaseParams
+            ,exportScriptPath : ScriptFile
+            ,rootType         : SqlTypeEnum.Schema
+            ,createMode       : CreateModeEnum.Alter
+            ,requiredSchemas  : "{dbo}"
+            ,requiredTypes    : null
+            ,logFile          : @"D:\Logs\DbScripter.log"
+            ,scriptUseDb      : true
+         );
+
+         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
+         Assert.IsNotNull(script, $"export script not defined");
+         Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
+
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "PROCEDURE", ""    , 0,   48,     0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "FUNCTION" , ""    , 0,   21,     0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "TABLE"    , ""    , 0,    0,     0, out msg), msg); // 3 tables for drop or creat - 0 for alter
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "VIEW"     , ""    , 0,   15,     0, out msg), msg);
+         Assert.IsTrue(CheckForSchema( script, "dbo" , "DATATYPE" , ""    , 0,    0,     0, out msg), msg);
+         //DisplayScript();
+         LogL();
+      }
+
+      /// <summary>
+      /// Bugs:
+      /// 1: ALTER FUNCTION [dbo].[fnALTERTrendSql]
+      /// 1: ALTER FUNCTION [dbo].[fnCreateTrendSql]
+      /// should only convert the  first instance of ^[ \t]*Create
+      /// </summary>
+      [TestMethod]
       public void ExportSchemas_Alter_2_cvd_dbo_tst_Test()
       {
          LogS();
@@ -472,7 +512,7 @@ namespace RSS.Test
             ,databaseName     : "Covid"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Schema
+            ,rootType         : SqlTypeEnum.Schema
             ,createMode       : CreateModeEnum.Alter
             ,requiredSchemas  : "{dbo,test}"
             ,requiredTypes    : null
@@ -481,6 +521,8 @@ namespace RSS.Test
          );
 
          Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
+         Assert.IsNotNull(script, $"export script not defined");
+         Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
 
          Assert.IsTrue(CheckForSchema( script, "dbo" , "PROCEDURE", ""    , 0,   48,     0, out msg), msg);
          Assert.IsTrue(CheckForSchema( script, "dbo" , "FUNCTION" , ""    , 0,   21,     0, out msg), msg);
@@ -488,47 +530,69 @@ namespace RSS.Test
          Assert.IsTrue(CheckForSchema( script, "dbo" , "VIEW"     , ""    , 0,   15,     0, out msg), msg);
          Assert.IsTrue(CheckForSchema( script, "dbo" , "DATATYPE" , ""    , 0,    0,     0, out msg), msg);
 
-         Assert.IsNotNull(script, $"export script not defined");
-         Assert.IsTrue(script.Length >500, $"export script length too small {script.Length}");
          Assert.IsTrue(CheckForSchema( script, "test", "PROCEDURE", ""    , 0,  47,  0, out msg), msg);
          Assert.IsTrue(CheckForSchema( script, "test", "FUNCTION" , ""    , 0,   0,  0, out msg), msg);
          Assert.IsTrue(CheckForSchema( script, "test", "TABLE"    , ""    , 0,   0,  0, out msg), msg);
          Assert.IsTrue(CheckForSchema( script, "test", "VIEW"     , ""    , 0,   0,  0, out msg), msg);
          Assert.IsTrue(CheckForSchema( script, "test", "DATATYPE" , ""    , 0,   0,  0, out msg), msg);
+         //DisplayScript();
          LogL();
       }
-      
-       /// <summary>
-       /// Required types depends on the export type
-       /// For example if Exporting procedures then required types should be procedures only
-       /// 
-       /// If the export type is     schema then { Table, Function, Procedure, Table, TableType, View} are required
-       /// If the export type is not schema or database then only the same 1 export type is required.
-       /// 
-       /// PRECONDITIONS:
-       ///   PRE 1: required_type not SqlTypeEnum.Undefined (handled)
-       ///
-       /// POSTCONDITIONS:
-       ///   POST 1: If the export type is     schema then { Table, Function, Procedure, Table, TableType, View} are required
-       ///   POST 2: If the export type is not schema or database then only the same 1 export type is required
-       /// </summary>
+
+      /// <summary>
+      /// Required types depends on the export type
+      /// For example if Exporting procedures then required types should be procedures only
+      /// 
+      /// If the export type is     schema then { Table, Function, Procedure, Table, TableType, View} are required
+      /// If the export type is not schema or database then only the same 1 export type is required.
+      /// 
+      /// PRECONDITIONS:
+      ///   PRE 1: required_type not SqlTypeEnum.Undefined (handled)
+      ///
+      /// POSTCONDITIONS:
+      ///   POST 1: If the export type is     schema then { Table, Function, Procedure, Table, TableType, View} are required
+      ///   POST 2: If the export type is not schema or database then only the same 1 export type is required
+      /// </summary>
+      [TestMethod]
+      [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
+      public void CorrectRequiredTypesBadRootTest()
+      {
+         LogS();
+         string msg;
+         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Table, createMode: CreateModeEnum.Create, input: null, exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table }, out msg), msg);
+      }
+
+      /// <summary>
+      /// Required types depends on the export type
+      /// For example if Exporting procedures then required types should be procedures only
+      /// 
+      /// If the export type is     schema then { Table, Function, Procedure, Table, TableType, View} are required
+      /// If the export type is not schema or database then only the same 1 export type is required.
+      /// 
+      /// PRECONDITIONS:
+      ///   PRE 1: required_type not SqlTypeEnum.Undefined (handled)
+      ///
+      /// POSTCONDITIONS:
+      ///   POST 1: If the export type is     schema then { Table, Function, Procedure, Table, TableType, View} are required
+      ///   POST 2: If the export type is not schema or database then only the same 1 export type is required
+      /// </summary>
       [TestMethod]
       public void CorrectRequiredTypesTest()
       {
          LogS();
          string msg;
 
-         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Table, createMode: CreateModeEnum.Create, inp: null,                                          exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table }, out msg), msg);
-         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Table, createMode: CreateModeEnum.Create, inp: new List<SqlTypeEnum>() { SqlTypeEnum.Table }, exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table }, out msg), msg);
-         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Table, createMode: CreateModeEnum.Create, inp: new List<SqlTypeEnum>() { SqlTypeEnum.Table }, exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table }, out msg), msg);
+         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Schema, createMode: CreateModeEnum.Create, input: null,                                          exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table }, out msg), msg);
+         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Schema, createMode: CreateModeEnum.Create, input: new List<SqlTypeEnum>() { SqlTypeEnum.Table }, exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table }, out msg), msg);
+         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Schema, createMode: CreateModeEnum.Create, input: new List<SqlTypeEnum>() { SqlTypeEnum.Table }, exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table }, out msg), msg);
 
-         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Schema,createMode: CreateModeEnum.Create, inp: new List<SqlTypeEnum>() { SqlTypeEnum.Table,  SqlTypeEnum.Function,  SqlTypeEnum.Procedure }
+         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Schema,createMode: CreateModeEnum.Create, input: new List<SqlTypeEnum>() { SqlTypeEnum.Table,  SqlTypeEnum.Function,  SqlTypeEnum.Procedure }
                        , exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table, SqlTypeEnum.Function, SqlTypeEnum.Procedure, SqlTypeEnum.TableType, SqlTypeEnum.View }, out msg), msg);
 
-         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Schema,createMode: CreateModeEnum.Drop, inp: new List<SqlTypeEnum>() { SqlTypeEnum.Table,  SqlTypeEnum.Function,  SqlTypeEnum.Procedure }
+         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Schema,createMode: CreateModeEnum.Drop, input: new List<SqlTypeEnum>() { SqlTypeEnum.Table,  SqlTypeEnum.Function,  SqlTypeEnum.Procedure }
                        , exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Table, SqlTypeEnum.Function, SqlTypeEnum.Procedure, SqlTypeEnum.TableType, SqlTypeEnum.View }, out msg), msg);
 
-         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Schema,createMode: CreateModeEnum.Alter, inp: new List<SqlTypeEnum>() { SqlTypeEnum.Function,  SqlTypeEnum.Procedure }
+         Assert.IsTrue (CorrectRequiredTypesHlpr(ty: SqlTypeEnum.Schema,createMode: CreateModeEnum.Alter, input: new List<SqlTypeEnum>() { SqlTypeEnum.Function,  SqlTypeEnum.Procedure }
                        , exp: new List<SqlTypeEnum>(){ SqlTypeEnum.Function, SqlTypeEnum.Procedure, SqlTypeEnum.TableType, SqlTypeEnum.View }, out msg), msg);
          LogL();
       }
@@ -549,27 +613,26 @@ namespace RSS.Test
       /// </summary>
       [TestMethod]
       [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
-      public void CorrectRequiredTypesTestWhenUndefinedReqTypeThenExpEx()
+      public void CorrectRequiredTypesTestWhenSqlTypeErrorReqTypeThenExpEx()
       {
          LogS();
-         DbScripterTestable.CorrectRequiredTypes(SqlTypeEnum.Undefined, CreateModeEnum.Create, new List<SqlTypeEnum>());
+         Assert.IsFalse(DbScripterTestable.CorrectRequiredTypes(SqlTypeEnum.Error, CreateModeEnum.Create, new List<SqlTypeEnum>(), out _, out  var msg), msg);
          LogL();
       }
 
       [TestMethod]
       [ExpectedException(typeof(Exception), AllowDerivedTypes = true)]
-      public void CorrectRequiredTypesTestWhenExpSchemasAndCretUndefThenExpEx()
+      public void CorrectRequiredTypesTestWhenExpSchemasAndCreateModeErrorThenExpEx()
       {
          LogS();
-         DbScripterTestable.CorrectRequiredTypes(SqlTypeEnum.Schema, CreateModeEnum.Undefined, new List<SqlTypeEnum>());
+         Assert.IsFalse(DbScripterTestable.CorrectRequiredTypes(SqlTypeEnum.Schema, CreateModeEnum.Error, new List<SqlTypeEnum>(), out _, out var msg), msg);
          LogL();
       }
 
-      protected bool CorrectRequiredTypesHlpr(SqlTypeEnum ty, CreateModeEnum createMode, List<SqlTypeEnum>? inp, List<SqlTypeEnum> exp, out string msg)
+      protected bool CorrectRequiredTypesHlpr(SqlTypeEnum ty, CreateModeEnum createMode, List<SqlTypeEnum>? input, List<SqlTypeEnum> exp, out string msg)
       {
-         bool ret = false;
          msg = "";
-         var act = DbScripterTestable.CorrectRequiredTypes(ty, createMode, inp);
+         bool ret = DbScripterTestable.CorrectRequiredTypes(ty, createMode, input, out var act, out msg);
 
          do
          { 
@@ -581,7 +644,7 @@ namespace RSS.Test
 
             // Counts match so check items match
             foreach(var exp_ty in exp)
-               if(!(inp?.Contains(exp_ty) ?? false))
+               if(!(act?.Contains(exp_ty) ?? false))
                   break;
 
             // If here then all chks passed
@@ -626,7 +689,7 @@ namespace RSS.Test
              name             : "ExportDatabase Params"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Procedure
+            ,rootType         : SqlTypeEnum.Procedure
             ,createMode       : CreateModeEnum.Drop
             ,requiredSchemas  : "{dbo,test,tSQLt}"
             ,requiredTypes    : null
@@ -645,34 +708,6 @@ namespace RSS.Test
       }
 
       [TestMethod]
-      public void ExportProceduresCreateTest()
-      {
-         LogS();
-         string msg;
-         DbScripter sc = new DbScripter();
-
-         Params p = Params.PopParams
-         (
-             name             : "ExportDatabase Params"
-            ,prms             : CovidBaseParams
-            ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Procedure
-            ,createMode       : CreateModeEnum.Create
-            ,requiredSchemas  : "{dbo, tSQLt}"
-            ,requiredTypes    : "P"
-         );
-
-         Log(p);
-         Assert.IsTrue(sc.Export(ref p, out var script, out msg), msg);
-         Assert.IsNotNull(script, "Null script");
-         Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE.*)",           134, out msg), msg);
-         Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[dbo\].*)",   40 , out msg), msg);
-         Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[test\].*)",  0  , out msg), msg);
-         Assert.IsTrue(ChkContains(script, @"^(CREATE PROCEDURE \[tSQLt\].*)", 94 , out msg), msg);
-         LogL();
-      }
-
-      [TestMethod]
       public void ExportFunctionsTest()
       {
          LogS();
@@ -684,7 +719,7 @@ namespace RSS.Test
              name             : "ExportDatabase Params"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Function
+            ,rootType         : SqlTypeEnum.Function
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{dbo, [ teSt], tSQLt}" // should handle more than 1 schema and crappy formatting
             ,requiredTypes    : "F"
@@ -712,7 +747,7 @@ namespace RSS.Test
              name             : "ExportDatabase Params"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Database
+            ,rootType         : SqlTypeEnum.Database
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{dbo, [ teSt], tSQLt}" // should handle more than 1 schema and crappy formatting
             ,requiredTypes    : null
@@ -740,7 +775,7 @@ namespace RSS.Test
             ,prms             : CovidBaseParams
             ,databaseName     :  "Covid_T1"
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Schema
+            ,rootType         : SqlTypeEnum.Schema
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{test}" // should handle more than 1 schema and crappy formatting
             ,requiredTypes    : null
@@ -780,7 +815,7 @@ namespace RSS.Test
             ,prms             : CovidBaseParams
             ,databaseName     : "ut"
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Schema
+            ,rootType         : SqlTypeEnum.Schema
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{test}" // should handle more than 1 schema and crappy formatting
             ,requiredTypes    : null
@@ -808,7 +843,7 @@ namespace RSS.Test
              name             : "ExportSchemas_Alter_2_cvdT1_dbo_tst Params"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Schema
+            ,rootType         : SqlTypeEnum.Schema
             ,createMode       : CreateModeEnum.Alter
             ,requiredSchemas  : "{dbo,test}" // should handle more than 1 schema and crappy formatting
             ,requiredTypes    : null
@@ -893,7 +928,7 @@ namespace RSS.Test
              name             : "Count1CrtSchemaTest Params"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Schema
+            ,rootType         : SqlTypeEnum.Schema
             ,createMode       : CreateModeEnum.Drop
             ,requiredSchemas  : "{test}" // should handle more than 1 schema and crappy formatting
             ,requiredTypes    : "s"
@@ -926,7 +961,7 @@ namespace RSS.Test
             ,prms             : CovidBaseParams
             ,databaseName     : "Covid_T1"
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Function
+            ,rootType         : SqlTypeEnum.Function
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{dbo}"
             ,requiredTypes    : "F"
@@ -950,7 +985,7 @@ namespace RSS.Test
              name             : "ExportDatabase Params"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Function
+            ,rootType         : SqlTypeEnum.Function
             ,createMode       : CreateModeEnum.Drop
             ,requiredSchemas  : "{dbo}"
             ,requiredTypes    : "F"
@@ -974,7 +1009,7 @@ namespace RSS.Test
              name             : "Count1CrtSchemaTest Params"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Table
+            ,rootType         : SqlTypeEnum.Table
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{dbo, [ teSt]}" // should handle more than 1 schema and crappy formatting
             ,requiredTypes    : "t"              // this is overridden in Export schema as it exports all the child objects
@@ -1000,7 +1035,7 @@ namespace RSS.Test
                 prms             : CovidBaseParams
                ,exportScriptPath : @"C:\temp\InitTableExportTest.sql"
                ,createMode       : CreateModeEnum.Create
-               ,sqlType          : SqlTypeEnum.Table
+               ,rootType         : SqlTypeEnum.Table
                ,requiredSchemas  : "tEst,tSqlt"
               );
 
@@ -1035,7 +1070,7 @@ namespace RSS.Test
                 prms             : CovidBaseParams
                ,exportScriptPath : @"C:\temp\InitTableExportTestEx.sql"
                ,createMode       : CreateModeEnum.Alter
-               ,sqlType          : SqlTypeEnum.Table
+               ,rootType         : SqlTypeEnum.Table
                ,requiredSchemas  : "tEst,tSqlt"
               );
 
@@ -1071,7 +1106,7 @@ namespace RSS.Test
                 prms             : CovidBaseParams
                ,exportScriptPath : @"C:\temp\T011_ExportSchemaScriptTest.sql"
                ,createMode       : CreateModeEnum.Alter
-               ,sqlType          : SqlTypeEnum.Table
+               ,rootType         : SqlTypeEnum.Table
                ,requiredSchemas  : "tEst,tSqlt"
               );
        
@@ -1090,7 +1125,7 @@ namespace RSS.Test
                 prms             : CovidBaseParams
                ,exportScriptPath : @"C:\temp\T011_ExportSchemaScriptTest.sql"
                ,createMode       : CreateModeEnum.Alter
-               ,sqlType          : SqlTypeEnum.Procedure
+               ,rootType         : SqlTypeEnum.Procedure
                ,requiredSchemas  : "tEst,tSqlt"
               );
        
@@ -1107,7 +1142,7 @@ namespace RSS.Test
                 prms             : CovidBaseParams
                ,exportScriptPath : @"C:\temp\MapTypeToSqlTypeTest.sql"
                ,createMode       : CreateModeEnum.Create
-               ,sqlType          : SqlTypeEnum.Procedure
+               ,rootType         : SqlTypeEnum.Procedure
                ,requiredSchemas  : "tEst,tSqlt"
               );
        
@@ -1133,7 +1168,7 @@ namespace RSS.Test
             Params p = Params.PopParams( 
                    prms             : CovidBaseParams
                   ,exportScriptPath : @"C:\temp\MapTypeToSqlTypeTestUnknownTypeTest.sql"
-                  ,sqlType          : SqlTypeEnum.Schema
+                  ,rootType         : SqlTypeEnum.Schema
                   ,createMode       : CreateModeEnum.Create
                   ,requiredSchemas  : "tEst,tSqlt"
                  );
@@ -1171,7 +1206,7 @@ namespace RSS.Test
             ,newSchemaName    : null
             ,requiredSchemas  : "{dbo, [ teSt]}"// should handle more than 1 schema and crappy formatting
             ,requiredTypes    : null            // this is overridden so that it exports all the child objects
-            ,sqlType          : SqlTypeEnum.Schema
+            ,rootType         : SqlTypeEnum.Schema
             ,createMode       : CreateModeEnum.Create
             );
 

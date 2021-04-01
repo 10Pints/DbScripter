@@ -7,6 +7,11 @@ namespace RSS.Test
 {
    class ParamsTestable : Params
    {
+
+      public new static string DefaultLogFile {get=>Params.DefaultLogFile ; set=> Params.DefaultLogFile = value;}// = @"D:\Logs\DbScripter.log";
+
+      public new static string DefaultScriptDir {get=>Params.DefaultScriptDir ; set=> Params.DefaultLogFile = value;}// @"D:\Dev\Repos\C#\Db\Scripts";
+
       public ParamsTestable
       (
           string           name              = ""
@@ -18,8 +23,8 @@ namespace RSS.Test
          ,string?          newSchemaName     = null
          ,string?          requiredSchemas   = null
          ,string?          requiredTypes     = null
-         ,SqlTypeEnum?     sqlType           = SqlTypeEnum     .Undefined
-         ,CreateModeEnum?  createMode        = CreateModeEnum  .Undefined
+         ,SqlTypeEnum?     sqlType           = null //SqlTypeEnum     .Undefined
+         ,CreateModeEnum?  createMode        = null //CreateModeEnum  .Undefined
          ,bool?            scriptUseDb       = null
          ,bool?            addTimestamp      = null
          ,string?          logFile           = null
@@ -40,11 +45,11 @@ namespace RSS.Test
             ,serverName       : serverName
             ,instanceName     : instanceName
             ,databaseName     : databaseName
-            ,exportScriptPath : exportScriptPath
+            ,exportScript : exportScriptPath
             ,newSchemaName    : newSchemaName
             ,requiredSchemas  : requiredSchemas
             ,requiredTypes    : requiredTypes
-            ,sqlType          : sqlType
+            ,rootType         : sqlType
             ,createMode       : createMode
             ,scriptUseDb      : scriptUseDb
             ,addTimestamp     : addTimestamp
@@ -70,6 +75,11 @@ namespace RSS.Test
       public new void SetExportFlagState(bool? st = null)
       {
          base.SetExportFlagState(st);
+      }
+
+      public new void SetDefaults()
+      {
+         base.SetDefaults();
       }
    }
 }

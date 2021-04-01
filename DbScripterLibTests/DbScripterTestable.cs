@@ -12,18 +12,6 @@ namespace RSS.Test
 {
    public class DbScripterTestable : DbScripter
    {
-      public static new string DefaultLogFile
-      {
-         get => DbScripter.DefaultLogFile;
-         set => DbScripter.DefaultLogFile = value;
-      }
-
-      public static new string DefaultScriptDir
-      {
-         get => DbScripter.DefaultScriptDir;
-         set => DbScripter.DefaultScriptDir = value;
-      }
-
       public DbScripterTestable()
          : base()
       { 
@@ -49,9 +37,9 @@ namespace RSS.Test
          base.ClearState();
       }
 
-      public new void InitWriter()
+      public new bool InitWriter(out string msg)
       {
-         base.InitWriter();
+         return base.InitWriter( out msg);
       }
 
       public new bool IsWanted(string currentSchemaName, SqlSmoObject obj)
@@ -109,29 +97,14 @@ namespace RSS.Test
          return DbScripter.IsTestSchema( schemaName);
       }
 
-      public new static List<SqlTypeEnum> CorrectRequiredTypes( SqlTypeEnum required_type, CreateModeEnum createMode, List<SqlTypeEnum>? requiredTypesIn)
+      public new static bool CorrectRequiredTypes( SqlTypeEnum rootType, CreateModeEnum createMode, List<SqlTypeEnum>? reqTypesIn, out List<SqlTypeEnum> reqTypesOut, out string msg)
       {
-         return DbScripter.CorrectRequiredTypes(required_type, createMode, requiredTypesIn);
+         return DbScripter.CorrectRequiredTypes(rootType, createMode, reqTypesIn, out reqTypesOut, out msg);
       }
 
       public new static void ScriptSchemaStatements(List<string> schemaNames, StringBuilder sb)
       {
           DbScripter.ScriptSchemaStatements( schemaNames, sb);
-      }
-
-      public static new string GetLogFileFromConfig()
-      {
-         return DbScripter.GetLogFileFromConfig();
-      }
-
-      public static new string GetScriptDirFromConfig()
-      {
-         return DbScripter.GetScriptDirFromConfig();
-      }
-
-      public static new void Normalise( Params p)
-      {
-         DbScripter.Normalise( p);
       }
    }
 }

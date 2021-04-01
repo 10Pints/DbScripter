@@ -9,8 +9,8 @@ namespace DbScripterLibNS
    /// </summary>
    public enum CreateModeEnum
    {
-      [EnumAlias("Undefined")]
-      Undefined   = 0,
+      [EnumAlias("Error"     ,"E")]
+      Error = 0,
 
       [EnumAlias("Create")]
       Create,

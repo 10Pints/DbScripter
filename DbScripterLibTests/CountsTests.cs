@@ -24,8 +24,8 @@ namespace RSS.Test
             ,newSchemaName    : "New Schema Name"
             ,requiredSchemas  : "{dbo, [tEst]}"
             ,requiredTypes    : "S"
-            ,sqlType          : SqlTypeEnum.Undefined
-            ,createMode       : CreateModeEnum.Undefined
+            ,rootType         : null
+            ,createMode       : null
             ,scriptUseDb      : false
             ,addTimestamp     : false
            );
@@ -41,30 +41,23 @@ namespace RSS.Test
          Logger.LogS();
          DbScripter sc = new DbScripter();
 
-         Params p = Params.PopParams(
+         Params p = Params.PopParams
+         (
              name             : "Count_Crt_Export_Tables_only_Schemas_dbo_tst_Test Params"
             ,prms             : CovidBaseParams
             ,exportScriptPath : ScriptFile
-            ,sqlType          : SqlTypeEnum.Table
+            ,rootType         : SqlTypeEnum.Table
             ,createMode       : CreateModeEnum.Create
             ,requiredSchemas  : "{dbo, [ teSt]}"// should handle more than 1 schema and crappy formatting
             ,requiredTypes    : "t"             // this is overridden in Export schema as it exports all the child objects
             ,addTimestamp     : false
-            );
+         );
 
-         try
-         { 
-            Logger.Log(p);
-            Assert.IsTrue(sc.Export(ref p, out var script, out var msg), msg);
-            Assert.IsTrue(ChkContains(script, @"^([ \t]*CREATE[ \t]+TABLE[ \t\[]+dbo[^\.[ \t\[]+)" , 21, out msg), msg);
-            Assert.IsTrue(ChkContains(script, @"^([ \t]*CREATE[ \t]+TABLE[ \t\[]+test[^\.[ \t\[]+)",  3, out msg), msg);
-            Logger.LogL("All subtests passed");
-         }
-         catch(Exception e)
-         {
-            Logger.LogException(e);
-            throw;
-         }
+         Logger.Log(p);
+         Assert.IsTrue(sc.Export(ref p, out var script, out var msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^([ \t]*CREATE[ \t]+TABLE[ \t\[]+dbo[^\.[ \t\[]+)" , 21, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^([ \t]*CREATE[ \t]+TABLE[ \t\[]+test[^\.[ \t\[]+)",  3, out msg), msg);
+         Logger.LogL("All subtests passed");
 
          Logger.LogL();
       }
