@@ -22,7 +22,6 @@ namespace DbScripterLibNS
       ///  -S:       server                                                        default: DESKTOP-UAULS0U\SQLEXPRESS
       ///  -i:       instance                                                      default: SQLEXPRESS
       ///  -d:       database                                                      default: none
-      ///  -rt:      root type, optional surrounding [ ]                           default: SCHEMA
       ///  -rs:      required schemas like {dbo,test}, optional surrounding { }    default: dbo
       ///  -tct:     target child types, optional surrounding { } comma separated list of 1 or more typecodes: like {F,P}
       ///    valid   types: {F,P,S,T,TTY,V}
@@ -175,7 +174,6 @@ namespace DbScripterLibNS
       ///  -S:       server                                                        default: DESKTOP-UAULS0U\SQLEXPRESS
       ///  -i:       instance                                                      default: SQLEXPRESS
       ///  -d:       database                                                      default: none
-      ///  -rt:      root type, optional surrounding [ ]                           default: SCHEMA
       ///  -rs:      required schemas like {dbo,test}, optional surrounding { }    default: dbo
       ///  -tct:     target child types, optional surrounding { } comma separated list of 1 or more typecodes: like {F,P}
       ///    valid   types: {F,P,S,T,TTY,V}
@@ -206,7 +204,6 @@ namespace DbScripterLibNS
       ///     DatabaseName
       ///     ExportScriptPath
       ///     RequiredSchemas
-      ///     RootType
       ///     TargetChildTypes
       ///     CreateMode
       ///     ScriptUseDb
@@ -237,7 +234,7 @@ namespace DbScripterLibNS
                p.Server             = GetArg( args, argsU,        "-S",  p);                    // -S             this machine
                p.Instance           = GetArg( args, argsU,        "-I",  p);                    // -I             SQLEXPRESS
                p.Database           = GetArg( args, argsU,        "-D",  p);                    // -d             no default
-               p.RootType           = GetArg( args, argsU,        "-rt", p).FindEnumByAlias<SqlTypeEnum>();// -rt schema
+               //p.RootType           = GetArg( args, argsU,        "-rt", p).FindEnumByAlias<SqlTypeEnum>();// -rt schema
                p.RequiredSchemas    = p.ParseRequiredSchemas( GetArg( args, argsU, "-rs", p));  // -rs            dbo
                p.TargetChildTypes   = p.ParseRequiredTypes  ( GetArg( args, argsU, "-tct", p)); // -tct           F,P
                p.CreateMode         = GetArg( args, argsU,        "-cm", p).FindEnumByAlias<CreateModeEnum>();//-cm  ALTER
@@ -255,7 +252,7 @@ namespace DbScripterLibNS
                if( p.ScriptPath        == null){ msg = "-E   (Export Script Path)"   + spec_msg; break;}
                if( p.Instance          == null){ msg = "-i   (instance name)"        + spec_msg; break;}
                if( p.RequiredSchemas   == null){ msg = "-rs  (required schemas)"     + spec_msg; break;}
-               if( p.RootType          == null){ msg = "-rt  (Root Type)"            + spec_msg; break;}
+            //   if( p.RootType          == null){ msg = "-rt  (Root Type)"            + spec_msg; break;}
                if( p.Server            == null){ msg = "-S   (server name)"          + spec_msg; break;}
                if( p.TargetChildTypes  == null){ msg = "-tct (target child types)"   + spec_msg; break;}
                if( p.AddTimestamp      == null){ msg = "-ts  (add timestamp to SFN)" + spec_msg; break;}
@@ -296,7 +293,7 @@ namespace DbScripterLibNS
          int len = args.Length;
          string arg;
          bool isValue = false;
-         string[] hasParam = new []{ "-S", "-I","-D","-RT","-RS","-TCT","-E","-CM"};
+         string[] hasParam = new []{ "-S", "-I","-D","-RS","-TCT","-E","-CM"};
 
          do
          {
@@ -391,7 +388,6 @@ namespace DbScripterLibNS
       ///  -S:       server                                                        default: DESKTOP-UAULS0U\SQLEXPRESS
       ///  -i:       instance                                                      default: SQLEXPRESS
       ///  -d:       database                                                      default: none
-      ///  -rt:      root type, optional surrounding [ ]                           default: SCHEMA
       ///  -rs:      required schemas like {dbo,test}, optional surrounding { }    default: dbo
       ///  -tct:     target child types, optional surrounding { } comma separated list of 1 or more typecodes: like {F,P}
       ///    valid   types: {F,P,S,T,TTY,V}
@@ -425,12 +421,11 @@ namespace DbScripterLibNS
 
          Console.WriteLine(@"
 Usage: 
-E.G.  DbScripter -S DESKTOP-UAULS0U\SQLEXPRESS -i SQLEXPRESS -d ut -rt [dbo] -E D:\tmp\utExport.sql -T F,P -M create|alter|drop
+E.G.  DbScripter -S DESKTOP-UAULS0U\SQLEXPRESS -i SQLEXPRESS -d ut -E D:\tmp\utExport.sql -T F,P -M create|alter|drop
 Where:
  -S:        server                                                         default: DESKTOP-UAULS0U\SQLEXPRESS
  -i:        instance                                                       default: SQLEXPRESS
  -d:        database                                                       default: none
- -rt:       root type, optional surrounding [ ]                            default: SCHEMA
  -rs:       required schemas like {dbo,test}, optional surrounding { }     default: dbo
 
  -tct:      target child types, optional surrounding { } comma separated list of 1 or more typecodes: like {P,F}

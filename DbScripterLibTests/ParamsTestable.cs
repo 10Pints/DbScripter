@@ -14,67 +14,39 @@ namespace RSS.Test
 
       public ParamsTestable
       (
-          string           name              = ""
-         ,Params?          prms              = null // Use this state to start with and update with the subsequent parameters
-         ,string?          serverName        = null
-         ,string?          instanceName      = null
-         ,string?          databaseName      = null
-         ,string?          exportScriptPath  = null
-         ,string?          newSchemaName     = null
-         ,string?          requiredSchemas   = null
-         ,string?          requiredTypes     = null
-         ,SqlTypeEnum?     sqlType           = null //SqlTypeEnum     .Undefined
-         ,CreateModeEnum?  createMode        = null //CreateModeEnum  .Undefined
-         ,bool?            scriptUseDb       = null
-         ,bool?            addTimestamp      = null
-         ,string?          logFile           = null
-         ,bool?            isExprtngData     = null
-         ,bool?            isExprtngDb       = null
-         ,bool?            isExprtngFKeys    = null
-         ,bool?            isExprtngFns      = null
-         ,bool?            isExprtngProcs    = null
-         ,bool?            isExprtngSchema   = null
-         ,bool?            isExprtngTbls     = null
-         ,bool?            isExprtngTTys     = null
-         ,bool?            isExprtngVws      = null
+          string           nm        = ""
+         ,Params?          prms      = null // Use this state to start with and update with the subsequent parameters
+         ,string?          svrNm     = null
+         ,string?          instNm    = null
+         ,string?          dbNm      = null
+         ,string?          xprtScrpt = null
+         ,string?          newSchNm  = null
+         ,string?          rss       = null
+         ,string?          rts       = null
+         ,CreateModeEnum?  cm        = null //CreateModeEnum  .Undefined
+         ,bool?            useDb     = null
+         ,bool?            addTs     = null
+         ,string?          log       = null
+         ,bool?            isXprtDta = null
       )
          : base
          (
-             name             : name
-            ,prms             : prms
-            ,serverName       : serverName
-            ,instanceName     : instanceName
-            ,databaseName     : databaseName
-            ,exportScript : exportScriptPath
-            ,newSchemaName    : newSchemaName
-            ,requiredSchemas  : requiredSchemas
-            ,requiredTypes    : requiredTypes
-            ,rootType         : sqlType
-            ,createMode       : createMode
-            ,scriptUseDb      : scriptUseDb
-            ,addTimestamp     : addTimestamp
-            ,logFile          : logFile
-            ,isExprtngData    : isExprtngData
-            ,isExprtngDb      : isExprtngDb
-            ,isExprtngFKeys   : isExprtngFKeys
-            ,isExprtngFns     : isExprtngFns
-            ,isExprtngProcs   : isExprtngProcs
-            ,isExprtngSchema  : isExprtngSchema
-            ,isExprtngTbls    : isExprtngTbls
-            ,isExprtngTTys    : isExprtngTTys
-            ,isExprtngVws     : isExprtngVws
+             nm        : nm       
+            ,prms      : prms     
+            ,svrNm     : svrNm    
+            ,instNm    : instNm   
+            ,dbNm      : dbNm     
+            ,xprtScrpt : xprtScrpt
+            ,newSchNm  : newSchNm 
+            ,rss       : rss      
+            ,rts       : rts      
+            ,cm        : cm       
+            ,useDb     : useDb    
+            ,addTs     : addTs    
+            ,log       : log      
+            ,isXprtDta : isXprtDta
          )
       { 
-      }
-
-      public void SetExportFlagsFromSqlType()
-      {
-         base.SetExportFlagsFromRootType();
-      }
-
-      public new void SetExportFlagState(bool? st = null)
-      {
-         base.SetExportFlagState(st);
       }
 
       public new void SetDefaults()

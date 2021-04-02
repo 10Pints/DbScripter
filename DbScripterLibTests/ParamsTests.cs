@@ -1,21 +1,60 @@
-﻿using Microsoft.VisualStudio.TestTools.UnitTesting;
+﻿
+#nullable enable 
+
+using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using DbScripterLibNS;
 using RSS.Common;
 using System.IO;
 using static RSS.Common.Logger;
 using static RSS.Common.Utils;
+using System.Collections.Generic;
 
 namespace RSS.Test
 {
    [TestClass]
    public class ParamsTests : UnitTestBase
    {
-      public ParamsTests()
-      { 
-         //Init();
-      }
+      /// <summary>
+      /// This test the basic inheritance principle used in the test parameter objects
+      /// There are 4 scenarios
+      /// 
+      ///   Scenario    Parent   Parameter   Child
+      ///   1           null     null        null
+      ///   2           v1       null        v1
+      ///   3           null     v2          v2
+      ///   4           v1       v2          v2
+      ///   
+      /// </summary>
+      [TestMethod()]
+      public void UpdatePropertyIfNeccessaryTest2()
+      {
+         //   Scenario    Parent   Parameter   Child
+         //   1           null     null        null
+         Params parent = new();
+         Params child  = new(prms: parent);
+         Assert.IsNull(parent.Server);
+         Assert.IsNull(child .Server);
 
+         //   Scenario    Parent   Parameter   Child
+         //   2           v1       null        v1
+         parent = new Params(svrNm: "parent svr");
+         child  = new Params(prms: parent);
+         Assert.AreEqual("parent svr", parent.Server);
+
+         //   Scenario    Parent   Parameter   Child
+         //   3           null     v2          v2
+         parent = new Params();
+         child  = new Params(prms: parent, svrNm: "parent svr");
+
+         Assert.AreEqual("parent svr", child.Server);
+
+         //   Scenario    Parent   Parameter   Child
+         //   4           v1       v2          v2
+         parent = new Params(svrNm: "parent svr");
+         child  = new Params(prms: parent, svrNm: "child svr");
+         Assert.AreEqual("child svr", child.Server);
+      }
 
       [TestMethod()]
       public void SetDefaultsWhenNewTest()
@@ -30,14 +69,13 @@ namespace RSS.Test
          Assert.IsFalse    ( p.ScriptUseDb,                                "ScriptUseDb"              );
          Assert.AreEqual   ( "SQLEXPRESS",         p.Instance,             "Instance"                 );
          Assert.IsNull     ( p.IsExprtngData,                              "IsExprtngData"            );
-         Assert.IsNull     ( p.IsExprtngDb,                                "IsExprtngDb"              );
-         Assert.IsNull     ( p.IsExprtngFKeys,                             "IsExprtngFKeys"           );
-         Assert.IsNull     ( p.IsExprtngFns,                               "IsExprtngFns"             );
-         Assert.IsNull     ( p.IsExprtngProcs,                             "IsExprtngProcs"           );
-         Assert.IsTrue     ( p.IsExprtngSchema,                            "IsExprtngSchema"          );
-         Assert.IsNull     ( p.IsExprtngTbls,                              "IsExprtngTbls"            );
-         Assert.IsNull     ( p.IsExprtngTTys,                              "IsExprtngTTys"            );
-         Assert.IsNull     ( p.IsExprtngVws,                               "IsExprtngVws"             );
+         Assert.IsFalse    ( p.IsExprtngDb,                                "IsExprtngDb"              );
+         Assert.IsTrue     ( p.IsExprtngFns,                               "IsExprtngFns"             );
+         Assert.IsTrue     ( p.IsExprtngProcs,                             "IsExprtngProcs"           );
+         Assert.IsFalse    ( p.IsExprtngSchema,                            "IsExprtngSchema"          ); // false because create mode is set to its default: alter
+         Assert.IsFalse    ( p.IsExprtngTbls,                              "IsExprtngTbls"            );
+         Assert.IsFalse    ( p.IsExprtngTTys,                              "IsExprtngTTys"            );
+         Assert.IsFalse    ( p.IsExprtngVws,                               "IsExprtngVws"             );
          Assert.IsNull     ( p.IsExprtngData,                              "AddTimestamp"             );
          Assert.IsNotNull  ( p.LogFile,                                    "LogFile"                  );
          Assert.IsNotNull  ( p.ScriptPath,                                 "LogFile"                  );
@@ -45,69 +83,11 @@ namespace RSS.Test
          Assert.IsNotNull  ( p.RequiredSchemas,                            "RequiredSchemas null"     );
          Assert.AreEqual   ( 1, p.RequiredSchemas.Count,                   "RequiredSchemas.Count, 1" );
          Assert.AreEqual   ( "dbo", p.RequiredSchemas[0],                  "RequiredSchemas[0]"       );
-         Assert.AreEqual   ( p.RootType,      SqlTypeEnum.Schema,          "RootType"                 );
          Assert.AreEqual   ( @"DESKTOP-UAULS0U\SQLEXPRESS", p.Server,      "Server"                   );
          Assert.IsNotNull  ( p.TargetChildTypes,                           "TargetChildTypes"         );
          Assert.AreEqual   ( 2,  p.TargetChildTypes.Count,                 "TargetChildTypes.Count"   );
+         Assert.AreEqual   ( SqlTypeEnum.Function,  p.TargetChildTypes[0], "TargetChildTypes[1]"      );
          Assert.AreEqual   ( SqlTypeEnum.Procedure, p.TargetChildTypes[1], "TargetChildTypes[1]"      );
-      }
-
-      /// <summary>
-      /// Utils.PreconditionS: 
-      ///   
-      /// POSTCONDITIONS: 
-      ///   POST 1: returns null if rs is null, empty
-      ///   POST 2: returns null if rs contains no schemas
-      ///   POST 3: returns all the required schemas in rs in the returned collection
-      ///   POST 4: contains no empty schemas
-      ///   POST 5: Server, Instance Database exist
-      ///   POST 6: the schemas found should exist in the database
-      ///           AND match the Case of the Db Schema name
-      /// "{dbo, [ teSt]}"
-      /// </summary>
-      [TestMethod()]
-      public void SetExportFlagsFromSqlTypeTest()
-      {
-         // 1: test from cstr
-         ParamsTestable p = new ParamsTestable(
-             name              : "ParseRequiredSchemasTestWhen2SchemasThenOk param"
-            ,prms              : null
-            ,serverName        : @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName      : "SQLEXPRESS"
-            ,databaseName      : "Covid_T1" 
-            ,exportScriptPath  : null
-            ,newSchemaName     : null
-            ,requiredSchemas   : "{dbo}"
-            ,requiredTypes     : null
-            ,sqlType           : null
-            ,createMode        : null
-            ,scriptUseDb       : null
-            ,addTimestamp      : null
-         );
-
-         // Clear all the is exporting state flags
-         p.SetExportFlagState(null);
-         p.IsExprtngDb   = true;//   isxDb, isxS,  isxFn, isxp,  isxTbls,isxTTy, isxVw, isxData
-         Assert.IsTrue(Checkflags(p, true,  null,  null,  null,  null,   null,   null,  null));
-         p.SetExportFlagState(false);
-         p.IsExprtngSchema = true;
-         Assert.IsTrue(Checkflags(p, false, true,  false, false, false,  false,  false, false));
-         p.SetExportFlagState(true);
-         p.IsExprtngFns = false;
-         Assert.IsTrue(Checkflags(p, true,  true,  false, true,  true,   true,   true,  true));
-         p.SetExportFlagState(null);
-         p.IsExprtngProcs = false;
-         Assert.IsTrue(Checkflags(p, null,  null,  null,  false, null,   null,   null,  null));
-
-         p.SetExportFlagState(null);
-         p.IsExprtngTbls = true;
-         p.IsExprtngTTys = false;
-         Assert.IsTrue(Checkflags(p, null,  null,  null,  null,  true,   false,  null,  null));
-
-         p.SetExportFlagState(false); 
-         p.IsExprtngVws  = null;
-         p.IsExprtngData = true;
-         Assert.IsTrue(Checkflags(p, false, false, false, false, false,  false,  null,  true));
       }
 
       bool Checkflags(Params p
@@ -154,35 +134,34 @@ namespace RSS.Test
          //var exportScriptPath = @"C:\temp\PareseRequiredschemasTest.sql";
          
          p11_exp = new Params(
-             name             : "p11_exp"
-            ,prms             : null // Use this state to start with and update with the subsequent parameters
-            ,serverName       : @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName     : "SQLEXPRESS"
-            ,databaseName     : "Covid_T1"
-            ,exportScript     : null
-            ,newSchemaName    : null
-            ,requiredSchemas  : null
-            ,requiredTypes    : null
-            ,rootType         : null
-            ,createMode       : null
-            ,scriptUseDb      : false
-            ,addTimestamp     : true
+             prms      : null // Use this state to start with and update with the subsequent parameters
+            ,nm        : "p11_exp"
+            ,svrNm     : @"DESKTOP-UAULS0U\SQLEXPRESS"
+            ,instNm    : "SQLEXPRESS"
+            ,dbNm      : "Covid_T1"
+            ,xprtScrpt : null
+            ,cm        : null
+            ,rss       : null
+            ,rts       : null
+            ,newSchNm  : null
+            ,log       : null
+            ,useDb     : false
+            ,addTs     : true
             );
 
          Params p = new Params(
-             name              : "ParseRequiredSchemasTestWhen2SchemasThenOk param"
-            ,prms              : null
-            ,serverName        : @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName      : "SQLEXPRESS"
-            ,databaseName      : "Covid_T1" 
-            ,exportScript      : null
-            ,newSchemaName     : null
-            ,requiredSchemas   : "{dbo, [ teSt]}"// should handle more than 1 schema and crappy formatting
-            ,requiredTypes     : null
-            ,rootType          : null
-            ,createMode        : null
-            ,scriptUseDb       : null
-            ,addTimestamp      : null
+             prms      : null
+            ,nm        : "ParseRequiredSchemasTestWhen2SchemasThenOk param"
+            ,svrNm     : @"DESKTOP-UAULS0U\SQLEXPRESS"
+            ,instNm    : "SQLEXPRESS"
+            ,dbNm      : "Covid_T1" 
+            ,xprtScrpt : null
+            ,cm        : null
+            ,rss       : "{dbo, [ teSt]}"// should handle more than 1 schema and crappy formatting
+            ,rts       : null
+            ,useDb     : null
+            ,newSchNm  : null
+            ,addTs     : null
          );
 
          var requiredSchemas = p.RequiredSchemas;
@@ -209,45 +188,45 @@ namespace RSS.Test
          // Create the test objects
 
          Params prm_base = new Params(
-             name             : "prm_base"
-            ,prms             : null // Use this state to start with and update with the subsequent parameters
-            ,serverName       : "base svr"
-            ,instanceName     : "base instance"
-            ,databaseName     : "base db"
-            ,exportScript     : null
-            ,newSchemaName    : null
-            ,requiredSchemas  : null
-            ,requiredTypes    : null
-            ,rootType         : null
-            ,createMode       : null
-            ,scriptUseDb      : false
-            ,addTimestamp     : true
+             prms      : null // Use this state to start with and update with the subsequent parameters
+            ,nm        : "prm_base"
+            ,svrNm     : "base svr"
+            ,instNm    : "base instance"
+            ,dbNm      : "base db"
+            ,xprtScrpt : null
+            ,cm        : null
+            ,rss       : null
+            ,rts       : null
+            ,useDb     : false
+            ,addTs     : true
+            ,newSchNm  : null
             );
 
          Params prm_exp = new Params(
-             name             : "prm_exp"
-            ,prms             : null
-            ,serverName       : "ovr svr"
-            ,instanceName     : "base instance"
-            ,databaseName     : "ovr db" 
-            ,exportScript     : "ovr script path" // base is null
-            ,newSchemaName    : null
-            ,requiredSchemas  : "{dbo, test}" 
-            ,requiredTypes    : "table, function" 
-            ,rootType         : null
-            ,createMode       : null
-            ,scriptUseDb      : false
-            ,addTimestamp     : true
+             prms      : null
+            ,nm        : "prm_exp"
+            ,svrNm     : "ovr svr"
+            ,instNm    : "base instance"
+            ,dbNm      : "ovr db" 
+            ,xprtScrpt : "ovr script path" // base is null
+            ,cm        : null
+            ,rss       : "{dbo, test}" 
+            ,rts       : "table, function" 
+            ,useDb     : false
+            ,addTs     : true
+            ,newSchNm  : null
             );
 
          Params prm_act = new Params(
-             name             : "prm act"
-            ,prms             : prm_base          // sets SVR:UAULS0U\SQLEXPRESS, inst:UAULS0U\SQLEXPRESS, db:Covid_T1, {expth, newschma,requiredSchemas,requiredTypes} :null
-            ,serverName       : "ovr svr"
-            ,databaseName     : "ovr db"          // replaces "Covid_T2"
-            ,exportScript     : "ovr script path" // replaces null
-            ,requiredSchemas  : "{dbo, test}" 
-            ,requiredTypes    : "table, function" 
+             prms       : prm_base          // sets SVR:UAULS0U\SQLEXPRESS, inst:UAULS0U\SQLEXPRESS, db:Covid_T1, {expth, newschma,requiredSchemas,requiredTypes} :null
+            ,nm         : "prm act"
+            ,svrNm      : "ovr svr"
+            ,instNm     : null
+            ,dbNm       : "ovr db"          // replaces "Covid_T2"
+            ,xprtScrpt  : "ovr script path" // replaces null
+            ,cm         : null
+            ,rss        : "{dbo, test}" 
+            ,rts        : "table, function" 
             );
 
          ChkEquals(prm_exp, prm_act, "OverlappingTest");
@@ -262,45 +241,45 @@ namespace RSS.Test
          // Create the test objects
 
          Params prm_base = new Params(
-             name             : "prm_base"
-            ,prms             : null // Use this state to start with and update with the subsequent parameters
-            ,serverName       : "base svr"
-            ,instanceName     : "base instance"
-            ,databaseName     : "base db"
-            ,exportScript     : null
-            ,newSchemaName    : null
-            ,requiredSchemas  : "{base sch 1}" 
-            ,requiredTypes    : "procedure, function" 
-            ,rootType         : null
-            ,createMode       : null
-            ,scriptUseDb      : false
-            ,addTimestamp     : true
+             prms      : null // Use this state to start with and update with the subsequent parameters
+            ,nm        : "prm_base"
+            ,svrNm     : "base svr"
+            ,instNm    : "base instance"
+            ,dbNm      : "base db"
+            ,xprtScrpt : null
+            ,cm        : null
+            ,rss       : "{base sch 1}" 
+            ,rts       : "procedure, function" 
+            ,useDb     : false
+            ,addTs     : true
+            ,newSchNm  : null
             );
 
          Params prm_exp = new Params(
-             name             : "prm_exp"
-            ,prms             : null
-            ,serverName       : "ovr svr"
-            ,instanceName     : "base instance"
-            ,databaseName     : "ovr db" 
-            ,exportScript     : "ovr script path" // base is null
-            ,newSchemaName    : null
-            ,requiredSchemas  : "{dbo, test}" 
-            ,requiredTypes    : "table, database" 
-            ,rootType         : null
-            ,createMode       : null
-            ,scriptUseDb      : false
-            ,addTimestamp     : true
+             prms      : null
+            ,nm        : "prm_exp"
+            ,svrNm     : "ovr svr"
+            ,instNm    : "base instance"
+            ,dbNm      : "ovr db" 
+            ,xprtScrpt : "ovr script path" // base is null
+            ,cm        : null
+            ,rss       : "{dbo, test}" 
+            ,rts       : "table, database" 
+            ,useDb     : false
+            ,addTs     : true
+            ,newSchNm  : null
             );
 
          Params prm_act = new Params(
-             name             : "prm act"
-            ,prms             : prm_base          // sets SVR:UAULS0U\SQLEXPRESS, inst:UAULS0U\SQLEXPRESS, db:Covid_T1, {expth, newschma,requiredSchemas,requiredTypes} :null
-            ,serverName       : "ovr svr"
-            ,databaseName     : "ovr db"          // replaces "Covid_T2"
-            ,exportScript     : "ovr script path" // replaces null
-            ,requiredSchemas  : "{dbo, test}" 
-            ,requiredTypes    : "table, database" 
+             prms       : prm_base          // sets SVR:UAULS0U\SQLEXPRESS, inst:UAULS0U\SQLEXPRESS, db:Covid_T1, {expth, newschma,requiredSchemas,requiredTypes} :null
+            ,nm         : "prm act"
+            ,svrNm      : "ovr svr"
+            ,instNm     : null
+            ,dbNm       : "ovr db"          // replaces "Covid_T2"
+            ,xprtScrpt  : "ovr script path" // replaces null
+            ,cm         : null
+            ,rss        : "{dbo, test}" 
+            ,rts        : "table, database" 
             );
 
          ChkEquals(prm_exp, prm_act, "OverlappingTestBaseCollSpecd");
@@ -328,34 +307,29 @@ p11_ source                                           P21_overlap_inp : p11_exp 
 
          // overwrite will replace all specified parameters even those that are defaults not supplied**
          Params P21_overlap_ovrwrt_exp = new Params  (
-             name             : "P21_overlap_ovrwrt_exp"
-            ,prms             : null                    // was 
-            ,serverName       : @"FRED"                 // was DESKTOP-UAULS0U\SQLEXPRESS
-            ,instanceName     : "SQLEXPRESS"            // was same
-            ,databaseName     : "P21 db"                // was Covid_T1
-            ,exportScript     : "P21 export path"       // was null
-            ,newSchemaName    : null                    // was null
-            ,requiredSchemas  : null                    // was null                     
-            ,requiredTypes    : null                    // was null                     
-            ,rootType         : null
-            ,createMode       : null
-            ,scriptUseDb      : true                    // was false                    
-            ,addTimestamp     : false                   // was true                     
-            );;
+             prms       : null                    // was 
+            ,nm         : "P21_overlap_ovrwrt_exp"
+            ,svrNm      : @"FRED"                 // was DESKTOP-UAULS0U\SQLEXPRESS
+            ,instNm     : "SQLEXPRESS"            // was same
+            ,dbNm       : "P21 db"                // was Covid_T1
+            ,xprtScrpt  : "P21 export path"       // was null
+            ,cm         : null
+            ,rss        : null                    // was null                     
+            ,rts        : null                    // was null                     
+            ,useDb      : true                    // was false                    
+            ,addTs      : false                   // was true                     
+            ,newSchNm   : null                    // was null
+            );
 
          Params P21_overlap_ovrwrt_act = new Params (
-             name              : "P21_overlap_ovrwrt_act:p11_exp"
-            ,prms              : p11_exp           // sets SVR:UAULS0U\SQLEXPRESS, inst:UAULS0U\SQLEXPRESS, db:Covid_T1, {expth, newschma,requiredSchemas,requiredTypes} :null
-            ,serverName        : @"FRED"
-            ,instanceName      : "SQLEXPRESS"
-            ,databaseName      : "P21 db" 
-            ,exportScript  : "P21 export path"
-            //newSchemaName                        // param not specified in this call so it will be set to null
-            //bOpType          : null              // replaces DbOpTypeEnum.CreateSchema with a specified null value
-            //sqlType          default             // param not specified in this call so it will be set to SqlTypeEnum.Undefined
-            //createMode       default             // param not specified in this call so it will be set to CreateModeEnum.Undefined
-            ,scriptUseDb       : true
-            ,addTimestamp      : false
+             prms       : p11_exp           // sets SVR:UAULS0U\SQLEXPRESS, inst:UAULS0U\SQLEXPRESS, db:Covid_T1, {expth, newschma,requiredSchemas,requiredTypes} :null
+            ,nm         : "P21_overlap_ovrwrt_act:p11_exp"
+            ,svrNm      : @"FRED"
+            ,instNm     : "SQLEXPRESS"
+            ,dbNm       : "P21 db" 
+            ,xprtScrpt  : "P21 export path"
+            ,useDb      : true
+            ,addTs      : false
             );
 
          ChkEquals(P21_overlap_ovrwrt_exp, P21_overlap_ovrwrt_act, "Overlapping2Test");
@@ -371,6 +345,7 @@ p11_ source                                           P21_overlap_inp : p11_exp 
          var act = p.ParseRequiredTypes("t,F,P,v,s");
 
          LogDirect("------------- ParseRequiredTypesTest --------------");
+         Assert.IsNotNull(act);
 
          foreach(SqlTypeEnum item in act)
             LogDirect($"got req ty: {item.GetAlias()}");
@@ -394,23 +369,23 @@ p11_ source                                           P21_overlap_inp : p11_exp 
       }
    
       [TestMethod()]
-      [ExpectedException((typeof(ArgumentException)))]
       public void ParseRequiredSchemasNullTest()
       {
          Params p = new Params();
          // POST 1,2 required schemas must be specified
-         p.ParseRequiredSchemas(null);
+         List<string>? rs = p.ParseRequiredSchemas(null);
+         Assert.IsNull(rs);
          //   POST 3: returns all schemas in rs in the returned ary
          //   POST 4: contains no []
       }
    
       [TestMethod()]
-      [ExpectedException((typeof(ArgumentException)))]
       public void ParseRequiredSchemasMtTest()
       {
          Params p = new Params();
+         List<string>? rs = p.ParseRequiredSchemas("");
+         Assert.IsNull(rs);
          // POST 1,2 required schemas must be specified
-         p.ParseRequiredSchemas("");
          //   POST 3: returns all schemas in rs in the returned ary
          //   POST 4: contains no []
       }
@@ -418,99 +393,93 @@ p11_ source                                           P21_overlap_inp : p11_exp 
       private void CreateTestObjects()
       {
          p10_null = new Params(
-             name             : "p10_null"
-            ,prms             : null
-            ,serverName       : null
-            ,instanceName     : null
-            ,databaseName     : null
-            ,exportScript     : null
-            ,newSchemaName    : null
-            ,requiredSchemas  : null
-            ,requiredTypes    : null
-            ,rootType         : null
-            ,createMode       : null
-            ,scriptUseDb      : null
-            ,addTimestamp     : null
+             prms       : null
+            ,nm         : "p10_null"
+            ,svrNm      : null
+            ,instNm     : null
+            ,dbNm       : null
+            ,xprtScrpt  : null
+            ,cm         : null
+            ,rss        : null
+            ,rts        : null
+            ,useDb      : null
+            ,addTs      : null
+            ,newSchNm   : null
          );
 
          p11_all_inp = new Params(
-             name             : "p11_all_inp"
-            ,prms             : null // Use this state to start with and update with the subsequent parameters
-            ,serverName       : @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName     : "SQLEXPRESS"
-            ,databaseName     : "Covid_T1"
-            ,exportScript     : @"C:\tmp\T002_InitTest_export.sql"
-            ,newSchemaName    : "New Schema Name"
-            ,requiredSchemas  : "{dbo, test}"
-            ,requiredTypes    : "F,P"
-            ,rootType         : null
-            ,createMode       : null
-            ,scriptUseDb      : false
-            ,addTimestamp     : true
+             prms       : null // Use this state to start with and update with the subsequent parameters
+            ,nm         : "p11_all_inp"
+            ,svrNm      : @"DESKTOP-UAULS0U\SQLEXPRESS"
+            ,instNm     : "SQLEXPRESS"
+            ,dbNm       : "Covid_T1"
+            ,xprtScrpt  : @"C:\tmp\T002_InitTest_export.sql"
+            ,cm         : null
+            ,rss        : "{dbo, test}"
+            ,rts        : "F,P"
+            ,useDb      : false
+            ,addTs      : true
+            ,newSchNm   : "New Schema Name"
          );
 
          p11_exp = new Params(
-             name             : "p11_exp"
-            ,prms             : null // Use this state to start with and update with the subsequent parameters
-            ,serverName       : @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName     : "SQLEXPRESS"
-            ,databaseName     : "Covid_T1"
-            ,exportScript     : null
-            ,newSchemaName    : null
-            ,requiredSchemas  : null
-            ,requiredTypes    : null
-            ,rootType         : null
-            ,createMode       : null
-            ,scriptUseDb      : false
-            ,addTimestamp     : true
+             prms       : null // Use this state to start with and update with the subsequent parameters
+            ,nm         : "p11_exp"
+            ,svrNm      : @"DESKTOP-UAULS0U\SQLEXPRESS"
+            ,instNm     : "SQLEXPRESS"
+            ,dbNm       : "Covid_T1"
+            ,xprtScrpt  : null
+            ,cm         : null
+            ,rss        : null
+            ,rts        : null
+            ,useDb      : false
+            ,addTs      : true
+            ,newSchNm   : null
             );
 
          p11_act = new Params(
-             name             : "p11_act:p10_null"
-            ,prms             : p10_null // Use this state to start with and update with the subsequent parameters
-            ,serverName       : @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName     : "SQLEXPRESS"
-            ,databaseName     : "Covid_T1"
-            ,exportScript     : null
-            ,newSchemaName    : null
-            ,requiredSchemas  : null
-            ,requiredTypes    : null
-            ,rootType         : null
-            ,createMode       : null
-            ,scriptUseDb      : false
-            ,addTimestamp     : true
+             prms      : p10_null // Use this state to start with and update with the subsequent parameters
+            ,nm        : "p11_act:p10_null"
+            ,svrNm     : @"DESKTOP-UAULS0U\SQLEXPRESS"
+            ,instNm    : "SQLEXPRESS"
+            ,dbNm      : "Covid_T1"
+            ,xprtScrpt : null
+            ,cm        : null
+            ,rss       : null
+            ,rts       : null
+            ,useDb     : false
+            ,addTs     : true
+            ,newSchNm  : null
          );
 
          p20_exp = new Params(
-             name               : "p20_exp"
-            ,prms               : null // Use this state to start with and update with the subsequent parameters
-            ,serverName         : @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName       : "SQLEXPRESS"
-            ,databaseName       : "Covid_T1"
-            ,exportScript       : @"C:\tmp\T002_InitTest_export.sql"
-            ,newSchemaName      : "New Schema Name"
-            ,requiredSchemas    : "{dbo, test}"
-            ,requiredTypes      : "F,P"
-            ,rootType         : null
-            ,createMode       : null
-            ,scriptUseDb        : false
-            ,addTimestamp       : true
+             prms       : null // Use this state to start with and update with the subsequent parameters
+            ,nm         : "p20_exp"
+            ,svrNm      : @"DESKTOP-UAULS0U\SQLEXPRESS"
+            ,instNm     : "SQLEXPRESS"
+            ,dbNm       : "Covid_T1"
+            ,xprtScrpt  : @"C:\tmp\T002_InitTest_export.sql"
+            ,cm         : null
+            ,rss        : "{dbo, test}"
+            ,rts        : "F,P"
+            ,useDb      : false
+            ,addTs      : true
+            ,newSchNm   : "New Schema Name"
          );
         
          p20_act= new Params(
-             name              : "p20_act:p11_all_inp"
-            ,prms              : p11_all_inp
-            ,serverName        : null
-            ,instanceName      : null
-            ,databaseName      : null
-            ,exportScript  : null
-            ,newSchemaName     : null
-            ,requiredSchemas   : null
-            ,requiredTypes     : null
-            ,rootType          : null
-            ,createMode        : null
-            ,scriptUseDb       : null
-            ,addTimestamp      : null
+             prms      : p11_all_inp
+            ,nm        : "p20_act:p11_all_inp"
+            ,svrNm     : null
+            ,instNm    : null
+            ,dbNm      : null
+            ,xprtScrpt : null
+            ,cm        : null
+            ,rss       : null
+            ,rts       : null
+            ,useDb     : null
+            ,addTs     : null
+            ,newSchNm  : null
          );
 
       }
@@ -523,12 +492,12 @@ p11_ source                                           P21_overlap_inp : p11_exp 
       {
       }
 
-      Params p10_null   = null;
-      Params p11_all_inp= null;
-      Params p11_exp    = null;
-      Params p11_act    = null;
-      Params p20_act    = null;
-      Params p20_exp    = null;
+      Params? p10_null   = null;
+      Params? p11_all_inp= null;
+      Params? p11_exp    = null;
+      Params? p11_act    = null;
+      Params? p20_act    = null;
+      Params? p20_exp    = null;
 
 
       public override string TestDataDir { get =>_testDataDir; set{ _testDataDir=value;} }

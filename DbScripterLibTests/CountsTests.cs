@@ -17,17 +17,16 @@ namespace RSS.Test
       #region tests
            public Params CovidBaseParams {get;set; } = new Params
            (
-             prms             : null // Use this state to start with and update with the subsequent parameters
-            ,serverName       : @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName     : "SQLEXPRESS"
-            ,databaseName     : "Covid_T1"
-            ,newSchemaName    : "New Schema Name"
-            ,requiredSchemas  : "{dbo, [tEst]}"
-            ,requiredTypes    : "S"
-            ,rootType         : null
-            ,createMode       : null
-            ,scriptUseDb      : false
-            ,addTimestamp     : false
+             prms    : null // Use this state to start with and update with the subsequent parameters
+            ,svrNm   : @"DESKTOP-UAULS0U\SQLEXPRESS"
+            ,instNm  : "SQLEXPRESS"
+            ,dbNm    : "Covid_T1"
+            ,newSchNm: "New Schema Name"
+            ,rss     : "{dbo, [tEst]}"
+            ,rts     : "S"
+            ,cm      : null
+            ,useDb   : false
+            ,addTs   : false
            );
  
       /// <summary>
@@ -43,14 +42,13 @@ namespace RSS.Test
 
          Params p = Params.PopParams
          (
-             name             : "Count_Crt_Export_Tables_only_Schemas_dbo_tst_Test Params"
-            ,prms             : CovidBaseParams
-            ,exportScriptPath : ScriptFile
-            ,rootType         : SqlTypeEnum.Table
-            ,createMode       : CreateModeEnum.Create
-            ,requiredSchemas  : "{dbo, [ teSt]}"// should handle more than 1 schema and crappy formatting
-            ,requiredTypes    : "t"             // this is overridden in Export schema as it exports all the child objects
-            ,addTimestamp     : false
+             nm        : "Count_Crt_Export_Tables_only_Schemas_dbo_tst_Test Params"
+            ,prms      : CovidBaseParams
+            ,xprtScrpt : ScriptFile
+            ,cm        : CreateModeEnum.Create
+            ,rss       : "{dbo, [ test]}"// should handle more than 1 schema and crappy formatting
+            ,rts       : "t"             // this is overridden in Export schema as it exports all the child objects
+            ,addTs     : false
          );
 
          Logger.Log(p);
@@ -58,8 +56,6 @@ namespace RSS.Test
          Assert.IsTrue(ChkContains(script, @"^([ \t]*CREATE[ \t]+TABLE[ \t\[]+dbo[^\.[ \t\[]+)" , 21, out msg), msg);
          Assert.IsTrue(ChkContains(script, @"^([ \t]*CREATE[ \t]+TABLE[ \t\[]+test[^\.[ \t\[]+)",  3, out msg), msg);
          Logger.LogL("All subtests passed");
-
-         Logger.LogL();
       }
 
       public override void TestSetup_()
@@ -84,21 +80,6 @@ namespace RSS.Test
       {
       }
 
- /*     public Params CovidBaseParams {get;set; } = new Params(
-             prms              : null // Use this state to start with and update with the subsequent parameters
-            ,serverName        : @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instanceName      : "SQLEXPRESS"
-            ,databaseName      : "Covid_T1"
-            ,exportScriptPath  : @"C:\tmp\T002_InitTest_export.sql"
-            ,newSchemaName     : "New Schema Name"
-            ,requiredSchemas   : "{ dbo , [ teSt ] }"
-            ,requiredTypes     : "F,P"
-            ,sqlType           : SqlTypeEnum.Undefined
-            ,createMode        : CreateModeEnum.Alter
-            ,scriptUseDb       : false
-            ,addTimestamp      : true
-         );*/
- 
  
       #region Additional test attributes
       //

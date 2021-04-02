@@ -67,7 +67,6 @@ namespace DbScripterAppTestsNS
              "-S", svr_nm
             ,"-i","SQLEXPRESS"
             ,"-d","ut"
-            ,"-rt","Schema"
             ,"-rs","{dbo}"
             ,"-tct","{F,P,T,TTY,V}"
             ,"-E", ScriptFile
@@ -100,7 +99,6 @@ namespace DbScripterAppTestsNS
              "-S", svr_nm
             ,"-i","SQLEXPRESS"
             ,"-d","ut"
-            ,"-rt","Schema"
             ,"-rs","{test}"
             ,"-tct","{F,P,T,TTY,V}"
             ,"-E", ScriptFile
@@ -134,7 +132,6 @@ namespace DbScripterAppTestsNS
              "-S", svr_nm
             ,"-i","SQLEXPRESS"
             ,"-d","ut"
-            ,"-rt","Schema"
             ,"-rs","{dbo, test}"
             ,"-tct","{F,P,T,TTY,V}"
             ,"-E", ScriptFile
@@ -167,7 +164,6 @@ namespace DbScripterAppTestsNS
              "-S"  , svr_nm
             ,"-i"  ,"SQLEXPRESS"
             ,"-d"  ,"ut"
-            ,"-rt" ,"Schema"
             ,"-rs" ,"dbo"
             ,"-tct","{F,P,T,TTY,V}"
             ,"-E"  , ScriptFile
@@ -263,7 +259,7 @@ namespace DbScripterAppTestsNS
          Assert.AreEqual(svr_nm                 , p.Server,                "Server -S");
          Assert.AreEqual("SQLEXPRESS"           , p.Instance,              "Instance -i");
          Assert.AreEqual("covid"                , p.Database,              "Database -d");
-         Assert.AreEqual(SqlTypeEnum.Schema     , p.RootType,              "RootType -rt");
+  //       Assert.AreEqual(SqlTypeEnum.Schema     , p.RootType,              "RootType -rt");
          Assert.AreEqual(ScriptFile             , p.ScriptPath,            "ScriptPath -E");
          Assert.AreEqual(2                      , p.RequiredSchemas.Count, "RequiredSchemas -rs");
          Assert.AreEqual("dbo"                  , p.RequiredSchemas[0],    "RequiredSchema[0]");
@@ -313,7 +309,7 @@ namespace DbScripterAppTestsNS
          Assert.AreEqual(svr_nm                 , p.Server,                "Server -S");
          Assert.AreEqual("SQLEXPRESS"           , p.Instance,              "Instance -i");
          Assert.AreEqual("ut"                   , p.Database,              "Database -d");
-         Assert.AreEqual(SqlTypeEnum.Schema     , p.RootType,              "RootType -rt");
+   //      Assert.AreEqual(SqlTypeEnum.Schema     , p.RootType,              "RootType -rt");
          Assert.AreEqual(ScriptFile             , p.ScriptPath,            "ScriptPath -E");
          Assert.AreEqual(1                      , p.RequiredSchemas.Count, "RequiredSchemas -rs");
          Assert.AreEqual("dbo"                  , p.RequiredSchemas[0],    "RequiredSchema[0]");
@@ -371,7 +367,7 @@ namespace DbScripterAppTestsNS
          Assert.AreEqual(svr_nm                , p.Server,                 "ServerName       -S"   );
          Assert.AreEqual("SQLEXPRESS"          , p.Instance,               "InstanceName     -i"   );
          Assert.AreEqual("TPC"                 , p.Database,               "DatabaseName     -d"   );
-         Assert.AreEqual(SqlTypeEnum.Schema    , p.RootType,               "RootType         -rt"  );
+//         Assert.AreEqual(SqlTypeEnum.Schema    , p.RootType,               "RootType         -rt"  );
          Assert.AreEqual(ScriptFile            , p.ScriptPath,             "ExportScriptPath -E"   );
          Assert.AreEqual(1                     , p.RequiredSchemas.Count,  "RequiredSchemas  -rs"  );
          Assert.AreEqual("dbo"                 , p.RequiredSchemas[0],     "RequiredSchema[0]"     );

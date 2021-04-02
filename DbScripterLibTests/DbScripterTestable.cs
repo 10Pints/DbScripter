@@ -17,9 +17,9 @@ namespace RSS.Test
       { 
       }
 
-      public new bool Init( Params p, out string msg, StringBuilder? sb = null, bool append = false)
+      public new bool Init( Params p, out string msg, StringBuilder? sb = null)
       {
-         return base.Init(p, out msg, sb, append);
+         return base.Init(p, out msg, sb);
       }
 
       public new string HandleExportFilePath(string exportFilePath, bool addTimestamp)
@@ -52,24 +52,6 @@ namespace RSS.Test
          return base.IsTypeWanted(typeName);
       }
 
-      public new void SetExportSchemaFlags()
-      {
-         base.SetExportSchemaFlags();
-      }
-      /// <summary>
-      /// PRE:  NONE
-      /// POST: all UNDEFIEND flags set true
-      /// </summary>
-      public void ResetUndefinedExportSchemaFlags(bool? st)
-      {
-         P.IsExprtngFns    = st;
-         P.IsExprtngProcs  = st;
-         P.IsExprtngSchema = st;
-         P.IsExprtngTbls   = st;
-         P.IsExprtngTTys   = st;
-         P.IsExprtngVws    = st;
-      }
-
       public new static SqlTypeEnum MapTypeToSqlType(SqlSmoObject? smo)
       {
          return DbScripter.MapTypeToSqlType(smo);
@@ -80,9 +62,9 @@ namespace RSS.Test
          base.InitScriptingOptions( out msg);
       }
 
-      public new ScriptingOptions InitTableExport()
+      public new bool InitTableExport(out ScriptingOptions? so, out string msg)
       { 
-         return base.InitTableExport();
+         return base.InitTableExport(out so, out msg);
       }
 
 
@@ -97,9 +79,9 @@ namespace RSS.Test
          return DbScripter.IsTestSchema( schemaName);
       }
 
-      public new static bool CorrectRequiredTypes( SqlTypeEnum rootType, CreateModeEnum createMode, List<SqlTypeEnum>? reqTypesIn, out List<SqlTypeEnum> reqTypesOut, out string msg)
+      public new static bool CorrectRequiredTypes( CreateModeEnum createMode, List<SqlTypeEnum>? reqTypesIn, out List<SqlTypeEnum> reqTypesOut, out string msg)
       {
-         return DbScripter.CorrectRequiredTypes(rootType, createMode, reqTypesIn, out reqTypesOut, out msg);
+         return DbScripter.CorrectRequiredTypes(createMode, reqTypesIn, out reqTypesOut, out msg);
       }
 
       public new static void ScriptSchemaStatements(List<string> schemaNames, StringBuilder sb)
