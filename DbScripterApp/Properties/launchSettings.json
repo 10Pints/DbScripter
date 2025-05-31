@@ -1,0 +1,10 @@
+{
+  "profiles": {
+    "DbScripterApp": {
+      "commandName": "Project",
+      "commandLineArgs": "D:\\Dev\\Farming\\AppSettings.json",
+      "workingDirectory": "D:\\Dev\\Farming",
+      "remoteDebugEnabled": false
+    }
+  }
+}

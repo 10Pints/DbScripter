@@ -1,5 +1,5 @@
 ﻿
-using RSS.Common;
+using CommonLib;
 
 namespace DbScripterLibNS
 {
@@ -9,8 +9,11 @@ namespace DbScripterLibNS
    public enum SqlTypeEnum
    {
       [EnumAlias("Error"     , "E"   )]
-      Error = 0,                     
-                                     
+      Error = 0,
+
+      [EnumAlias("Assembly",   "A", "Db")]
+      Assembly,
+
       [EnumAlias("Database"  , "D",   "Db")]
       Database,                      
                                      
@@ -24,12 +27,21 @@ namespace DbScripterLibNS
       Schema,                        
                                      
       [EnumAlias("Table"     , "T"   )]
-      Table,                         
-                                     
+      Table,
+
+      [EnumAlias("Trigger", "Tr")]
+      Trigger,
+
       [EnumAlias("Table Type", "TTy" )]
       TableType,
 
-      [EnumAlias("View"      , "V"   )]
-      View
+      [EnumAlias("View", "V")]
+      View,
+
+      [EnumAlias("UserDefinedDataType", "UDDT")]
+      UserDefinedDataType, // Includes UserDefinedDataType and UserDefinedTableType
+
+      [EnumAlias("Undefined", "-")]
+      Undefined
    }
 }

@@ -1,0 +1,10 @@
+{
+  "compareExpActScriptAfterTestFailure" : "true",
+  "compareExpActResultsAfterTestFailure": "true",
+  "displayLogAfterTestFailure"          : "true",
+  "displayScriptAfterTestFailure"       : "true",
+  "hasTestData"                         : "false",
+  "logLevel"                            : "Info",
+  "requireExpJson"                      : "false"
+}
+

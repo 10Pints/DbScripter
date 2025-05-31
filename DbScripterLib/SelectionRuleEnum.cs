@@ -1,5 +1,5 @@
 ﻿
-using RSS.Common;
+using CommonLib;
 
 namespace DbScripterLibNS
 {
@@ -29,5 +29,7 @@ namespace DbScripterLibNS
       [EnumAlias("Unresolved entity")]
       UnresolvedEntity,
 
+      [EnumAlias("Unknown entity")]
+      UnknownEntity
    }
 }

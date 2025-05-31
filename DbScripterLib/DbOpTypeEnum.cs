@@ -2,7 +2,7 @@
  This file contains the DbOpTypeEnum enumeration used by the SqlTrackingProvider
 */
 
-using RSS.Common;
+using CommonLib;
 
 namespace DbScripterLibNS
 {

@@ -1,4 +1,4 @@
-﻿using RSS.Common;
+﻿using CommonLib;
 
 
 namespace DbScripterLibNS
@@ -9,8 +9,12 @@ namespace DbScripterLibNS
    /// </summary>
    public enum CreateModeEnum
    {
-      [EnumAlias("Error"     ,"E")]
-      Error = 0,
+
+      [EnumAlias("Undefined")]
+      Undefined = -1,
+ 
+      [EnumAlias("Error","E")]
+      Error,
 
       [EnumAlias("Create")]
       Create,
@@ -20,5 +24,5 @@ namespace DbScripterLibNS
 
       [EnumAlias("Drop")]
       Drop
-   }
+  }
 }

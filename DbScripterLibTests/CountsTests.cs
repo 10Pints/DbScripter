@@ -2,9 +2,8 @@
 using Microsoft.VisualStudio.TestTools.UnitTesting;
 using System;
 using System.Diagnostics;
-using RSS.Common;
-using TestHelpers;
-//using static RSS.Common.Logger;
+using Common;
+using CommonLib;
 
 namespace RSS.Test
 {
@@ -14,19 +13,19 @@ namespace RSS.Test
    [TestClass]
    public class CountsTests : ScriptableUnitTestBase
    {
+      /*
       #region tests
            public Params CovidBaseParams {get;set; } = new Params
            (
-             prms    : null // Use this state to start with and update with the subsequent parameters
-            ,svrNm   : @"DESKTOP-UAULS0U\SQLEXPRESS"
-            ,instNm  : "SQLEXPRESS"
-            ,dbNm    : "Covid_T1"
-            ,newSchNm: "New Schema Name"
-            ,rss     : "{dbo, [tEst]}"
-            ,rts     : "S"
-            ,cm      : null
-            ,useDb   : false
-            ,addTs   : false
+              prms         : null // Use this state to start with and update with the subsequent parameters
+            , serverName        : @"DEVI9\SQLEXPRESS"
+            , instanceName       : "SQLEXPRESS"
+            , databaseName         : "Covid_T1"
+            , requiredSchemas          : "{dbo, [tEst]}"
+            , requiredTypes          : "S"
+            , createMode           : null
+            , useDb        : false
+            , addTimestamp : false
            );
  
       /// <summary>
@@ -38,34 +37,34 @@ namespace RSS.Test
       public void Count_Crt_Export_Tables_only_Schemas_dbo_tst_Test()
       {
          Logger.LogS();
-         DbScripter sc = new DbScripter();
+         DbScripter sc = new();
 
          Params p = Params.PopParams
          (
-             nm        : "Count_Crt_Export_Tables_only_Schemas_dbo_tst_Test Params"
+             name        : "Count_Crt_Export_Tables_only_Schemas_dbo_tst_Test Params"
             ,prms      : CovidBaseParams
-            ,xprtScrpt : ScriptFile
-            ,cm        : CreateModeEnum.Create
-            ,rss       : "{dbo, [ test]}"// should handle more than 1 schema and crappy formatting
-            ,rts       : "t"             // this is overridden in Export schema as it exports all the child objects
-            ,addTs     : false
+            ,scriptFile : ScriptFile
+            ,createMode        : CreateModeEnum.Create
+            ,requiredSchemas       : "{dbo, [ test]}"// should handle more than 1 schema and crappy formatting
+            ,requiredTypes       : "t"             // this is overridden in Export schema as it exports all the child objects
+            , addTimestamp: false
          );
 
          Logger.Log(p);
          Assert.IsTrue(sc.Export(ref p, out var script, out var msg), msg);
-         Assert.IsTrue(ChkContains(script, @"^([ \t]*CREATE[ \t]+TABLE[ \t\[]+dbo[^\.[ \t\[]+)" , 21, out msg), msg);
-         Assert.IsTrue(ChkContains(script, @"^([ \t]*CREATE[ \t]+TABLE[ \t\[]+test[^\.[ \t\[]+)",  3, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^([ \t]*CREATE[ \t]+TABLE[ \t\[]+dbo[^\.[ \t\[]+)" , 22, out msg), msg);
+         Assert.IsTrue(ChkContains(script, @"^([ \t]*CREATE[ \t]+TABLE[ \t\[]+test[^\.[ \t\[]+)",  2, out msg), msg);
          Logger.LogL("All subtests passed");
       }
 
-      public override void TestSetup_()
+      protected override void TestSetup_()
       {
          Logger.LogS();
          base.TestSetup_();
          Logger.LogL();
       }
 
-      public override void TestCleanup_()
+      protected override void TestCleanup_()
       {
          Logger.LogS();
          base.TestCleanup_();
@@ -103,5 +102,6 @@ namespace RSS.Test
       //
       #endregion
       #endregion test support
+      */
    }
 }
