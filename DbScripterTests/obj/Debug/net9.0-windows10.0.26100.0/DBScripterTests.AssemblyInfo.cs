@@ -14,7 +14,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("DBScripterTests")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+927dd26f120b21a98e3bd6fc0778359e766295ad")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+abb318c58b89724d8fdc80fa16ae4c2cb8e5335e")]
 [assembly: System.Reflection.AssemblyProductAttribute("DBScripterTests")]
 [assembly: System.Reflection.AssemblyTitleAttribute("DBScripterTests")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

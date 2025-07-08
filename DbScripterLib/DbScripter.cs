@@ -12,7 +12,7 @@ using Microsoft.SqlServer.Management.HadrModel;
 using Microsoft.SqlServer.Management.Sdk.Sfc;
 using Microsoft.SqlServer.Management.Smo;
 
-using NLog.Filters;
+//using NLog.Filters;
 
 using System;
 using System.Collections.Generic;

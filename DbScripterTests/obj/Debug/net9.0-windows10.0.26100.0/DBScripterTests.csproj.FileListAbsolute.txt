@@ -298,8 +298,6 @@ D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\Microsoft
 D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\Microsoft.VisualStudio.TestPlatform.Common.dll
 D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\Microsoft.Win32.SystemEvents.dll
 D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\Newtonsoft.Json.dll
-D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\NLog.dll
-D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\NLog.Extensions.Logging.dll
 D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\Serilog.dll
 D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\Serilog.Expressions.dll
 D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\Serilog.Settings.Configuration.dll
@@ -400,8 +398,6 @@ D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\runtimes\
 D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\runtimes\win-x64\native\sni.dll
 D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\runtimes\win-x86\native\sni.dll
 D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\runtimes\win\lib\net6.0\System.Data.OleDb.dll
-D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\runtimes\unix\lib\netcoreapp2.1\System.Data.SqlClient.dll
-D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\runtimes\win\lib\netcoreapp2.1\System.Data.SqlClient.dll
 D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\runtimes\win\lib\net6.0\System.Diagnostics.PerformanceCounter.dll
 D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\runtimes\unix\lib\net6.0\System.Drawing.Common.dll
 D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\runtimes\win\lib\net6.0\System.Drawing.Common.dll
@@ -429,3 +425,9 @@ D:\Dev\DbScripter\DbScripterTests\obj\Debug\net9.0-windows10.0.26100.0\refint\DB
 D:\Dev\DbScripter\DbScripterTests\obj\Debug\net9.0-windows10.0.26100.0\DBScripterTests.pdb
 D:\Dev\DbScripter\DbScripterTests\obj\Debug\net9.0-windows10.0.26100.0\DBScripterTests.genruntimeconfig.cache
 D:\Dev\DbScripter\DbScripterTests\obj\Debug\net9.0-windows10.0.26100.0\ref\DBScripterTests.dll
+D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\MartinCostello.Logging.XUnit.dll
+D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\Serilog.Sinks.XUnit.dll
+D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\runtimes\unix\lib\net8.0\System.Data.SqlClient.dll
+D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\runtimes\win\lib\net8.0\System.Data.SqlClient.dll
+D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\nunit.framework.dll
+D:\Dev\DbScripter\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\nunit.framework.legacy.dll

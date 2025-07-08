@@ -1,0 +1,104 @@
+2025-07-09 02:34:03.477 +08:00 [INF] ParamsTests.cs(23)            	ParamsTests.Params01Test_when_default_then_()	starting: Starting test
+2025-07-09 02:34:03.488 +08:00 [INF] Test started
+2025-07-09 02:34:03.488 +08:00 [DBG] Debug information
+2025-07-09 02:34:03.488 +08:00 [WRN] This is a warning
+2025-07-09 02:34:03.506 +08:00 [INF] Params.cs(774)                	Params.LoadConfigFromFile()       	LoadFromConfig(): config_nm [AppSettings.Params.01], config_file: [AppSettings.Params.01.json]
+2025-07-09 02:34:03.515 +08:00 [INF] Params.cs(822)                	Params.LoadConfigFromFile()       	Param.LoadFromConfig: 
+--------------------------------------------------------------------------------
+ Type            : Params
+--------------------------------------------------------------------------------
+ CreateMode      : Create
+ Database        : Farming_dev
+ DisplayLog      : True
+ DisplayScript   : True
+ IndividualFiles              : False
+ Instance                     : 
+ IsExprtngData                : False
+ LogFile                      : D:\Logs\Farming.log
+ LogLevel                     : Info
+ Name                         : AppSettings.Params.01
+ RequiredAssemblies           : System.Collections.Generic.List`1[System.String]
+ RequiredSchemas              : System.Collections.Generic.List`1[System.String]
+ RequiredFunctions            : System.Collections.Generic.List`1[System.String]
+ RequiredProcedures           : System.Collections.Generic.List`1[System.String]
+ RequiredTables               : System.Collections.Generic.List`1[System.String]
+ RequiredViews                : System.Collections.Generic.List`1[System.String]
+ RequiredUserDefinedTypes     : System.Collections.Generic.List`1[System.String]
+ RequiredUserDefinedDataTypes : System.Collections.Generic.List`1[System.String]
+ RequiredUserDefinedTableTypes: System.Collections.Generic.List`1[System.String]
+ Want All:                  : Assembly
+ Want All:                  : Database
+ Want All:                  : Function
+ Want All:                  : Procedure
+ Want All:                  : Schema
+ Want All:                  : Table
+ Want All:                  : View
+ Want All:                  : UserDefinedType
+ Want All:                  : UserDefinedDataType
+ Want All:                  : UserDefinedTableType
+ Script Dir                   : D:\Dev\DbScripter_new\DbScripterLibTests\Scripts
+ Script File                  : D:\Dev\DbScripter_new\DbScripterLibTests\Scripts\Farming_dev schema.sql
+ ScriptUseDb                  : True
+ Server                       : DevI9
+ AddTimestamp                 : False
+ Timestamp                    : 250709-0234
+
+ RequiredSchemas : 2
+	dbo
+	test
+
+
+2025-07-09 02:34:03.516 +08:00 [INF] Params.cs(825)                	Params.LoadConfigFromFile()       	leaving : result True, 
+2025-07-09 02:34:03.521 +08:00 [INF] ParamsTests.cs(62)            	ParamsTests.Params01Test_when_default_then_()	leaving : 
+2025-07-09 02:38:26.251 +08:00 [INF] ??(0)                         	ParamsTests.Params01Test_when_default_then_()	starting: Starting test
+2025-07-09 02:38:26.262 +08:00 [INF] Test started
+2025-07-09 02:38:26.262 +08:00 [DBG] Debug information
+2025-07-09 02:38:26.262 +08:00 [WRN] This is a warning
+2025-07-09 02:38:26.277 +08:00 [INF] Params.cs(774)                	Params.LoadConfigFromFile()       	LoadFromConfig(): config_nm [AppSettings.Params.01], config_file: [AppSettings.Params.01.json]
+2025-07-09 02:38:26.286 +08:00 [INF] Params.cs(822)                	Params.LoadConfigFromFile()       	Param.LoadFromConfig: 
+--------------------------------------------------------------------------------
+ Type            : Params
+--------------------------------------------------------------------------------
+ CreateMode      : Create
+ Database        : Farming_dev
+ DisplayLog      : True
+ DisplayScript   : True
+ IndividualFiles              : False
+ Instance                     : 
+ IsExprtngData                : False
+ LogFile                      : D:\Logs\Farming.log
+ LogLevel                     : Info
+ Name                         : AppSettings.Params.01
+ RequiredAssemblies           : System.Collections.Generic.List`1[System.String]
+ RequiredSchemas              : System.Collections.Generic.List`1[System.String]
+ RequiredFunctions            : System.Collections.Generic.List`1[System.String]
+ RequiredProcedures           : System.Collections.Generic.List`1[System.String]
+ RequiredTables               : System.Collections.Generic.List`1[System.String]
+ RequiredViews                : System.Collections.Generic.List`1[System.String]
+ RequiredUserDefinedTypes     : System.Collections.Generic.List`1[System.String]
+ RequiredUserDefinedDataTypes : System.Collections.Generic.List`1[System.String]
+ RequiredUserDefinedTableTypes: System.Collections.Generic.List`1[System.String]
+ Want All:                  : Assembly
+ Want All:                  : Database
+ Want All:                  : Function
+ Want All:                  : Procedure
+ Want All:                  : Schema
+ Want All:                  : Table
+ Want All:                  : View
+ Want All:                  : UserDefinedType
+ Want All:                  : UserDefinedDataType
+ Want All:                  : UserDefinedTableType
+ Script Dir                   : D:\Dev\DbScripter_new\DbScripterLibTests\Scripts
+ Script File                  : D:\Dev\DbScripter_new\DbScripterLibTests\Scripts\Farming_dev schema.sql
+ ScriptUseDb                  : True
+ Server                       : DevI9
+ AddTimestamp                 : False
+ Timestamp                    : 250709-0238
+
+ RequiredSchemas : 2
+	dbo
+	test
+
+
+2025-07-09 02:38:26.287 +08:00 [INF] Params.cs(825)                	Params.LoadConfigFromFile()       	leaving : result True, 
+2025-07-09 02:38:26.295 +08:00 [INF] ??(0)                         	ParamsTests.Params01Test_when_default_then_()	leaving : 

@@ -1,29 +1,32 @@
+using Microsoft.Extensions.Logging;
+using Microsoft.VisualStudio.TestPlatform.Utilities;
+
+using Serilog;
+
+using Xunit;
+using Xunit.Abstractions;
+
 namespace DbScripterTests;
 
-public class ParamsTests : IDisposable
+public class ParamsTests : XunitTestBase
 {
-   private readonly ITestOutputHelper _output;
-   //protected ConsoleWriter ConsoleWriter_ { get; set; }
-
-   public ParamsTests(ITestOutputHelper output)
+   public ParamsTests(ITestOutputHelper _output)
+      : base(_output)
    {
-      _output = output;
-      //ConsoleWriter_ = new ConsoleWriter(output);
-      //Console.SetOut(ConsoleWriter_);
-   }
-
-   public void Dispose()
-   {
-      // Do "global" teardown here; Called after every test method.
+      if(!CommonLib.Logger.IsInitialized())
+         CommonLib.Logger.InitLogger(@"D:\Logs\DbScripterTests.log");
    }
 
    [Fact]
    public void Params01Test_when_default_then_()
    {
-      LogS();
-      Params.Config = new ConfigurationBuilder()
-      .AddJsonFile("AppSettings.Params.01.json")
-      .Build();
+      CommonLib.Logger.LogS("Starting test");
+      Log.Information("Test started");
+      Log.Debug("Debug information");
+      Log.Warning("This is a warning");
+
+      CommonLib.Logger.GetLogger()?.Information("my information message");
+
 
       Params p = new();
       Assert.True(p.LoadConfigFromFile("AppSettings.Params.01.json", out string msg), msg);
@@ -54,8 +57,9 @@ public class ParamsTests : IDisposable
       Assert.True (p.DisplayScript);
       Assert.True (p.DisplayLog);
       Assert.Equal("D:\\Logs\\Farming.log", p.LogFile);
-      Assert.Equal(LogLevel.Info, p.LogLevel);
+      Assert.Equal(CommonLib.LogLevel.Info, p.LogLevel);
       Assert.False(p.IsExportingData);
+      CommonLib.Logger.LogL();
    }
 
    /// <summary>
@@ -81,19 +85,16 @@ public class ParamsTests : IDisposable
       Assert.Equal("test", p.RequiredSchemas[1]);
    }
 
-   [Fact(Skip = "Skipping test")]
+   [Fact]
    public void LoadConfigFromFileTest()
    {
-      Params.Config = new ConfigurationBuilder()
-      .AddJsonFile("appsettings.json")
-      .Build();
-
+      CommonLib.Logger.LogS();
       Params p = new();
-      Assert.Empty(p.RequiredSchemas);
-      Assert.True(p.LoadConfigFromFile("AppSettings.01.json", out string msg), msg);
+      Assert.True(p.Init("AppSettings.Params.01.json", out string msg), msg);
       Assert.Equal(2, p.RequiredSchemas.Count);
       Assert.Equal("dbo", p.RequiredSchemas[0]);
       Assert.Equal("test", p.RequiredSchemas[1]);
+      CommonLib.Logger.LogL();
    }
 
     [Fact] 
@@ -144,7 +145,7 @@ public class ParamsTests : IDisposable
       return true;
    }
 
-   [Fact(Skip = "Skipping test")]
+   [Fact]
    public void NameTest()
    {
       Params.Config = new ConfigurationBuilder()
@@ -166,7 +167,7 @@ public class ParamsTests : IDisposable
       Assert.True(p.DisplayScript);
       Assert.True(p.DisplayLog);
       Assert.Equal("D:\\Logs\\Farming.log", p.LogFile);
-      Assert.Equal(LogLevel.Info, p.LogLevel);
+      Assert.Equal(CommonLib.LogLevel.Info, p.LogLevel);
       Assert.False(p.IsExportingData);
    }
 }
