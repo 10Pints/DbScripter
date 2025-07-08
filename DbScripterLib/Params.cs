@@ -1,11 +1,13 @@
 ﻿#pragma warning disable CS8604//	Possible null reference argument for parameter 'rs' in 'SqlTypeEnum[]? Params.ParseRequiredTypes(string rs)'.	DbScripterLib	D:\Dev\C#\Db\Ut\DbScriptExporter\DbScripterLib\Params.cs	263	Active
-using System.Text;
 using CommonLib;
-using static CommonLib.Utils;
-using static CommonLib.Logger;
+
 using Microsoft.Extensions.Configuration;
-//using Microsoft.SqlServer.Management.Smo;
-//using Microsoft.IdentityModel.Tokens;
+using Microsoft.IdentityModel.Tokens;
+
+using System.Text;
+
+using static CommonLib.Logger;
+using static CommonLib.Utils;
 
 namespace DbScripterLibNS
 {
@@ -16,15 +18,19 @@ namespace DbScripterLibNS
    {
       private static IConfigurationRoot? _config = null;
 
+      /// <summary>
+      /// Main configuration - set by Program.Main()
+      /// </summary>
       public static IConfigurationRoot? Config 
       { 
          get{ return _config; }
          set { _config = value;} 
       }
 
-      public string FilePath { get; private set; } = "";
+      //public property call Name with a getter and a setter ;
       public string Name { get; private set; } = "";
 
+      //public property
       public string LogFile { get; private set; } = "";
 
       public string Timestamp
@@ -55,9 +61,23 @@ namespace DbScripterLibNS
 
       public LogLevel LogLevel { get; private set; } = LogLevel.Undefined;
 
-      public List<string> RequiredSchemas { get; private set; } = new List<string>();
-
       public static string DefaultLogFile { get; private set; } = @"D:\Logs\DbScripter.log";
+
+
+      public CreateModeEnum CreateMode { get; set; } = CreateModeEnum.Undefined;
+      
+      private Dictionary<SqlTypeEnum, List<string>> _requiredItemMap = new Dictionary<SqlTypeEnum, List<string>>();
+      public Dictionary<SqlTypeEnum, List<string>> RequiredItemMap { get => _requiredItemMap;}
+
+      public List<string> RequiredAssemblies           => RequiredItemMap[key: SqlTypeEnum.Assembly];
+      public List<string> RequiredSchemas              => RequiredItemMap[key: SqlTypeEnum.Schema];
+      public List<string> RequiredFunctions            => RequiredItemMap[key: SqlTypeEnum.Function];
+      public List<string> RequiredProcedures           => RequiredItemMap[key: SqlTypeEnum.StoredProcedure];
+      public List<string> RequiredTables               => RequiredItemMap[key: SqlTypeEnum.Table];
+      public List<string> RequiredViews                => RequiredItemMap[key: SqlTypeEnum.View];
+      public List<string> RequiredUserDefinedTypes     => RequiredItemMap[key: SqlTypeEnum.UserDefinedType];
+      public List<string> RequiredUserDefinedDataTypes => RequiredItemMap[key: SqlTypeEnum.UserDefinedDataType];
+      public List<string> RequiredUserDefinedTableTypes=> RequiredItemMap[key: SqlTypeEnum.UserDefinedTableType];
 
       /// <summary>
       /// the target types are 1 or more required child types
@@ -65,42 +85,138 @@ namespace DbScripterLibNS
       /// 
       /// INVARIANT: cannot be empty after init
       /// </summary>
-      public List<SqlTypeEnum> RequiredTypes {get; private set; } = new List<SqlTypeEnum>();
+      private List<SqlTypeEnum> _requiredTypes = new();
+      //public ref List<SqlTypeEnum> RequiredTypes { get => ref _requiredTypes; }
 
-      public CreateModeEnum CreateMode { get; set; } = CreateModeEnum.Undefined;
-      
+      /*
+      private List<string> _requiredSchemas = new();
+      public ref List<string> RequiredSchemas { get => ref  _requiredSchemas; }// private set => _schemas = value; }
+      private List<string> _requiredAssemblies = new();
+      public ref List<string> RequiredAssemblies { get => ref _requiredAssemblies; }
+      private List<string> _requiredFunctions = new();
+      public ref List<string> RequiredFunctions { get => ref _requiredFunctions; }
+      private List<string> _requiredProcedures = new();
+      public ref List<string> RequiredProcedures { get => ref _requiredProcedures; }
+      private List<string> _requiredTables = new();
+      public ref List<string> RequiredTables { get => ref _requiredTables; }
+      private List<string> _requiredViews = new();
+      public ref List<string> RequiredViews { get => ref _requiredViews; }
+      private List<string> _userDefinedTypes = new(); 
+      public ref List<string> RequiredUserDefinedTypes    { get => ref _userDefinedTypes; }
+      private List<string> _userDefinedDataTypes = new(); 
+      public ref List<string> RequiredUserDefinedDataTypes { get => ref _userDefinedDataTypes; }
+      private List<string> _userDefinedTableTypes = new(); 
+      public ref List<string> RequiredUserDefinedTableTypes { get => ref _userDefinedTableTypes; }
+      */
       public bool ScriptUseDb { get; private set; } = false;
       
       public bool AddTimestamp { get; private set; } = false;
 
       // Export flags
+      public bool WantAll(SqlTypeEnum ty)
+      {
+         if(!WantAllMap.TryGetValue(ty, out bool v))
+            return false;
+
+         return v;
+      }
+      /*
+         return ty == SqlTypeEnum.Assembly                 ? WantAllAssemblies               :
+                ty == SqlTypeEnum.Schema                   ? WantAllSchemas                  :
+                ty == SqlTypeEnum.Table                    ? WantAllTables                   :
+                ty == SqlTypeEnum.View                     ? WantAllViews                    :
+                ty == SqlTypeEnum.Function                 ? WantAllFunctions                :
+                ty == SqlTypeEnum.StoredProcedure          ? WantAllStoredProcedures         :
+                ty == SqlTypeEnum.UserDefinedType          ? WantAllUserDefinedTypes         :
+                ty == SqlTypeEnum.UserDefinedDataType      ? WantAllUserDefinedDataTypes     : false
+         ;
+      }*/
+
+      // public bool WantAllAssemblies { get; set; }
+      // public bool WantAllSchemas { get; set; }
+      // public bool WantAllTables { get; set; }
+      // public bool WantAllFunctions { get; set; }
+      // public bool WantAllStoredProcedures { get; set; }
+      // public bool WantAllUserDefinedTypes { get; set; }
+      // public bool WantAllUserDefinedDataTypes { get; set; }
+      // public bool WantAllUserDefinedTableTypes { get; set; }
+      // public bool WantAllTableTypes { get; set; }
+      // public bool WantAllViews { get; set; }
+      public Dictionary<SqlTypeEnum, bool> WantAllMap { get; } = new Dictionary<SqlTypeEnum, bool> ();
+
+      public bool IsExportingType(SqlTypeEnum type) //=> RequiredTypes.Contains(type);
+      {
+         // Check if want all of this type
+         if (WantAllMap.TryGetValue(type, out var ret))
+            if(ret)
+               return ret;
+
+         // no, check if want any of this type
+         if (!RequiredItemMap.TryGetValue(type, out var required_items))
+            return false;
+
+         // any
+         return required_items.Count()>1;
+      }
+
+      /// <summary>
+      /// Clears the export flag for a given type
+      /// used when scripting config contains alter and table
+      /// </summary>
+      /// <param name="type"></param>
+      protected void ClearExportType(SqlTypeEnum type)
+      {
+         if (WantAllMap.ContainsKey(type))
+            WantAllMap.Remove(type);
+
+         if(RequiredItemMap.ContainsKey(type))
+            RequiredItemMap.Remove(type);
+      }
+
+      public bool IsExportingAssemblies => IsExportingType(SqlTypeEnum.Assembly);
+
+      public bool IsExportingTables => IsExportingType(SqlTypeEnum.Table);
+
+      public bool IsExportingDb => IsExportingType(SqlTypeEnum.Database);
+
+      public bool IsExportingFunctions => IsExportingType(SqlTypeEnum.Function);
+
+      public bool IsExportingStoredProcedures => IsExportingType(SqlTypeEnum.StoredProcedure);
+
+      public bool IsExportingSchema => IsExportingType(SqlTypeEnum.Schema); //CreateMode != CreateModeEnum.Alter;
+
+      public bool IsExportingTableTys => IsExportingType(SqlTypeEnum.UserDefinedTableType);
+
+      public bool IsExportingUserDefinedTypes => IsExportingType(SqlTypeEnum.UserDefinedDataType);
+
+      public bool IsExportingVws => IsExportingType(SqlTypeEnum.View);
+
       public bool IsExportingData { get; private set; } = false;
 
-      public bool IsExportingDb => RequiredTypes.Contains(SqlTypeEnum.Database);
-
-      public bool IsExportingFns=> RequiredTypes.Contains(SqlTypeEnum.Function);
-
-      public bool IsExportingProcs => RequiredTypes.Contains(SqlTypeEnum.Procedure);
-
       /// <summary>
-      /// Export the create/drop schema if CreateMode != altering
+      /// Loads the configuration from configFile 
+      /// default: Appsettings.json
+      /// uses the absolute path
+      /// PRE01: (checked) All config files should have the "Name" setting set
       /// </summary>
-      public bool IsExportingSchema => CreateMode != CreateModeEnum.Alter;
+      /// <param name="configFile"></param>
+      /// <param name="msg"></param>
+      /// <returns>true if loaded ok, false otherwise</returns>
+      public bool Init(string? configFile, out string msg)
+      {
+         //var config_path = Path.GetFullPath(configFile.IsNullOrEmpty() ? "Appsettings.json" : configFile);
+         var config_path = Path.GetFullPath(configFile);
+         LogS($"config_file: {configFile} config_path: {config_path}");
 
-      public bool IsExportingTbls => RequiredTypes.Contains(SqlTypeEnum.Table);
+         // pop all types bar database
+         var types = Enum.GetValues<SqlTypeEnum>().Where(e => e!=SqlTypeEnum.Database);
+         // Setup the type lists in the RequiredItemMap
+         foreach (var e in types)
+            RequiredItemMap[e] = new List<string>();
 
-      public bool IsExportingTriggers => RequiredTypes.Contains(SqlTypeEnum.Trigger);
-
-      public bool IsExportingTTys => RequiredTypes.Contains(SqlTypeEnum.TableType);
-
-      /// <summary>
-      /// Scrting handles USERDEFINEDTYPE, USERDEFINEDDATATYPE and USERDEFINEDTABLETYPE the same
-      /// </summary>
-      public bool IsExportingUsrDefTys => RequiredTypes.Contains(SqlTypeEnum.UserDefinedDataType);
-
-      public bool IsExportingVws => RequiredTypes.Contains(SqlTypeEnum.View);
-
-      public bool IsExportingAssemblies => RequiredTypes.Contains(SqlTypeEnum.Assembly);
+         bool ret = LoadConfigFromFile(config_path, out msg);
+         return LogR(ret);
+      }
 
       /// <summary>
       /// Validates the params configuration
@@ -124,27 +240,14 @@ namespace DbScripterLibNS
          {
             var spec_msg = " must be specified";
 
-            //if( AddTimestamp        == null) { msg = "add timestamp)"            + spec_msg; break;}
-            //if( DisplayScript       == null) { msg = "DisplayScript"             + spec_msg; break;}
-            //if( string.IsNullOrEmpty(IndividualFiles) { msg = "Individual Files"          + spec_msg; break; }
-            //if( IsExportingData     == null)     { msg = "IsExportingData"       + spec_msg; break; }
-            //if( IsExportingDb       == null){ msg = "-export_database"           + spec_msg; break;}
-            //if( IsExportingFns      == null){ msg = "IsExprtngFns   "            + spec_msg; break;}
-            //if( IsExportingProcs    == null){ msg = "IsExprtngProcs "            + spec_msg; break;}
-            //if( IsExportingSchema   == null){ msg = "IsExprtngSchema"            + spec_msg; break;}
-            //if( IsExportingTbls     == null){ msg = "IsExprtngTbls  "            + spec_msg; break;}
-            //if( IsExportingTTys     == null){ msg = "IsExprtngTTys  "            + spec_msg; break;}
-            //if( IsExportingVws      == null){ msg = "IsExprtngVws   "            + spec_msg; break;}
-            //if( ScriptUseDb         == null){ msg = "script usedb)"              + spec_msg; break;}
             if ( CreateMode          == CreateModeEnum.Undefined) { msg = "create mode"               + spec_msg; break;}
             if( string.IsNullOrEmpty(Database)){ msg = "database"                  + spec_msg; break;}
-            if( string.IsNullOrEmpty(FilePath)) { msg = "configurataion file path" + spec_msg; break; }
-            //if( string.IsNullOrEmpty(Instance)) { msg = "Instance"                  + spec_msg; break; }
+            //if( string.IsNullOrEmpty(FilePath)) { msg = "configurataion file path" + spec_msg; break; }
             if ( string.IsNullOrEmpty(LogFile)){ msg = "log file"                   + spec_msg; break;}
             if( LogLevel            == LogLevel.Undefined){ msg = "log level"                  + spec_msg; break;}
             if( String.IsNullOrEmpty(Name))    { msg = "configurataion name"+ spec_msg; break; }
-            if( RequiredSchemas.Count == 0){ msg = "required schemas"           + spec_msg; break; }
-            if( RequiredTypes.Count   == 0){ msg = "required types"             + spec_msg; break;}
+            //if( RequiredSchemas.Count == 0){ msg = "schemas"           + spec_msg; break; }
+            //if( RequiredTypes.Count   == 0){ msg = "required types"             + spec_msg; break;}
             if( string.IsNullOrEmpty(Server)){ msg = "server name)"               + spec_msg; break;}
             if(string.IsNullOrEmpty(ScriptFile)){ msg = "export Script Path)"        + spec_msg; break;}
 
@@ -203,12 +306,8 @@ namespace DbScripterLibNS
          if(CreateMode == CreateModeEnum.Alter)
          {
             // Remove RequiredTypes table and table type for alter
-            if(RequiredTypes?.Contains(SqlTypeEnum.Table) ?? false)
-               LogI($"Not Removing Table from RequiredTypes because of ALTER mode");
-            //   RequiredTypes.Remove(SqlTypeEnum.Table);
-
-            if(RequiredTypes?.Contains(SqlTypeEnum.TableType) ?? false)
-               RequiredTypes.Remove(SqlTypeEnum.TableType);
+            ClearExportType(SqlTypeEnum.Table);
+            ClearExportType(SqlTypeEnum.UserDefinedTableType);
          }
       }
 
@@ -322,6 +421,9 @@ namespace DbScripterLibNS
 
       public override bool Equals( object? obj )
       {
+         throw new NotSupportedException("Params == is no longer supported");
+      }
+      /*
          Params? b = obj as Params;
          Assertion(b != null);
          string msg = "";
@@ -379,7 +481,7 @@ namespace DbScripterLibNS
          //Assertion if here then a check failed
          return false;
       }
-
+      */
       public override string ToString()
       {
          string Line = new string('-', 80);
@@ -394,21 +496,33 @@ namespace DbScripterLibNS
          s.AppendLine($" Database        : {Database}");
          s.AppendLine($" DisplayLog      : {DisplayLog}");
          s.AppendLine($" DisplayScript   : {DisplayScript}");
-         s.AppendLine($" FilePath        : {FilePath}");
-         s.AppendLine($" IndividualFiles : {IndividualFiles}");
-         s.AppendLine($" Instance        : {Instance}");
-         s.AppendLine($" IsExprtngData   : {IsExportingData}");
-         s.AppendLine($" LogFile         : {LogFile}");
-         s.AppendLine($" LogLevel        : {LogLevel}");
-         s.AppendLine($" Name            : {Name}");
-         s.AppendLine($" RequiredSchemas : {RequiredSchemas}");
-         s.AppendLine($" RequiredTypes   : {RequiredTypes}");
-         s.AppendLine($" Script Dir      : {ScriptDir}");
-         s.AppendLine($" Script File     : {ScriptFile}");
-         s.AppendLine($" ScriptUseDb     : {ScriptUseDb}");
-         s.AppendLine($" Server          : {Server}");
-         s.AppendLine($" AddTimestamp    : {AddTimestamp}");
-         s.AppendLine($" Timestamp       : {Timestamp}");
+         //s.AppendLine($" FilePath        : {FilePath}");
+         s.AppendLine($" IndividualFiles              : {IndividualFiles}");
+         s.AppendLine($" Instance                     : {Instance}");
+         s.AppendLine($" IsExprtngData                : {IsExportingData}");
+         s.AppendLine($" LogFile                      : {LogFile}");
+         s.AppendLine($" LogLevel                     : {LogLevel}");
+         s.AppendLine($" Name                         : {Name}");
+         s.AppendLine($" RequiredAssemblies           : {RequiredAssemblies}");
+         s.AppendLine($" RequiredSchemas              : {RequiredSchemas}");
+         s.AppendLine($" RequiredFunctions            : {RequiredFunctions}");
+         s.AppendLine($" RequiredProcedures           : {RequiredProcedures}");
+         s.AppendLine($" RequiredTables               : {RequiredTables}");
+         s.AppendLine($" RequiredViews                : {RequiredViews}");
+         s.AppendLine($" RequiredUserDefinedTypes     : {RequiredUserDefinedTypes}");
+         s.AppendLine($" RequiredUserDefinedDataTypes : {RequiredUserDefinedDataTypes}");
+         s.AppendLine($" RequiredUserDefinedTableTypes: {RequiredUserDefinedTableTypes}");
+
+         // Want all flags
+         foreach (SqlTypeEnum e in Enum.GetValues(typeof(SqlTypeEnum)))
+            s.AppendLine($" Want All:                  : {e.GetAlias()}");
+
+         s.AppendLine($" Script Dir                   : {ScriptDir}");
+         s.AppendLine($" Script File                  : {ScriptFile}");
+         s.AppendLine($" ScriptUseDb                  : {ScriptUseDb}");
+         s.AppendLine($" Server                       : {Server}");
+         s.AppendLine($" AddTimestamp                 : {AddTimestamp}");
+         s.AppendLine($" Timestamp                    : {Timestamp}");
 
          s.AppendLine();
 
@@ -423,12 +537,12 @@ namespace DbScripterLibNS
          s.AppendLine();
 
          // RequiredTypes
-         txt = RequiredTypes?.Count.ToString() ?? "<null>";
-         s.AppendLine($" RequiredTypes : {txt}");
+        // txt = RequiredTypes?.Count.ToString() ?? "<null>";
+         //s.AppendLine($" RequiredTypes : {txt}");
 
-         if(RequiredTypes != null)
-            foreach(var item in RequiredTypes)
-               s.AppendLine($"\t{item}"); 
+         //if(RequiredTypes != null)
+         //   foreach(var item in RequiredTypes)
+         //      s.AppendLine($"\t{item}"); 
 
 //         s.AppendLine();
 //         s.AppendLine(Line);
@@ -460,11 +574,10 @@ namespace DbScripterLibNS
       /// <param name="logFile"></param>
       /// <param name="isXprtDta"></param>
       /// <param name="displayScript"></param>
-      public Params
-      (
-      )
+      public Params()
       {
       }
+
       public void ClearState()
       {
          AddTimestamp      = false;
@@ -477,8 +590,20 @@ namespace DbScripterLibNS
          IndividualFiles   = false;
          Instance          = "";
          LogFile           = "";
+         /*
          RequiredSchemas   = new List<string>();
-         RequiredTypes     = new List<SqlTypeEnum>();
+
+         RequiredTypes.Clear();
+         RequiredAssemblies.Clear();
+         RequiredFunctions.Clear();
+         RequiredProcedures.Clear();
+         RequiredTables.Clear();
+         RequiredTypes.Clear();
+         RequiredUserDefinedTableTypes.Clear();
+         RequiredUserDefinedDataTypes.Clear();
+         RequiredUserDefinedTypes.Clear();
+         RequiredViews.Clear();
+         */
          ScriptFile        = "";
          Server            = "";
 
@@ -532,7 +657,6 @@ namespace DbScripterLibNS
          LogL($"Found {list.Count} items");
          return list;
       }
-
 
       /// <summary>
       /// Handles strings like:
@@ -602,204 +726,6 @@ namespace DbScripterLibNS
          return requiredSchemaList;
       }
 
-      /*
-      public static Params PopParams
-         (
-              string?         name              = null
-             ,Params?         prms              = null // Use this state to start with and update with the subsequent parameters
-             ,bool?           addTimestamp      = null
-             ,CreateModeEnum? createMode        = null // must be null to avoid overwriting prms if set
-             ,string?         databaseName      = null
-             ,bool?           displayScript     = null
-             ,bool?           displayLog        = null
-             ,string?         filePath          = null
-             ,bool?           isExportingData   = null
-             ,string?         instanceName      = null
-             ,string?         logFile           = null
-             ,LogLevel?       logLevel          = null
-             ,bool?           individualFiles   = null
-             ,string?         requiredSchemas   = null
-             ,string?         requiredTypes     = null
-             ,string?         scriptDir         = null
-             ,string?         scriptFile        = null
-             ,string?         serverName        = null
-             ,string?         timestamp         = null
-             ,bool?           useDb             = null
-         )
-      {
-         Params p = new Params();
-
-         p.PopFrom(
-              name             : name
-            , prms             : prms
-            , addTimestamp     : addTimestamp
-            , createMode       : createMode
-            , databaseName     : databaseName
-            , displayLog       : displayLog
-            , displayScript    : displayScript
-            , filePath         : filePath
-            , individualFiles  : individualFiles
-            , instanceName     : instanceName
-            , isExportingData  : isExportingData
-            , logFile          : logFile
-            , logLevel         : logLevel
-            , requiredSchemas  : requiredSchemas
-            , requiredTypes    : requiredTypes
-            , useDb            : useDb
-            , serverName       : serverName
-         );
-
-         p.FilePath = name;
-         return p;
-      }
-      */
-
-      /*
-      /// <summary>
-      /// 2 stages:
-      ///   1: does copy of prms overwite mode
-      ///   2:copies state from the other parameters if and only if the current property is null
-      ///   
-      /// To copy state from the prms if and only if the current property is null use PopFrom2
-      /// </summary>
-      /// <param name="prms"></param>
-      /// <param name="serverName"></param>
-      /// <param name="instanceName"></param>
-      /// <param name="databaseName"></param>
-      /// <param name="scriptFile"></param>
-      /// <param name="newSchNm"></param>
-      /// <param name="requiredSchemas"></param>
-      /// <param name="requiredTypes"></param>
-      /// <param name="createMode"></param>
-      /// <param name="useDb"></param>
-      /// <param name="addTs"></param>
-      /// <param name="logFile"></param>
-      /// <param name="isXprtDtangData"></param>
-      /// <param name="displayScript"></param>
-      public void PopFrom
-          (
-              string?         name              = null
-             ,Params?         prms              = null // Use this state to start with and update with the subsequent parameters
-             ,bool?           addTimestamp      = null
-             ,CreateModeEnum? createMode        = null // must be null to avoid overwriting prms if set
-             ,string?         databaseName      = null
-             ,bool?           displayLog        = null
-             ,bool?           displayScript     = null
-             ,string?         filePath          = null
-             ,bool?           individualFiles   = null
-             ,string?         instanceName      = null
-             ,bool?           isExportingData   = null
-             ,string?         logFile           = null
-             ,LogLevel?       logLevel          = null
-             ,string?         requiredSchemas   = null
-             ,string?         requiredTypes     = null
-             ,string?         scriptDir         = null
-             ,string?         scriptFile        = null
-             ,string?         serverName        = null
-             ,string?         timestamp         = null
-             ,bool?           useDb             = null
-         )
-      {
-         // overwite 
-         // overwrite specified parameters if not null
-         // If prms is supplied use it as the default configuration
-         if(prms != null)
-            CopyFrom(prms);
-
-         // Update state if overwrite or param is defined
-         if(requiredSchemas != null)
-            RequiredSchemas = PrsRegSchema(requiredSchemas);
-
-         if(requiredTypes != null)
-            RequiredTypes= PrsReqTypes  (requiredTypes);
-
-         this.UpdatePropertyIfNeccessary("AddTimestamp",    addTimestamp);
-         this.UpdatePropertyIfNeccessary("CreateMode",      createMode);
-         this.UpdatePropertyIfNeccessary("Database",        databaseName); 
-         this.UpdatePropertyIfNeccessary("DisplayLog",      displayLog);
-         this.UpdatePropertyIfNeccessary("DisplayScript",   displayScript);
-         this.UpdatePropertyIfNeccessary("FilePath",        filePath);
-         this.UpdatePropertyIfNeccessary("IndividualFiles", individualFiles);
-         this.UpdatePropertyIfNeccessary("Instance",        instanceName);
-         this.UpdatePropertyIfNeccessary("IsExprtngData",   isExportingData);
-         this.UpdatePropertyIfNeccessary("LogFile",         logFile);
-         this.UpdatePropertyIfNeccessary("LogLevel",        logLevel);
-         this.UpdatePropertyIfNeccessary("Name",            name);
-         this.UpdatePropertyIfNeccessary("RequiredSchemas", requiredSchemas); // *
-         this.UpdatePropertyIfNeccessary("RequiredTypes",   requiredTypes);   // *
-         this.UpdatePropertyIfNeccessary("ScriptDir",       scriptDir);
-         this.UpdatePropertyIfNeccessary("ScriptFile",      scriptFile);
-         this.UpdatePropertyIfNeccessary("ScriptUseDb",     useDb);
-         this.UpdatePropertyIfNeccessary("Server",          serverName);
-         this.UpdatePropertyIfNeccessary("Timestamp",       timestamp);
-      }
-      */
-      /*
-      /// <summary>
-      /// This copies state from prams if and only if the current property is null
-      /// </summary>
-      /// <param name="prms"></param>
-      public void PopFrom2( Params p)
-      {
-         // Update state if param is defined
-         // Update state if overwrite or param is defined
-         if(p.RequiredSchemas != null)
-            RequiredSchemas   = new List<string>(p.RequiredSchemas);       // copy not ref
-
-         if(p.RequiredTypes != null)
-            RequiredTypes  = new List<SqlTypeEnum>(p.RequiredTypes); // copy not ref
-
-         this.UpdatePropertyIfNeccessary("AddTimestamp",    p.AddTimestamp    );
-         this.UpdatePropertyIfNeccessary("CreateMode",      p.CreateMode      );
-         this.UpdatePropertyIfNeccessary("Database",        p.Database        );
-         this.UpdatePropertyIfNeccessary("DisplayLog",      p.DisplayLog      );
-         this.UpdatePropertyIfNeccessary("DisplayScript",   p.DisplayScript   );
-         this.UpdatePropertyIfNeccessary("FilePath",        p.FilePath        );
-         this.UpdatePropertyIfNeccessary("IndividualFiles", p.IndividualFiles );
-         this.UpdatePropertyIfNeccessary("Instance",        p.Instance        );
-         this.UpdatePropertyIfNeccessary("IsExportingData", p.IsExportingData );
-         this.UpdatePropertyIfNeccessary("LogFile",         p.LogFile         );
-         this.UpdatePropertyIfNeccessary("LogLevel",        p.LogLevel        );
-         this.UpdatePropertyIfNeccessary("Name",            p.Name            );
-         this.UpdatePropertyIfNeccessary("RequiredSchemas", p.RequiredSchemas );
-         this.UpdatePropertyIfNeccessary("RequiredTypes",   p.RequiredTypes   );
-         this.UpdatePropertyIfNeccessary("ScriptDir",       p.ScriptDir       );
-         this.UpdatePropertyIfNeccessary("ScriptFile",      p.ScriptFile      );
-         this.UpdatePropertyIfNeccessary("ScriptUseDb",     p.ScriptUseDb     ); 
-         this.UpdatePropertyIfNeccessary("Server",          p.Server          );
-         this.UpdatePropertyIfNeccessary("Timestamp",       p.Timestamp       );
-      }
-      */
-      /*
-      /// <summary>
-      ///   Full copy allways of all state from p other than status
-      /// </summary>
-      /// <param name="p"></param>
-      public void CopyFrom( Params p )
-      {
-         AddTimestamp      = p.AddTimestamp;
-         CreateMode        = p.CreateMode;
-         Database          = p.Database;
-         DisplayLog        = p.DisplayLog;
-         DisplayScript     = p.DisplayScript;
-         FilePath          = p.FilePath;
-         IndividualFiles   = p.IndividualFiles;
-         Instance          = p.Instance;
-         IsExportingData   = p.IsExportingData;
-         LogFile           = p.LogFile;
-         LogLevel          = p.LogLevel;
-         Name              = p.Name;
-         RequiredSchemas   = (p.RequiredSchemas  != null) ? new List<string>     (p.RequiredSchemas): null; // copy not ref
-         RequiredTypes     = (p.RequiredTypes    != null) ? new List<SqlTypeEnum>(p.RequiredTypes)  : null; // copy not ref
-         ScriptDir         = p._scriptDir;
-         ScriptFile        = p.ScriptFile;
-         ScriptUseDb       = p.ScriptUseDb;
-         Server            = p.Server;
-         Timestamp         = p.Timestamp;
-      }
-      */
-
-      /// <summary>
       /// Adds the timestamp to the file path like 
       /// dir\fileName_ts.ext"
       /// </summary>
@@ -826,88 +752,82 @@ namespace DbScripterLibNS
          return ret;
       }
 
-      /// <summary>
-      /// Usage: E.G.DbScripter [-c config file]
-      /// Where:
-      /// -c:        standard XML config file                                       default: the local App.config
-      ///
-      /// PRECONDITIONS:
-      ///  PRE 1: timestamp is set (by cstr)
-      ///
-      /// RESPONSIBILITIES and POSTCONDITIONS
-      /// POST 1: valid state for export
-      /// POST 2: all fields of P are specified (not null)
-      ///      ServerName
-      ///      InstanceName
-      ///      DatabaseName
-      ///      ExportScriptPath
-      ///      RequiredSchemas
-      ///      RequiredTypes
-      ///      CreateMode
-      ///      ScriptUseDb
-      ///      AddTimestamp
-      ///
-      /// POST 3: if timestamp is specified the logfile and script file contain the timestamp
-      ///  
-      /// POST 4: no invalid args
-      ///  
-      /// Changes
-      /// 240401: added check for empty args, parameter p is now ref and not nulled in this process
-      /// 240922: E84500: as of 240922: Command line args are other than the configuration file are no longer supported
-      ///  
-      /// Tests
-      ///  null args: DbScripterAppTests.App_Minimal_paramsTest
-      /// </summary>
-      /// <param name="args"></param>
-      public static bool ParseArgs( string[] args, ref Params p, out string msg) // -M create|alter
-      {
-         LogST();
-         //bool ret = false;
-         //string? configFile = null;
-         msg = "";
-         // 240922: E84500: as of 240922: Command line args are other than the configuration file are no longer supported
-         throw new NotSupportedException("E84500: as of 24109022: Command line args are other than the configuration file are no longer supported");
-      }
-      
 
       /// <summary>
       /// Gets the default config from app settings json
-      /// 
+      /// updates the files with the timestamp, if the add timestamp is flag set
       /// Changes:
       /// 240922: now updates the files with the timestamp, if the add timestamp is flag set
       /// </summary>
       /// <param name="p"></param>
-      public static void LoadFromConfig(Params p)
+      public bool LoadConfigFromFile(string config_file, out string msg)
       {
-         var config_nm   = GetAppSettingAsString("Name");
-         var config_file = GetAppSettingAsString("FilePath");
+         bool ret = false;
+         msg = "";
+
+         Config = new ConfigurationBuilder()
+                  .AddJsonFile(config_file)
+                  .Build()
+         ;
+
+         var config_nm = GetAppSettingAsString("Name");
          LogI($"LoadFromConfig(): config_nm [{config_nm}], config_file: [{config_file}]");
-         string scriptDir  = GetAppSettingAsString("Script Dir") ?? "" ;
+         string scriptDir = GetAppSettingAsString("Script Dir") ?? "";
 
-         p.Name            = GetAppSettingAsString("Name", "") ?? "";
-         p.FilePath        = GetAppSettingAsString("FilePath", "") ?? "";
-         p.Server          = GetAppSettingAsString("Server");
-         p.Instance        = GetAppSettingAsString("Instance", "SqlExpress") ?? "";
-         p.Database        = GetAppSettingAsString("Database") ?? "";
-         p.AddTimestamp    = GetAppSetting<bool>  ("AddTimestamp", false);
-         p.Timestamp       = GetTimestamp(fine: false);
-         p.ScriptDir       = p.AddTimestamp ? $"{scriptDir}\\{p.Timestamp}" : scriptDir;
-         p.ScriptFile      = @$"{p.ScriptDir}\{GetAppSettingAsString("Script File")}";
-         p.CreateMode      = GetAppSettingAsString("CreateMode").FindEnumByAliasExact<CreateModeEnum>();
-         p.ScriptUseDb     = GetAppSetting<bool>("ScriptUseDb", _default: false);
-         p.DisplayScript   = GetAppSetting<bool>("DisplayScript", true);
-         p.DisplayLog      = GetAppSetting<bool> ("DisplayLog", false);
-         p.LogFile         = GetAppSettingAsString("LogFile", "DbScripter.logFile") ?? "";
-         p.LogLevel        = GetAppSettingAsString("LogLevel", "Info").FindEnumByAliasExact<LogLevel>();
-         p.RequiredSchemas = GetAppSettingAsString("RequiredSchemas")?.Split(',')?.ToList() ?? new List<string>();
-         p.RequiredTypes   = GetRequiredTypesFromConfig() ?? new List<SqlTypeEnum>();
-         p.IsExportingData = GetAppSetting<bool>("IsExportingData", false);
-         p.IndividualFiles = GetAppSetting<bool>("IndividualFiles", false);
+         Name = GetAppSettingAsString("Name", "") ?? "";
+         //FilePath          = GetAppSettingAsString("FilePath", "") ?? "";
+         Server = GetAppSettingAsString("Server");
+         Instance = GetAppSettingAsString("Instance", "SqlExpress") ?? "";
+         Database = GetAppSettingAsString("Database") ?? "";
+         AddTimestamp = GetAppSetting<bool>("AddTimestamp", false);
+         Timestamp = GetTimestamp(fine: false);
+         ScriptDir = AddTimestamp ? $"{scriptDir}\\{Timestamp}" : scriptDir;
+         ScriptFile = @$"{ScriptDir}\{GetAppSettingAsString("Script File")}";
+         CreateMode = GetAppSettingAsString("CreateMode").FindEnumByAliasExact<CreateModeEnum>();
+         ScriptUseDb = GetAppSetting<bool>("ScriptUseDb", _default: false);
+         DisplayScript = GetAppSetting<bool>("DisplayScript", true);
+         DisplayLog = GetAppSetting<bool>("DisplayLog", false);
+         LogFile = GetAppSettingAsString("LogFile", "DbScripter.logFile") ?? "";
+         LogLevel = GetAppSettingAsString("LogLevel", "Info").FindEnumByAliasExact<LogLevel>();
 
-         p.UpdateFileNamesWithTimestamp();
+          _requiredItemMap[SqlTypeEnum.Schema]              = GetAppSettingsAsList("RequiredSchemas");
+          _requiredItemMap[SqlTypeEnum.Assembly]            = GetAppSettingsAsList("RequiredAssemblies");
+          _requiredItemMap[SqlTypeEnum.Function]            = GetAppSettingsAsList("RequiredFunctions");
+          _requiredItemMap[SqlTypeEnum.StoredProcedure]     = GetAppSettingsAsList("RequiredProcedures");
+          _requiredItemMap[SqlTypeEnum.Table ]              = GetAppSettingsAsList("RequiredTables");
+          _requiredItemMap[SqlTypeEnum.View ]               = GetAppSettingsAsList("RequiredViews");
+          _requiredItemMap[SqlTypeEnum.UserDefinedType ]    = GetAppSettingsAsList("RequiredUserDefinedTypes");
+          _requiredItemMap[SqlTypeEnum.UserDefinedDataType] = GetAppSettingsAsList("RequiredUserDefinedDataTypes");
+          _requiredItemMap[SqlTypeEnum.UserDefinedTableType]= GetAppSettingsAsList("RequiredUserDefinedTableTypes");
 
-         LogI($"Param.LoadFromConfig: {p.ToString()}");
-         Assertion(p.Validate(out string msg), "Params.LoadFromConfig failed");
+         //RequiredTypes   = GetRequiredTypesFromConfig() ?? new List<SqlTypeEnum>();
+         IsExportingData = GetAppSetting<bool>("IsExportingData", false);
+         IndividualFiles = GetAppSetting<bool>("IndividualFiles", false);
+
+         // Set the want all flags if any wildcards are set
+         WantAllMap[SqlTypeEnum.Assembly]             = RequiredAssemblies.Count == 1 ? RequiredAssemblies[0] == "*" : false;
+         WantAllMap[SqlTypeEnum.Schema]               = RequiredSchemas.Count    == 1 ? RequiredSchemas   [0] == "*" : false;
+         WantAllMap[SqlTypeEnum.Table]                = RequiredTables.Count     == 1 ? RequiredTables    [0] == "*" : false;
+         WantAllMap[SqlTypeEnum.Function]             = RequiredFunctions.Count  == 1 ? RequiredFunctions [0] == "*" : false;
+         WantAllMap[SqlTypeEnum.StoredProcedure]      = RequiredProcedures.Count == 1 ? RequiredProcedures[0] == "*" : false;
+         WantAllMap[SqlTypeEnum.UserDefinedTableType] = RequiredAssemblies.Count == 1 ? RequiredUserDefinedTableTypes[0] == "*" : false;
+         WantAllMap[SqlTypeEnum.View]                 = RequiredAssemblies.Count == 1 ? RequiredAssemblies[0] == "*" : false;
+
+         // Clear any wildcards
+         foreach(KeyValuePair<SqlTypeEnum, List<string>> pr in RequiredItemMap)
+            if(WantAll(pr.Key))
+               pr.Value.Clear();
+
+         UpdateFileNamesWithTimestamp();
+         LogI($"Param.LoadFromConfig: {ToString()}");
+         //Assertion(Validate(out msg), "Params.LoadFromConfig failed");
+         ret = Validate(out msg);
+         return LogR(ret, msg);
+      }
+
+      private List<string> GetAppSettingsAsList(string listName)
+      {
+         return GetAppSettingAsString(listName)?.Split(',')?.ToList() ?? new List<string>();
       }
 
       private static List<SqlTypeEnum>? GetRequiredTypesFromConfig()
@@ -953,21 +873,9 @@ namespace DbScripterLibNS
             if (string.IsNullOrWhiteSpace(LogFile))   { msg = "logFile file"+ spec_msg; break; }
 
             if (CreateMode       == CreateModeEnum.Undefined) { msg = "create mode"           + spec_msg; break; }
-//            if (DisplayScript    == false) { msg = "display script"    + spec_msg; break; }
             if (RequiredSchemas.Count==0) { msg = "required schemas"      + spec_msg; break; }
-            if (RequiredTypes.Count == 0) { msg = "target child types"    + spec_msg; break; }
- //           if (AddTimestamp     == null) { msg = "add timestamp to SFN"  + spec_msg; break; }
-//            if (ScriptUseDb      == null) { msg = "script usedb"          + spec_msg; break; }
+            //if (RequiredTypes.Count == 0) { msg = "target child types"    + spec_msg; break; }
             if (LogLevel         == LogLevel.Undefined) { msg = "LogLevel Error, Warning, Notice, Info, Debug, Trace" + spec_msg; break; }
-//            if (IsExportingData  == null) { msg = "-export_data (Export Data)"   + spec_msg; break; }
-//            if (IsExportingDb    == null) { msg = "-export_database (Export Database)" + spec_msg; break; }
-//            if (IsExportingFns   == null) { msg = " (IsExprtngFns   )          " + spec_msg; break; }
-//            if (IsExportingProcs == null) { msg = " (IsExprtngProcs )          " + spec_msg; break; }
-//            if (IsExportingSchema== null) { msg = " (IsExprtngSchema)          " + spec_msg; break; }
-//            if (IsExportingTbls  == null) { msg = " (IsExprtngTbls  )          " + spec_msg; break; }
-//            if (IsExportingTTys  == null) { msg = " (IsExprtngTTys  )          " + spec_msg; break; }
-//            if (IsExportingVws   == null) { msg = " (IsExprtngVws   )          " + spec_msg; break; }
-//            if (AddTimestamp     == null) { msg = " (AddTimestamp   )          " + spec_msg; break; }
 
             // ASSERTION: all ok so return true
             ret = true;
@@ -979,224 +887,6 @@ namespace DbScripterLibNS
 
          return LogRI(ret, msg);
       }
-
-
-
-      /*
-      /// <summary>
-      /// This returns the value if a switch with no args is set
-      /// 
-      /// Preconditions:
-      ///  PRE 1: arg is not supposed to have a value 
-      /// 
-      /// Method:
-      ///   get the default if not set
-      ///   then get the type
-      ///   map type to standard 'set' default value
-      ///   if mapping not found throw not implmented exception
-      /// </summary>
-      /// <returns>the  value if set for a switch with no args</returns>
-      protected static object GetDefaultValueIfSwitchSet(string key, Params p)
-      {
-         // Precondition:
-         Precondition(!ArgHasValue(key), $"Error: GetDefaultValueIfSwitchSet({key}): trying to get a default value if set of a switch that takes a parameter");
-
-         // get the default if not set
-         object? val = p.GetDefaultForSwitch(key);
-
-         if(val == null)
-            throw new ArgumentException(key, $"Params.GetDefaultValueIfSwitchSet() - bad key value [{key}]");
-
-         // get the type from the 'unset' default value
-         var ty = val.GetType();
-
-         // map type to standard 'set' default value
-         switch (ty.Name)
-         {
-            case "Boolean":
-               val = true;
-               break;
-
-            default:
-               // if mapping not found throw not implmented exception
-               throw new NotImplementedException($"GetArg() get value if set unhandled type: {ty.FullName} handler is not implemented");
-         }
-
-         return val;
-      }
-      */
-
-      /*
-      /// <summary>
-      /// Templated version of the above non templated GetArg()
-      /// </summary>
-      /// <typeparam name="T"></typeparam>
-      /// <param name="args"></param>
-      /// <param name="argsU"></param>
-      /// <param name="key"></param>
-      /// <param name="p"></param>
-      /// <param name="get_value"></param>
-      /// <returns></returns>
-      protected static T? GetArgT<T>(string[] args, string[] argsU, string key, Params p)// where T: struct
-      {
-         // if arg does not have a value and exists
-         var s = GetArg(args, argsU, key, p);
-         T?  t = default(T); 
-
-         if(s != null)
-            t = (T)Convert.ChangeType(s, typeof(T));
-
-         return t;
-      }
-      */
-      /*
-      /// <summary>
-      /// gets the Log level from params, or the default
-      /// </summary>
-      /// <param name=""></param>
-      /// <param name=""></param>
-      /// <param name=""></param>
-      /// <param name=""></param>
-      /// <returns></returns>
-      protected static LogLevel GetLogLevel(string[] args, string[] argsU, Params p)
-      {
-         var s = GetArgT<string>(args, argsU, "-log_level", p);
-         var ret = CommonLib.LogLevel.Info;
-
-         if(!Enum.TryParse<CommonLib.LogLevel>(s, out ret))
-            ret = GetDefaultForPropertyT<LogLevel>("LogLevel", p);//Common.LogLevel.Info;
-
-         return ret;
-      }
-      */
-      /*
-      /// <summary>
-      /// Utils.Precondition args not null
-      /// </summary>
-      /// <param name="args"></param>
-      /// <returns></returns>
-      protected static string[] GetArgAsArray(string[] args, string[] argsU, string key, Params p)
-      {
-         // get the {}
-         string str = GetArgT<string>( args, argsU, key, p) ?? "";
-         str = str.Replace("{", "").Replace("}", "");
-         return str.Split();
-      }
-      */
-
-      /*
-      /// <summary>
-      /// Logs the arguments
-      /// PRECONDITIONS
-      ///   Expects ags to have 0 or 1 value
-      ///   
-      /// POSTCONDITIONS:
-      ///   if args is populated then this rtn returns a string describing them: 1 line per switch and its [value] if any
-      ///   else "No args ????"
-      /// </summary>
-      /// <param name="args"></param>
-      protected static void LogArgs(string []? args)
-      {
-         LogC($"\nArgs:\n{ArgsToString(args)}\n");
-      }
-      */
-
-      /*
-      /// <summary>
-      /// Logs the arguments
-      /// PRECONDITIONS
-      ///   Expects ags to have 0 or 1 value
-      ///   
-      /// POSTCONDITIONS:
-      ///   if args is populated then this rtn returns a string describing them: 1 line per switch and its [value] if any
-      ///   else "No args ????"
-      /// </summary>
-      /// <param name="args"></param>
-      protected static string ArgsToString(string []? args)
-      {
-         StringBuilder sb = new();
-
-         // PRE 1
-         if((args == null) || args.Length==0)
-            return "";
-
-         int i = 0;
-         int len = args.Length;
-         string arg;
-         bool isValue = false;
-         string[] hasParam = new []{ "-S", "-I","-D","-disp_log","-disp_script","-RS","-TCT","-E","-CM", "-TS", "-USE"};
-
-         do
-         {
-            arg = args[i];
-            var f = Logger.LogFile;
-
-            // if switch has a value then dont add nl at the end of the msg
-            if((isValue == false) && hasParam.Any(s => s.Equals(arg, StringComparison.OrdinalIgnoreCase)))
-            {
-               sb.Append($"{arg, -12} : [");
-               isValue = true;
-            }
-            else
-            {
-               sb.AppendLine($"{arg}]");
-               isValue = false;
-            }
-         }while(++i < len);
-
-         return sb.ToString();
-      }
-      */
-
-      /*
-      /// <summary>
-      /// Validate args
-      /// </summary>
-      /// <param name="args"></param>
-      /// <returns>true if all args are valid args, false otherwise</returns>
-      public static bool ValidateArgs( string[] args, out string msg)
-      {
-         LogST();
-         bool is_valid = true;
-         var len = args.Length;
-         int i = 0; // 240631: first arg is now the dbscripter app name?? no
-         msg = "";
-
-         if(args.Length == 0)
-         {
-            is_valid = true;
-            return LogRT(is_valid, msg); ;
-         }
-
-         do
-         {
-            var arg = args[i];
-            string previous_arg = i>0 ? args[i-1] : "no previous arg";
-            var argL= arg.ToLower();
-
-            if (IsValidArg(argL))
-            {
-               // Skip forward over value if it has one
-               if(ArgHasValue(argL))
-                  i++;
-            }
-            else
-            {
-               // Invalid arg
-               msg = $"unrecognised argument [i]: [{arg}] previous arg:[{previous_arg}]";
-               is_valid = false;
-               break;
-            }
-         } while((++i < len) && (is_valid == true));
-
-         if(is_valid)
-            LogD($"valid: {is_valid} msg: {msg}");
-         else
-            LogE($"validation failed, msg: {msg}");
-
-         return LogRT(is_valid, msg);
-      }
-      */
 
       /// <summary>
       /// Determines if scripter should display the script

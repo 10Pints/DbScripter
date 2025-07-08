@@ -1,54 +1,19 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
   <PropertyGroup>
-    <LangVersion>12.0</LangVersion>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net9.0-windows10.0.22621.0</TargetFramework>
+    <TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
     <ImplicitUsings>enable</ImplicitUsings>
     <Nullable>enable</Nullable>
   </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|AnyCPU'">
-    <WarningLevel>9999</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|AnyCPU'">
-    <WarningLevel>9999</WarningLevel>
-  </PropertyGroup>
-  <PropertyGroup>
-    <SelfContained>true</SelfContained>
-    <RuntimeIdentifier>win-x64</RuntimeIdentifier>
-  </PropertyGroup>  <ItemGroup>
-    <Compile Remove="nlog.Designer.cs" />
-  </ItemGroup>
+
   <ItemGroup>
-    <None Remove="App.config" />
-    <None Remove="AppSettings.json" />
+    <PackageReference Include="Microsoft.SqlServer.SqlManagementObjects" Version="172.76.0" />
   </ItemGroup>
-  <ItemGroup>
-    <Content Include="AppSettings.json">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </Content>
-  </ItemGroup>
-  <ItemGroup>
-    <PackageReference Include="Serilog.Expressions" Version="5.0.0" />
-    <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
-    <PackageReference Include="Serilog.Sinks.File" Version="6.0.0" />
-  </ItemGroup>
+
   <ItemGroup>
     <ProjectReference Include="..\..\Common\CommonLib\CommonLib.csproj" />
-    <ProjectReference Include="..\DBScripterLib\DBScripterLib.csproj" />
+    <ProjectReference Include="..\DbScripterLib\DbScripterLib.csproj" />
   </ItemGroup>
-  <ItemGroup>
-    <Compile Update="appsettings.Designer.cs">
-      <DesignTimeSharedInput>True</DesignTimeSharedInput>
-      <AutoGen>True</AutoGen>
-      <DependentUpon>AppSettings.json</DependentUpon>
-    </Compile>
-  </ItemGroup>
-  <ItemGroup>
-    <None Update="nlog.config">
-      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
-    </None>
-  </ItemGroup>
-  <Target Name="PostBuild" AfterTargets="PostBuildEvent">
-    <Exec Command="if $(ConfigurationName) == Release for %25%25f in (exe,dll,pdb,config) do (&#xD;&#xA;ECHO XCopy $(TargetDir)\*.%25%25f  C:\bin\DbScripter /F /Y&#xD;&#xA;XCopy $(TargetDir)\*.%25%25f  C:\bin\DbScripter /F /Y&#xD;&#xA;XCopy $(TargetDir)\*.json C:\bin\DbScripter /F /Y&#xD;&#xA;)" />
-  </Target>
+
 </Project>

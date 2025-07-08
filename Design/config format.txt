@@ -1,0 +1,24 @@
+--------------------------------------------------------------------------------------------------------------------
+Config item			example										  default				mandatory
+--------------------------------------------------------------------------------------------------------------------
+Config Name														  none					yes
+Config File path - absolute path								  none					yes
+Server			 - "DEVI9"                                        none					yes
+Instance		 - ""                                             none					yes
+Database		 - "Farming_dev"                                  none					yes
+Script Dir		 - "D:\\Dev\\DbScripter\\Scripts\\\\Staging"      none					yes
+Script File		 - "Farming.sql"                                  <db name_[timestamp]> no
+Create Mode		 - one of {Create, Alter, Drop}                   Create
+Required Schemas - 1 or more schemas as a comma separated list    {dbo, test}
+Required Types   - one or more types                              {Schemas,Tables,Procedures,Functions,Views}
+					{Schemas,Tables,Procedures,Functions,Views}   
+					as a comma separated list
+					
+Add Timestamp	 - 'true' or 'false'                              true
+Script use db	 - 'true' or 'false'                              false
+Display script	 - 'true' or 'false'                              false
+Display log		 - 'true' or 'false'                              false
+LogFile path	 - "D:\\Logs\\Farming.log"                        none					yes
+Log level		 - one of {DEBUG, INFO, WARNING, ERROR}           INFO
+Export data		 - 'true' or 'false'                              false
+--------------------------------------------------------------------------------------------------------------------

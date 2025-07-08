@@ -1,0 +1,10 @@
+{
+   "profiles": {
+      "Build & Test": {
+         "commandName": "Executable",
+         "executablePath": "dotnet",
+         "commandLineArgs": "test",
+         "workingDirectory": "$(ProjectDir)"
+      }
+   }
+}

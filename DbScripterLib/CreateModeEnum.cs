@@ -1,6 +1,5 @@
 ﻿using CommonLib;
 
-
 namespace DbScripterLibNS
 {
    /// <summary>

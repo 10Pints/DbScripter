@@ -8,40 +8,36 @@ namespace DbScripterLibNS
    /// </summary>
    public enum SqlTypeEnum
    {
-      [EnumAlias("Error"     , "E"   )]
-      Error = 0,
-
-      [EnumAlias("Assembly",   "A", "Db")]
+      [EnumAlias("Assembly", "SqlAssembly")]
       Assembly,
 
-      [EnumAlias("Database"  , "D",   "Db")]
+      [EnumAlias("Database"  , "Database")]
       Database,                      
                                      
-      [EnumAlias("Function"  , "F",   "UserDefinedFunction")]
+      [EnumAlias("Function"  ,"UserDefinedFunction")]
       Function,                      
                                      
-      [EnumAlias("Procedure" , "P",   "StoredProcedure")]
-      Procedure,                     
+      [EnumAlias("Procedure" , "StoredProcedure")]
+      StoredProcedure,                     
                                      
-      [EnumAlias("Schema"    , "S"   )]
+      [EnumAlias("Schema"    , "Schema")]
       Schema,                        
                                      
-      [EnumAlias("Table"     , "T"   )]
+      [EnumAlias("Table"     , "Table")]
       Table,
 
-      [EnumAlias("Trigger", "Tr")]
-      Trigger,
-
-      [EnumAlias("Table Type", "TTy" )]
-      TableType,
-
-      [EnumAlias("View", "V")]
+      [EnumAlias("View", "View")]
       View,
 
-      [EnumAlias("UserDefinedDataType", "UDDT")]
-      UserDefinedDataType, // Includes UserDefinedDataType and UserDefinedTableType
+      [EnumAlias("UserDefinedType", "UserDefinedType")]
+      UserDefinedType,
 
-      [EnumAlias("Undefined", "-")]
-      Undefined
+      // {Server[@Name='DevI9']/Database[@Name='Farming_dev']/UserDefinedType[@Name='Private' and @Schema='tSQLt']}
+      [EnumAlias("UserDefinedDataType", "UserDefinedDataType")]
+      UserDefinedDataType,
+
+      //{Server[@Name='DevI9']/Database[@Name='Farming_dev']/UserDefinedTableType[@Name='IdNmTbl' and @Schema='dbo']}
+      [EnumAlias("UserDefinedTableType", "UserDefinedTableType")]
+      UserDefinedTableType,
    }
 }

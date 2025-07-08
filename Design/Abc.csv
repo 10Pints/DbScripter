@@ -1,0 +1,98 @@
+Name
+Export Files Act
+DbScripterApp.Program.Main Act
+DbScripter.Init
+Start
+Init the Params object
+User
+Note
+DbScripterApp.Program.Main
+Use Case2
+Object1
+System Boundary
+Call InitServer
+Call dbScripter.Init
+InitDatabase
+InitScriptingOptions
+Save a selection of items 1 item per file_ActivityGraph
+Save items 1 per file
+Start
+Read the configuration
+Create a list of all objects
+Filter the list by the wanted types
+Get the dependency tree for all items
+Createa Walk of the dependency tree in create order
+For each item
+Script the item
+write the main file
+Write the item file
+End
+DbScripterApp.Program.Main Act
+Start
+Config file
+Config file
+Filtering Setup Act
+Main Program: Does the the export - DoWork
+End
+Optionally Display the script and the log
+DoWork
+Start
+Create  a DbScripter object
+Call DbScripter.Export passing the params
+Params object
+Parent
+Export
+Export_ActivityGraph
+Start
+Validate Preconditions
+if creating a single composite file ?
+
+Call Init passing the params
+Script the output file header 
+Call ExportInit()
+
+Get the Filter Root smo objects Urns
+ Get list of child items for all roots
+Create a walk of smo items to scrpt in dependency order
+Script the items to script text
+Write the script text to sql file
+End
+Parent
+InitWriter
+Return the success of the op
+ActivityFinal
+
+Init Act
+Start
+Initialize the Logger
+Print the Arguments
+Load the Configuration from json configuration file
+Print Help msg
+if error
+End
+
+
+Main Use case Act: ave a selection of items 1 item per file_ActivityGraph
+Params.Init Act
+Use Case Model :Program.Main
+Parent
+Program.Init Act
+Parent
+Handle errors
+Filtering Setup Act
+Filtering Setup
+Filtering Setup Act
+Parent
+Start
+Load the configuration from file
+Get all the  required filter sets 
+Get the set of required function filters
+Get the set of required table filters
+Get the set of required view filters
+Export Files Act
+Filter the ITEMS by the required schema set if it is defined
+Filter the ITEMS by the required types if defined
+ActivityFinal
+Filtering :Filtering Setup Act
+Get the Filtered list of dependencies
+
