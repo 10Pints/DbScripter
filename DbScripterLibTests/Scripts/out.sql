@@ -33,12 +33,12 @@ Parameters:
  Want All:                  : UserDefinedType
  Want All:                  : UserDefinedDataType
  Want All:                  : UserDefinedTableType
- Script Dir                   : D:\Dev\DbScripter_new\DbScripterLibTests\Scripts
- Script File                  : D:\Dev\DbScripter_new\DbScripterLibTests\Scripts\Farming_dev schema.sql
+ Script Dir                   : D:\Dev\DbScripter\Tests\DbScripterExportTest
+ Script File                  : D:\Dev\DbScripter\Tests\DbScripterExportTest\Farming_dev schema.DbScripterExportTest.sql
  ScriptUseDb                  : True
  Server                       : DevI9
  AddTimestamp                 : False
- Timestamp                    : 250707-0004
+ Timestamp                    : 250709-0415
 
  RequiredSchemas : 2
 	dbo

@@ -117,7 +117,7 @@ namespace DbScripterLibNS
             if (!InitScriptingOptions(out msg))
                break;
 
-            //if (!InitWriter(out msg)) // Do later to avoid test issues with opene files
+            //if (!InitWriter(out msg)) // Do later to avoid test issues with open file files
             //   break;
 
             ret = true;
@@ -159,17 +159,6 @@ namespace DbScripterLibNS
 
          // Get all the required root items (or all if not spec)
          HashSet<Urn> rootUrns = GetRootUrns(urn_map);
-
-         // Get the root items and their dependencies items to script.
-         /*/ Create the schema dependency walk returns false if no items
-         if (!GetItemsToScript(rootUrns, (P.CreateMode == CreateModeEnum.Create || P.CreateMode == CreateModeEnum.Alter), out List<Urn> walk, out msg))
-         {
-            // This is not an error - if the database has no items to script given the criteria
-            // if GetSchemaDependencyWalk() encounters an error then it will throw exception
-            // script = "";
-            return LogR(true, "the database has no items to script given the criteria");
-         }
-         */
 
          // Create a walk of smo items to script in dependency order
          List<Urn> walk = GetDependencyWalk
@@ -235,7 +224,10 @@ namespace DbScripterLibNS
                break;
             }
 
-            //if (!P.IsValid(out msg)) break; // already checked
+            // 250707: Init Writer file is not opened before necessary else can lead to file locks
+            // during testing
+            if (!InitWriter(out msg))
+               break;
 
             if (database == null)
             {
@@ -247,10 +239,7 @@ namespace DbScripterLibNS
             ret = true;
          } while(false);
 
-         if(!ret)
-            LogE(msg);
-
-         return LogR(ret);
+         return LogR(ret, msg);
       }
 
       /// <summary>
@@ -416,6 +405,7 @@ namespace DbScripterLibNS
          string scriptFile = P.ScriptFile ?? "";
          LogS($"Script file: [{scriptFile}]");
          bool ret = false;
+         msg = "";
 
          try
          {
@@ -425,13 +415,20 @@ namespace DbScripterLibNS
                CloseWriter();
 
                // POST 2
-               Precondition(!string.IsNullOrEmpty(scriptFile), "exportScriptPath must be specified");
+               if(string.IsNullOrEmpty(scriptFile))
+               { 
+                  msg = "exportScriptPath must be specified";
+                  break;
+               }
 
                // ASSERTION: writer intialised
                string? directory = Path.GetDirectoryName(scriptFile);
 
                if(directory == null)
-                  throw new Exception("directory not specified");
+               {
+                  msg = "directory not specified";
+                  break;
+               }
 
                if (!Directory.Exists(directory))
                   Directory.CreateDirectory(directory);
@@ -449,13 +446,30 @@ namespace DbScripterLibNS
                // POST 1: writer open pointing to the export file AND
                //         writer file same as ExportFilePath and both equal exportFilePath parameter
                if ((Writer == null) ||
-                         !((FileStream)(Writer.BaseStream)).Name.Equals(P.ScriptFile, StringComparison.OrdinalIgnoreCase))
+                 !((FileStream)(Writer.BaseStream)).Name.Equals(P.ScriptFile, StringComparison.OrdinalIgnoreCase))
                {
                   msg = "Writer not initialised properly";
                   break;
                }
 
+               if (Writer == null)
+               {
+                  msg = "write not initialised";
+                  break;
+               }
+
+               string scripteFilePath = ((FileStream?)Writer?.BaseStream)?.Name ?? "not defined";
+
+               if (!scripteFilePath.Equals(P?.ScriptFile ?? "", StringComparison.OrdinalIgnoreCase))
+               {
+                  msg = $"Writer not initialised properly, scripteFilePath: {scripteFilePath}";
+                  break;
+               }
+
+               // ---------------------------------------------------------------------------
                // ASSERTION: writer intialised and target file has been created and is empty
+               // Processing complete
+               // ---------------------------------------------------------------------------
 
                ret = true;
                msg = "";
@@ -1525,20 +1539,6 @@ namespace DbScripterLibNS
             if (!P.IsValid(out msg))
                break;
 
-            if (Writer == null)
-            {
-               msg = "write not initialised";
-               break;
-            }
-
-            string x = (((FileStream)Writer.BaseStream)?.Name ?? "not defined");
-
-            // ((FileStream)(Writer.BaseStream)).Name.Equals(P.ExportScriptPath, StringComparison.OrdinalIgnoreCase)	D:\Dev\Repos\DbScripter\DbScripterLib\DbScripter.cs	493	37	DbScripterLib	Read	InitWriter	DbScripter	
-            if (!x.Equals(P?.ScriptFile ?? "xxx", StringComparison.OrdinalIgnoreCase))
-            {
-               msg = "Writer not initialised properly";
-               break;
-            }
 
             // Lastly if here then all checks have passed
             ret = true;
