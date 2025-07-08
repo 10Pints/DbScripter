@@ -2,7 +2,7 @@
 #nullable enable
 #pragma warning disable CS8602
 #pragma warning disable CA1031 // Do not catch general exception types
-
+//Microsoft.SqlServer.Management.Smo
 using Microsoft.SqlServer.Management.Smo;
 using System.Configuration;
 using System.Diagnostics;
@@ -106,15 +106,15 @@ namespace DbScripterLibNS
 
                LogI($"Params at Export: \r\n{P.ToString()}");
 
-               // Create header if composite file
-               if(!P.IndividualFiles)
+               // if a composite file create the output file header 
+               if (!P.IndividualFiles)
                { 
                   ScriptLine($"/*", sb);
                   ScriptLine($"Parameters:", sb);
                   ScriptLine($"{P}*/\r\n\r\n", sb);
                }
 
-               // Correct the case of the schemas
+               // Clear the list of required schemas
                var schemaList = new List<string>(P.RequiredSchemas);
                P.RequiredSchemas.Clear();
 
@@ -138,18 +138,20 @@ namespace DbScripterLibNS
                if(msg.Length>0)
                   break; // error finding schema
 
-               LogN("Stage 2 : export required schema objects in dependency order");
+               // Export the required objects in dependency order
+               LogN("Stage 2 : export the required objects in dependency order");
                var dbAssemblies = Database.Assemblies;
 
-               // ExportSchemas will script the entire set of required schemas
                // if ExportSchemas returns false then no items were found to script
                if (!ExportSchemas(sb, out string script, out msg))
                   break;
 
+               // Write the 'all objects' script to the main sql export file
                string sql = sb.ToString();
                File.WriteAllText("D:\\Dev\\DbScripter\\DbScripterLibTests\\Scripts\\out.sql", sql);
                sb.Clear();
 
+               // Log the results to the export summary file
                // sb will have a counts summary of the exported lists
                LogN("Stage 3 : logging the results");
                LogResults(sb);
@@ -157,6 +159,7 @@ namespace DbScripterLibNS
                // Write results summary to file
                ScriptLine($"/*\r\n{sb}*/"); // \r\n
 
+               // If there is a message: write it to the SQL file
                if (!string.IsNullOrEmpty(msg))
                   ScriptLine($"/*\r\n {msg}\r\n*/");
 
@@ -257,9 +260,12 @@ namespace DbScripterLibNS
 
                // Specialise the Options config for this op
                ExportSchemaScriptInit();
+
+               // Create a list of SMO schema objects
                List<Schema> schemas = new();
 
-               // Add the required Schema smo objects to schema obj list - Schemas[] is case insensitve
+               // Create and add the required Schema smo objects to the schema obj list
+               // Schemas[] is case insensitve
                foreach( var schemaName in P.RequiredSchemas)
                {
                   LogDirect($"Adding {schemaName} to the schema list");
@@ -278,7 +284,7 @@ namespace DbScripterLibNS
 
                LogC("DbScripter.Export Stage 3: Get Schema Dependencies Walk...");
 
-               // Get the schema dependency walk returns false if no items
+               // Create the schema dependency walk returns false if no items
                if(!GetSchemaDependencyWalk( P.RequiredSchemas, (P.CreateMode == CreateModeEnum.Create || P.CreateMode == CreateModeEnum.Alter), out List<Urn> walk, out msg))
                {
                   // This is not an error - if the database has no items to script given the criteria
@@ -774,7 +780,7 @@ namespace DbScripterLibNS
       /// POST 2: database state is normal
       /// POST 3: schemas exist in database smo
       /// POST 4: <returns>true if successful, false and msg populated otherwise</returns>
-     /// </summary>
+      /// </summary>
       /// <param name="databaseName"></param>
       protected bool InitDatabase(string? databaseName, out string msg)
       { 
@@ -868,7 +874,6 @@ namespace DbScripterLibNS
 
          return LogRD(ret, msg);
      }
-
 
       /// <summary>
       /// Sets up the general scripter options
@@ -1018,18 +1023,8 @@ namespace DbScripterLibNS
                // POST 2
                Precondition(!string.IsNullOrEmpty(ScriptFile), "exportScriptPath must be specified");
 
-               /*
-               if(string.IsNullOrEmpty(P.ScriptFile))
-                  P.ScriptFile = $"{Directory.GetCurrentDirectory()}{Database.Name}_export.sql";  //$"{Path.GetTempPath()}{Database.Name}_export.sql";
-
-               P.ScriptFile = Path.GetFullPath(P.ScriptFile);
-               */
-
                // ASSERTION: writer intialised
                var directory = Path.GetDirectoryName(ScriptFile);
-
-               //if(P.AddTimestamp == true)
-               //   directory = $"{directory}\\{P.Timestamp}";
 
                if (!Directory.Exists(directory))
                   Directory.CreateDirectory(directory);
@@ -1203,6 +1198,7 @@ namespace DbScripterLibNS
       /// <param name="sb"></param>
       protected void ScriptTransactions( StringCollection? transactions, StringBuilder sb, Urn urn, bool wantGo)
       {
+         
          Precondition(transactions != null, "oops: null transactions parameter");
          var key = GetUrnDetails(urn, out var smoType, out _, out var schemaNm, out var entityNm);
 
@@ -2189,6 +2185,7 @@ namespace DbScripterLibNS
          EnsureRequiredTypesContainsType(SqlTypeEnum.Procedure);
          EnsureRequiredTypesContainsType(SqlTypeEnum.Function);
          EnsureRequiredTypesContainsType(SqlTypeEnum.UserDefinedDataType);
+         EnsureRequiredTypesContainsType(SqlTypeEnum.Assembly);
 
          if (P.CreateMode != CreateModeEnum.Alter)
             EnsureRequiredTypesContainsType(SqlTypeEnum.TableType);
@@ -3849,7 +3846,7 @@ Script may need manual rearranging to get dependency order correct.
          case "TRIGGER"             : ret = P.IsExportingTriggers  ; break;
          case "USERDEFINEDTYPE"     : ret = P.IsExportingUsrDefTys ; break;
          case "USERDEFINEDDATATYPE" : ret = P.IsExportingUsrDefTys ; break;
-            case "FOREIGNKEY"          :
+         case "FOREIGNKEY"          :
          case "SERVICEQUEUE": ret = false; break;
 
             default:

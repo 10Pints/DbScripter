@@ -166,11 +166,24 @@ namespace DbScripterLibNS
          return LogRT(ret, msg);
       }
 
+      /// <summary>
+      /// 1 Main accessor to the configuration
+      /// </summary>
+      /// <param name="key"></param>
+      /// <param name="_default"></param>
+      /// <returns></returns>
       static string? GetAppSettingAsString(string key, string? _default = null)
       {
          return Config.GetValue<string>($"appSettings:{key}");
       }
 
+      /// <summary>
+      /// 1 Main accessor to the configuration
+      /// </summary>
+      /// <typeparam name="T"></typeparam>
+      /// <param name="key"></param>
+      /// <param name="_default"></param>
+      /// <returns></returns>
       static T? GetAppSetting<T>(string key, T? _default = default(T))
       {
          T? t =  Config.GetValue<T>($"appSettings:{key}");
@@ -861,7 +874,7 @@ namespace DbScripterLibNS
       /// Gets the default config from app settings json
       /// 
       /// Changes:
-      /// 240922: now updates the files with the timestamp if the add timestamp flag set
+      /// 240922: now updates the files with the timestamp, if the add timestamp is flag set
       /// </summary>
       /// <param name="p"></param>
       public static void LoadFromConfig(Params p)

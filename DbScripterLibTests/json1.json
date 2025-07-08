@@ -43,7 +43,6 @@
       "Server": "DEVI9",
       "Instance": ",",
       "Database\": \"Farming_dev\",\"Script",
-      : null,
       "Dir\": \"D": "\\Dev\\DbScripter\\Scripts\\Staging\",\"Script",
       "File\": \"Farming.sql\",\"CreateMode\": \"Alter\",\"RequiredSchemas\": \"dbo\",\"RequiredTypes\": \"Schemas",
       "Tables",

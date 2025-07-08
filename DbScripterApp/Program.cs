@@ -148,7 +148,7 @@ namespace DbScripterAppNS
       }
 
       /// <summary>
-      /// The testable part of the main functionality
+      /// Does the main export
       /// 
       /// Post conditions:
       /// if error then msg must be specified
@@ -159,13 +159,14 @@ namespace DbScripterAppNS
       /// </summary>
       /// <param name="args"></param>
       /// <returns></returns>
-      public static bool DoWork( Params p/*, out string script*/, out string msg)
+      public static bool DoWork( Params p, out string msg)
       {
          LogSN("Export starting ...");
          bool ret = false;
 
          do
          {
+            // Create  a DbScripter object
             DbScripter scripter = new DbScripter();
 
             if (!scripter.Export(p, out msg))
@@ -187,7 +188,7 @@ namespace DbScripterAppNS
          Postcondition( (ret== false) && (msg.Length > 0) ||
                         (ret== true ) && (msg.Length ==0));
 
-         return LogRN(ret,msg);
+         return LogRN(ret, msg);
       }
 
       /// <summary>

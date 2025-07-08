@@ -1,109 +1,2544 @@
+/*
+Parameters:
+
+--------------------------------------------------------------------------------
+ Type            : Params
+--------------------------------------------------------------------------------
+ CreateMode      : Create
+ Database        : Farming_dev
+ DisplayLog      : True
+ DisplayScript   : True
+ FilePath        : D:\Dev\DbScripter\DbScripterLibTests\AppSettings.json
+ IndividualFiles : False
+ Instance        : 
+ IsExprtngData   : False
+ LogFile         : D:\Logs\Farming.log
+ LogLevel        : Info
+ Name            : DbScripterLibTests config
+ RequiredSchemas : System.Collections.Generic.List`1[System.String]
+ RequiredTypes   : System.Collections.Generic.List`1[DbScripterLibNS.SqlTypeEnum]
+ Script Dir      : D:\Dev\DbScripter\DbScripterLibTests\Scripts
+ Script File     : D:\Dev\DbScripter\DbScripterLibTests\Scripts\Farming_dev schema.sql
+ ScriptUseDb     : True
+ Server          : DEVI9
+ AddTimestamp    : False
+ Timestamp       : 250629-1256
+
+ RequiredSchemas : 1
+	dbo
+
+ RequiredTypes : 6
+	Schema
+	Table
+	Procedure
+	Function
+	View
+	Assembly
+*/
+
 USE [Farming_dev]
 GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
-GO
+
+CREATE SCHEMA [dbo]
+
+GO
+GO
+
+CREATE TYPE [dbo].[ChkFldsNotNullDataType] AS TABLE(
+	[ordinal] [int] NOT NULL,
+	[col] [varchar](60) NOT NULL,
+	[sql] [varchar](4000) NOT NULL
+)
+
+GO
+GO
+
+CREATE TYPE [dbo].[CmdsTbl] AS TABLE(
+	[ordinal] [int] IDENTITY(1,1) NOT NULL,
+	[sql] [nvarchar](max) NULL
+)
+
+GO
+GO
+
+CREATE TYPE [dbo].[EPPO] AS TABLE(
+	[ordinal] [int] NULL,
+	[table] [varchar](250) NOT NULL,
+	[exp_row_cnt] [int] NULL,
+	PRIMARY KEY CLUSTERED 
+(
+	[table] ASC
+)WITH (IGNORE_DUP_KEY = OFF)
+)
+
+GO
+GO
+
+CREATE TYPE [dbo].[IdNmTbl] AS TABLE(
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[val] [varchar](4000) NULL,
+	PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (IGNORE_DUP_KEY = OFF)
+)
+
+GO
+GO
+
+CREATE TYPE [dbo].[staging2_tbl] AS TABLE(
+	[id] [int] NOT NULL,
+	[company] [varchar](70) NULL,
+	[ingredient] [varchar](250) NULL,
+	[product] [varchar](100) NULL,
+	[concentration] [varchar](100) NULL,
+	[formulation_type] [varchar](7) NULL,
+	[uses] [varchar](100) NULL,
+	[toxicity_category] [int] NULL,
+	[registration] [varchar](65) NULL,
+	[expiry] [varchar](30) NULL,
+	[entry_mode] [varchar](60) NULL,
+	[crops] [varchar](250) NULL,
+	[pathogens] [varchar](360) NULL,
+	[rate] [varchar](200) NULL,
+	[mrl] [varchar](200) NULL,
+	[phi] [varchar](200) NULL,
+	[phi_resolved] [varchar](120) NULL,
+	[reentry_period] [varchar](250) NULL,
+	[notes] [varchar](250) NULL,
+	[comments] [varchar](500) NULL,
+	[created] [datetime] NULL,
+	PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (IGNORE_DUP_KEY = OFF)
+)
+
 GO
 SET ANSI_NULLS ON
 
 SET QUOTED_IDENTIFIER ON
 
 GO
+
+CREATE TABLE [dbo].[Action](
+	[action_id] [int] IDENTITY(1,1) NOT NULL,
+	[action_nm] [varchar](50) NOT NULL,
+ CONSTRAINT [PK_Action] PRIMARY KEY CLUSTERED 
+(
+	[action_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE UNIQUE NONCLUSTERED INDEX [UQ_Action_nm] ON [dbo].[Action]
+(
+	[action_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ActionStaging](
+	[action_id] [int] NULL,
+	[action_nm] [varchar](30) NULL,
+ CONSTRAINT [UQ_ActionStaging_nm] UNIQUE NONCLUSTERED 
+(
+	[action_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[AppLog](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[timestamp] [varchar](30) NOT NULL,
+	[schema_nm] [varbinary](20) NULL,
+	[rtn] [varchar](60) NULL,
+	[hit] [int] NULL,
+	[log] [varchar](max) NULL,
+	[msg] [varchar](max) NULL,
+	[level] [int] NULL,
+	[row_count] [int] NULL,
+ CONSTRAINT [PK_AppLog] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+ALTER TABLE [dbo].[AppLog] ADD  CONSTRAINT [DF_AppLog_timestamp]  DEFAULT (getdate()) FOR [timestamp]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[CallRegister](
+	[id] [int] NOT NULL,
+	[rtn] [varchar](50) NULL,
+	[limit] [int] NULL,
+	[count] [int] NULL,
+	[updated] [datetime] NULL,
+ CONSTRAINT [PK_SessionContext] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+ALTER TABLE [dbo].[CallRegister] ADD  CONSTRAINT [DF_SessionContext_count]  DEFAULT ((0)) FOR [count]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[Chemical](
+	[chemical_id] [int] IDENTITY(1,1) NOT NULL,
+	[chemical_nm] [varchar](100) NOT NULL,
+ CONSTRAINT [PK_Chemical] PRIMARY KEY CLUSTERED 
+(
+	[chemical_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_Chemical_nm] UNIQUE NONCLUSTERED 
+(
+	[chemical_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ChemicalAction](
+	[chemical_id] [int] NOT NULL,
+	[action_id] [int] NOT NULL,
+	[chemical_nm] [varchar](400) NULL,
+	[action_nm] [varchar](50) NULL,
+	[created] [date] NULL,
+ CONSTRAINT [PK_ChemicalEntryMode] PRIMARY KEY CLUSTERED 
+(
+	[chemical_id] ASC,
+	[action_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_ChemicalEntryMode_chemical] ON [dbo].[ChemicalAction]
+(
+	[chemical_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_ChemicalEntryMode_entry_mode] ON [dbo].[ChemicalAction]
+(
+	[action_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+ALTER TABLE [dbo].[ChemicalAction] ADD  CONSTRAINT [DF_ChemicalAction_created]  DEFAULT (getdate()) FOR [created]
+
+ALTER TABLE [dbo].[ChemicalAction]  WITH CHECK ADD  CONSTRAINT [FK_ChemicalAction_Action] FOREIGN KEY([action_id])
+REFERENCES [dbo].[Action] ([action_id])
+
+ALTER TABLE [dbo].[ChemicalAction] CHECK CONSTRAINT [FK_ChemicalAction_Action]
+
+ALTER TABLE [dbo].[ChemicalAction]  WITH CHECK ADD  CONSTRAINT [FK_ChemicalAction_Chemical] FOREIGN KEY([chemical_id])
+REFERENCES [dbo].[Chemical] ([chemical_id])
+
+ALTER TABLE [dbo].[ChemicalAction] CHECK CONSTRAINT [FK_ChemicalAction_Chemical]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ChemicalActionStaging](
+	[chemical_nm] [varchar](100) NULL,
+	[action_nm] [varchar](100) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ChemicalProduct](
+	[chemical_id] [int] NOT NULL,
+	[product_id] [int] NOT NULL,
+	[chemical_nm] [varchar](100) NULL,
+	[product_nm] [varchar](50) NULL,
+ CONSTRAINT [PK_ChemicalProduct] PRIMARY KEY CLUSTERED 
+(
+	[chemical_id] ASC,
+	[product_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [IX_Chem2Prod] UNIQUE NONCLUSTERED 
+(
+	[chemical_id] ASC,
+	[product_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_Chem2Prod_chemical] ON [dbo].[ChemicalProduct]
+(
+	[chemical_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_Chem2Prod_product] ON [dbo].[ChemicalProduct]
+(
+	[product_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_ChemicalProduct] ON [dbo].[ChemicalProduct]
+(
+	[chemical_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+ALTER TABLE [dbo].[ChemicalProduct]  WITH CHECK ADD  CONSTRAINT [FK_ChemicalProduct_Chemical] FOREIGN KEY([chemical_id])
+REFERENCES [dbo].[Chemical] ([chemical_id])
+
+ALTER TABLE [dbo].[ChemicalProduct] CHECK CONSTRAINT [FK_ChemicalProduct_Chemical]
+
+ALTER TABLE [dbo].[ChemicalProduct]  WITH CHECK ADD  CONSTRAINT [FK_ChemicalProduct_Product] FOREIGN KEY([product_id])
+REFERENCES [dbo].[Product] ([product_id])
+
+ALTER TABLE [dbo].[ChemicalProduct] CHECK CONSTRAINT [FK_ChemicalProduct_Product]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ChemicalProductStaging](
+	[chemical_nm] [varchar](100) NULL,
+	[product_nm] [varchar](50) NULL,
+ CONSTRAINT [IX_ChemicalProductStaging] UNIQUE NONCLUSTERED 
+(
+	[chemical_nm] ASC,
+	[product_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ChemicalStaging](
+	[chemical_nm] [varchar](100) NOT NULL,
+ CONSTRAINT [PK_ChemicalStaging] PRIMARY KEY CLUSTERED 
+(
+	[chemical_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_ChemicalStaging_nm] UNIQUE NONCLUSTERED 
+(
+	[chemical_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ChemicalUse](
+	[chemical_id] [int] NULL,
+	[use_id] [int] NULL,
+	[chemical_nm] [varchar](100) NULL,
+	[use_nm] [varchar](50) NULL
+) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_Chemical2Type_chemical] ON [dbo].[ChemicalUse]
+(
+	[chemical_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_Chemical2Type_type] ON [dbo].[ChemicalUse]
+(
+	[use_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_ChemicalUse] ON [dbo].[ChemicalUse]
+(
+	[chemical_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+ALTER TABLE [dbo].[ChemicalUse]  WITH CHECK ADD  CONSTRAINT [FK_ChemicalUse_Chemical] FOREIGN KEY([chemical_id])
+REFERENCES [dbo].[Chemical] ([chemical_id])
+
+ALTER TABLE [dbo].[ChemicalUse] CHECK CONSTRAINT [FK_ChemicalUse_Chemical]
+
+ALTER TABLE [dbo].[ChemicalUse]  WITH CHECK ADD  CONSTRAINT [FK_ChemicalUse_Use] FOREIGN KEY([use_id])
+REFERENCES [dbo].[Use] ([use_id])
+
+ALTER TABLE [dbo].[ChemicalUse] CHECK CONSTRAINT [FK_ChemicalUse_Use]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ChemicalUseStaging](
+	[chemical_nm] [varchar](100) NULL,
+	[use_nm] [varchar](50) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[Company](
+	[company_id] [int] IDENTITY(1,1) NOT NULL,
+	[company_nm] [varchar](100) NOT NULL,
+	[company_type] [varchar](50) NULL,
+ CONSTRAINT [PK_Company] PRIMARY KEY CLUSTERED 
+(
+	[company_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE UNIQUE NONCLUSTERED INDEX [IX_Company_name] ON [dbo].[Company]
+(
+	[company_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[CompanyStaging](
+	[company_nm] [varchar](100) NOT NULL,
+ CONSTRAINT [PK_CompanyStaging] PRIMARY KEY CLUSTERED 
+(
+	[company_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[CorFiles](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[file] [nvarchar](60) NULL,
+	[row_cnt] [int] NULL,
+	[fixup_cnt] [int] NULL,
+ CONSTRAINT [PK_CorFiles] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [IX_CorFiles] UNIQUE NONCLUSTERED 
+(
+	[file] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[CorrectionLog](
+	[id] [int] NOT NULL,
+	[stg_id] [int] NULL,
+	[cor_id] [int] NULL,
+	[old] [varchar](250) NULL,
+	[new] [varchar](250) NULL,
+	[search_clause] [varchar](250) NULL,
+	[replace_clause] [varchar](150) NULL,
+	[not_clause] [varchar](150) NULL,
+	[row_cnt] [int] NULL,
+ CONSTRAINT [PK_CorrectionLog] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[Crop](
+	[crop_id] [int] IDENTITY(1,1) NOT NULL,
+	[crop_nm] [varchar](100) NOT NULL,
+	[latin_nm] [varchar](50) NULL,
+	[alt_latin_nms] [varchar](50) NULL,
+	[alt_common_nms] [varchar](50) NULL,
+	[taxonomy] [varchar](250) NULL,
+	[notes] [varchar](150) NULL,
+ CONSTRAINT [PK_Crop] PRIMARY KEY CLUSTERED 
+(
+	[crop_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[CropPathogen](
+	[crop_id] [int] NOT NULL,
+	[pathogen_id] [int] NOT NULL,
+	[crop_nm] [varchar](50) NULL,
+	[pathogen_nm] [varchar](100) NULL,
+ CONSTRAINT [PK_CropPathogen] PRIMARY KEY CLUSTERED 
+(
+	[crop_id] ASC,
+	[pathogen_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_CropPathogen_crop] ON [dbo].[CropPathogen]
+(
+	[crop_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_CropPathogen_pathogen] ON [dbo].[CropPathogen]
+(
+	[pathogen_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+ALTER TABLE [dbo].[CropPathogen]  WITH CHECK ADD  CONSTRAINT [FK_CropPathogen_Crop] FOREIGN KEY([crop_id])
+REFERENCES [dbo].[Crop] ([crop_id])
+
+ALTER TABLE [dbo].[CropPathogen] CHECK CONSTRAINT [FK_CropPathogen_Crop]
+
+ALTER TABLE [dbo].[CropPathogen]  WITH CHECK ADD  CONSTRAINT [FK_CropPathogen_Pathogen] FOREIGN KEY([pathogen_id])
+REFERENCES [dbo].[Pathogen] ([pathogen_id])
+
+ALTER TABLE [dbo].[CropPathogen] CHECK CONSTRAINT [FK_CropPathogen_Pathogen]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[CropPathogenStaging](
+	[crop_nm] [varchar](100) NULL,
+	[pathogen_nm] [varchar](100) NULL
+) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE UNIQUE NONCLUSTERED INDEX [IX_CropPathogenStaging] ON [dbo].[CropPathogenStaging]
+(
+	[crop_nm] ASC,
+	[pathogen_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[CropStaging](
+	[crop_id] [int] NULL,
+	[crop_nm] [varchar](100) NULL,
+	[latin_nm] [varchar](50) NULL,
+	[alt_latin_nms] [varchar](50) NULL,
+	[alt_common_nms] [varchar](50) NULL,
+	[taxonomy] [varchar](500) NULL,
+	[notes] [varchar](150) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[CropStaging_Test](
+	[id] [float] NULL,
+	[command] [nvarchar](255) NULL,
+	[must_update] [float] NULL,
+	[doit] [nvarchar](255) NULL,
+	[act_cnt] [nvarchar](255) NULL,
+	[search_clause] [nvarchar](255) NULL,
+	[search_clause_cont] [nvarchar](255) NULL,
+	[not_clause] [nvarchar](255) NULL,
+	[replace_clause] [nvarchar](255) NULL,
+	[case_sensitive] [float] NULL,
+	[Latin_name] [nvarchar](255) NULL,
+	[common_name] [nvarchar](255) NULL,
+	[local_name] [nvarchar](255) NULL,
+	[alt_names] [nvarchar](255) NULL,
+	[note_clause] [nvarchar](255) NULL,
+	[crops] [nvarchar](255) NULL,
+	[comments] [nvarchar](255) NULL,
+	[results] [nvarchar](255) NULL,
+	[chk] [nvarchar](255) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[Distributor](
+	[distributor_id] [int] IDENTITY(1,1) NOT NULL,
+	[distributor_nm] [varchar](100) NULL,
+	[city] [varchar](50) NULL,
+	[province] [varchar](50) NULL,
+	[region] [varchar](50) NULL,
+	[address] [varchar](100) NULL,
+	[phone 1] [varchar](50) NULL,
+	[phone 2] [varchar](50) NULL,
+	[maufacturers] [varchar](max) NULL,
+ CONSTRAINT [PK_Distributor] PRIMARY KEY CLUSTERED 
+(
+	[distributor_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[DistributorManufacturer](
+	[distributor_id] [int] NOT NULL,
+	[manufacturer_id] [int] NOT NULL,
+ CONSTRAINT [PK_DistributorManufacturer] PRIMARY KEY CLUSTERED 
+(
+	[distributor_id] ASC,
+	[manufacturer_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+ALTER TABLE [dbo].[DistributorManufacturer]  WITH CHECK ADD  CONSTRAINT [FK_DistributorManufacturer_Company] FOREIGN KEY([manufacturer_id])
+REFERENCES [dbo].[Company] ([company_id])
+
+ALTER TABLE [dbo].[DistributorManufacturer] CHECK CONSTRAINT [FK_DistributorManufacturer_Company]
+
+ALTER TABLE [dbo].[DistributorManufacturer]  WITH CHECK ADD  CONSTRAINT [FK_DistributorManufacturer_Distributor] FOREIGN KEY([distributor_id])
+REFERENCES [dbo].[Distributor] ([distributor_id])
+
+ALTER TABLE [dbo].[DistributorManufacturer] CHECK CONSTRAINT [FK_DistributorManufacturer_Distributor]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[DistributorStaging](
+	[distributor_id] [int] NOT NULL,
+	[distributor_nm] [varchar](100) NULL,
+	[city] [varchar](50) NULL,
+	[province] [varchar](50) NULL,
+	[region] [varchar](50) NULL,
+	[address] [varchar](100) NULL,
+	[phone 1] [varchar](20) NULL,
+	[phone 2] [varchar](20) NULL,
+	[manufacturers] [varchar](max) NULL,
+ CONSTRAINT [PK_Distributorstaging] PRIMARY KEY CLUSTERED 
+(
+	[distributor_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EntryModeFixup](
+	[id] [float] NULL,
+	[routine] [varchar](255) NULL,
+	[search_clause] [varchar](255) NULL,
+	[clause_1] [varchar](255) NULL,
+	[clause_2] [varchar](255) NULL,
+	[clause_3] [varchar](255) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_GafGroup](
+	[identifier] [varchar](10) NULL,
+	[datatype] [varchar](5) NULL,
+	[code] [varchar](8) NULL,
+	[lang] [varchar](6) NULL,
+	[langno] [int] NULL,
+	[preferred] [bit] NULL,
+	[status] [nchar](1) NULL,
+	[creation] [varchar](10) NULL,
+	[modification] [varchar](10) NULL,
+	[country] [varchar](20) NULL,
+	[fullname] [varchar](80) NULL,
+	[authority] [varchar](50) NULL,
+	[shortname] [varchar](80) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_GafGroupStaging](
+	[identifier] [varchar](max) NULL,
+	[datatype] [varchar](max) NULL,
+	[code] [varchar](max) NULL,
+	[lang] [varchar](max) NULL,
+	[langno] [varchar](max) NULL,
+	[preferred] [varchar](max) NULL,
+	[status] [varchar](max) NULL,
+	[creation] [varchar](max) NULL,
+	[modification] [varchar](max) NULL,
+	[country] [varchar](max) NULL,
+	[fullname] [varchar](max) NULL,
+	[authority] [varchar](max) NULL,
+	[shortname] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_GafLink](
+	[identifier] [nchar](10) NULL,
+	[datatype] [nchar](10) NULL,
+	[code] [nchar](2) NULL,
+	[creation] [date] NULL,
+	[modification] [nchar](15) NULL,
+	[grp_dtype] [varchar](3) NULL,
+	[grp_code] [varchar](6) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_GafLinkStaging](
+	[identifier] [varchar](max) NULL,
+	[datatype] [varchar](max) NULL,
+	[code] [varchar](max) NULL,
+	[creation] [varchar](max) NULL,
+	[modification] [varchar](max) NULL,
+	[grp_dtype] [varchar](max) NULL,
+	[grp_code] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_GafName](
+	[identifier] [varchar](7) NULL,
+	[datatype] [varchar](3) NULL,
+	[code] [varchar](8) NULL,
+	[lang] [varchar](2) NULL,
+	[langno] [varchar](2) NULL,
+	[preferred] [nchar](1) NULL,
+	[status] [nchar](1) NULL,
+	[creation] [date] NULL,
+	[modification] [varchar](10) NULL,
+	[country] [varchar](2) NULL,
+	[fullname] [varchar](150) NULL,
+	[authority] [varchar](70) NULL,
+	[shortname] [varchar](150) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_GafNameStaging](
+	[identifier] [varchar](max) NULL,
+	[datatype] [varchar](max) NULL,
+	[code] [varchar](max) NULL,
+	[lang] [varchar](max) NULL,
+	[langno] [varchar](max) NULL,
+	[preferred] [varchar](max) NULL,
+	[status] [varchar](max) NULL,
+	[creation] [varchar](max) NULL,
+	[modification] [varchar](max) NULL,
+	[country] [varchar](max) NULL,
+	[fullname] [varchar](max) NULL,
+	[authority] [varchar](max) NULL,
+	[shortname] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+EXEC sys.sp_addextendedproperty @name=N'DESC', @value=N'micro-organisms, viruses, abiotic growth factors' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'EPPO_GafNameStaging'
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_GaiGroup](
+	[identifier] [varchar](7) NULL,
+	[datatype] [varchar](3) NULL,
+	[code] [varchar](8) NULL,
+	[lang] [varchar](2) NULL,
+	[langno] [int] NULL,
+	[preferred] [bit] NULL,
+	[status] [nchar](1) NULL,
+	[creation] [date] NULL,
+	[modification] [varchar](10) NULL,
+	[country] [varchar](2) NULL,
+	[fullname] [varchar](60) NULL,
+	[authority] [varchar](32) NULL,
+	[shortname] [varchar](60) NOT NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_GaigroupStaging](
+	[identifier] [varchar](max) NULL,
+	[datatype] [varchar](max) NULL,
+	[code] [varchar](max) NULL,
+	[lang] [varchar](max) NULL,
+	[langno] [varchar](max) NULL,
+	[preferred] [varchar](max) NULL,
+	[status] [varchar](max) NULL,
+	[creation] [varchar](max) NULL,
+	[modification] [varchar](max) NULL,
+	[country] [varchar](max) NULL,
+	[fullname] [varchar](max) NULL,
+	[authority] [varchar](max) NULL,
+	[shortname] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_GaiLink](
+	[identifier] [varchar](7) NULL,
+	[datatype] [varchar](6) NULL,
+	[code] [nchar](1) NULL,
+	[creation] [date] NULL,
+	[modification] [varchar](10) NULL,
+	[grp_dtype] [varchar](3) NULL,
+	[grp_code] [varchar](6) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_GaiLinkStaging](
+	[identifier] [varchar](max) NULL,
+	[datatype] [varchar](max) NULL,
+	[code] [varchar](max) NULL,
+	[creation] [varchar](max) NULL,
+	[modification] [varchar](max) NULL,
+	[grp_dtype] [varchar](max) NULL,
+	[grp_code] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_GaiName](
+	[identifier] [varchar](8) NULL,
+	[datatype] [varchar](4) NULL,
+	[code] [varchar](8) NULL,
+	[lang] [varchar](2) NULL,
+	[langno] [int] NULL,
+	[preferred] [bit] NULL,
+	[status] [nchar](1) NULL,
+	[creation] [date] NULL,
+	[modification] [varchar](10) NULL,
+	[country] [varchar](2) NULL,
+	[fullname] [varchar](192) NULL,
+	[authority] [varchar](64) NULL,
+	[shortname] [varchar](128) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_GaiNameStaging](
+	[identifier] [varchar](max) NULL,
+	[datatype] [varchar](max) NULL,
+	[code] [varchar](max) NULL,
+	[lang] [varchar](max) NULL,
+	[langno] [varchar](max) NULL,
+	[preferred] [varchar](max) NULL,
+	[status] [varchar](max) NULL,
+	[creation] [varchar](max) NULL,
+	[modification] [varchar](max) NULL,
+	[country] [varchar](max) NULL,
+	[fullname] [varchar](max) NULL,
+	[authority] [varchar](max) NULL,
+	[shortname] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_NtxLink](
+	[identifier] [varchar](8) NULL,
+	[datatype] [varchar](8) NULL,
+	[code] [nchar](1) NULL,
+	[creation] [date] NULL,
+	[modification] [varchar](10) NULL,
+	[grp_dtype] [varchar](4) NULL,
+	[grp_code] [varchar](8) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_NtxLinkStaging](
+	[identifier] [varchar](max) NULL,
+	[datatype] [varchar](max) NULL,
+	[code] [varchar](max) NULL,
+	[creation] [varchar](max) NULL,
+	[modification] [varchar](max) NULL,
+	[grp_dtype] [varchar](max) NULL,
+	[grp_code] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_Ntxname](
+	[identifier] [varchar](8) NULL,
+	[datatype] [varchar](4) NULL,
+	[code] [varchar](8) NULL,
+	[lang] [varchar](2) NULL,
+	[langno] [int] NULL,
+	[preferred] [bit] NULL,
+	[status] [nchar](1) NULL,
+	[creation] [date] NULL,
+	[modification] [varchar](10) NULL,
+	[country] [varchar](2) NULL,
+	[fullname] [varchar](128) NULL,
+	[authority] [varchar](64) NULL,
+	[shortname] [varchar](64) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_NtxNameStaging](
+	[identifier] [varchar](max) NULL,
+	[datatype] [varchar](max) NULL,
+	[code] [varchar](max) NULL,
+	[lang] [varchar](max) NULL,
+	[langno] [varchar](max) NULL,
+	[preferred] [varchar](max) NULL,
+	[status] [varchar](max) NULL,
+	[creation] [varchar](max) NULL,
+	[modification] [varchar](max) NULL,
+	[country] [varchar](max) NULL,
+	[fullname] [varchar](max) NULL,
+	[authority] [varchar](max) NULL,
+	[shortname] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_PflGroup](
+	[identifier] [varchar](8) NULL,
+	[datatype] [varchar](4) NULL,
+	[code] [varchar](8) NULL,
+	[lang] [varchar](2) NULL,
+	[langno] [int] NULL,
+	[preferred] [bit] NULL,
+	[status] [nchar](1) NULL,
+	[creation] [date] NULL,
+	[modification] [varchar](10) NULL,
+	[country] [varchar](2) NULL,
+	[fullname] [varchar](64) NULL,
+	[authority] [varchar](64) NULL,
+	[shortname] [varchar](64) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_PflGroupStaging](
+	[identifier] [varchar](max) NULL,
+	[datatype] [varchar](max) NULL,
+	[code] [varchar](max) NULL,
+	[lang] [varchar](max) NULL,
+	[langno] [varchar](max) NULL,
+	[preferred] [varchar](max) NULL,
+	[status] [varchar](max) NULL,
+	[creation] [varchar](max) NULL,
+	[modification] [varchar](max) NULL,
+	[country] [varchar](max) NULL,
+	[fullname] [varchar](max) NULL,
+	[authority] [varchar](max) NULL,
+	[shortname] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_PflLink](
+	[identifier] [varchar](8) NULL,
+	[datatype] [varchar](8) NULL,
+	[code] [nchar](1) NULL,
+	[creation] [date] NULL,
+	[modification] [varchar](10) NULL,
+	[grp_dtype] [varchar](8) NULL,
+	[grp_code] [varchar](8) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_PflLinkStaging](
+	[identifier] [varchar](max) NULL,
+	[datatype] [varchar](max) NULL,
+	[code] [varchar](max) NULL,
+	[creation] [varchar](max) NULL,
+	[modification] [varchar](max) NULL,
+	[grp_dtype] [varchar](max) NULL,
+	[grp_code] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_PflName](
+	[identifier] [varchar](7) NULL,
+	[datatype] [varchar](3) NULL,
+	[code] [varchar](8) NULL,
+	[lang] [varchar](2) NULL,
+	[langno] [varchar](2) NULL,
+	[preferred] [varchar](1) NULL,
+	[status] [varchar](1) NULL,
+	[creation] [date] NULL,
+	[modification] [date] NULL,
+	[country] [varchar](2) NULL,
+	[fullname] [varchar](250) NULL,
+	[authority] [varchar](120) NULL,
+	[shortname] [varchar](250) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_PflNameStaging](
+	[identifier] [varchar](max) NULL,
+	[datatype] [varchar](max) NULL,
+	[code] [varchar](max) NULL,
+	[lang] [varchar](max) NULL,
+	[langno] [varchar](max) NULL,
+	[preferred] [varchar](max) NULL,
+	[status] [varchar](max) NULL,
+	[creation] [varchar](max) NULL,
+	[modification] [varchar](max) NULL,
+	[country] [varchar](max) NULL,
+	[fullname] [varchar](max) NULL,
+	[authority] [varchar](max) NULL,
+	[shortname] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_Repco](
+	[identifier] [varchar](5) NULL,
+	[datatype] [varchar](3) NULL,
+	[code] [varchar](8) NULL,
+	[statuslink] [varchar](1) NULL,
+	[creation] [date] NOT NULL,
+	[modification] [date] NULL,
+	[grp_dtype] [varchar](3) NULL,
+	[grp_code] [varchar](6) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[EPPO_RepcoStaging](
+	[identifier] [varchar](max) NULL,
+	[datatype] [varchar](max) NULL,
+	[code] [varchar](max) NULL,
+	[statuslink] [varchar](max) NULL,
+	[creation] [varchar](max) NULL,
+	[modification] [varchar](max) NULL,
+	[grp_dtype] [varchar](max) NULL,
+	[grp_code] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[FertHandler](
+	[region] [varchar](5) NOT NULL,
+	[company_nm] [varchar](80) NOT NULL,
+	[address] [varchar](100) NOT NULL,
+	[type] [varchar](15) NOT NULL,
+	[license] [varchar](25) NOT NULL,
+	[expiry_date] [date] NOT NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[FertHandlerStaging](
+	[region] [varchar](max) NULL,
+	[company_nm] [varchar](max) NULL,
+	[address] [varchar](max) NULL,
+	[type] [varchar](max) NULL,
+	[license] [varchar](max) NULL,
+	[expiry_date] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[Import](
+	[import_id] [int] NOT NULL,
+	[import_nm] [varchar](50) NOT NULL,
+	[description] [varchar](max) NULL,
+	[new_fields] [varchar](max) NULL,
+	[dropped_fields] [varchar](max) NULL,
+	[error_count] [int] NULL,
+ CONSTRAINT [PK_Import] PRIMARY KEY CLUSTERED 
+(
+	[import_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_Import_name] UNIQUE NONCLUSTERED 
+(
+	[import_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ImportCorrections](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[action] [varchar](12) NULL,
+	[command] [varchar](50) NULL,
+	[table_nm] [varchar](50) NULL,
+	[field_nm] [varchar](50) NULL,
+	[search_clause] [varchar](700) NULL,
+	[filter_field_nm] [varchar](50) NULL,
+	[filter_op] [varchar](10) NULL,
+	[filter_clause] [varchar](250) NULL,
+	[not_clause] [varchar](500) NULL,
+	[exact_match] [bit] NULL,
+	[cs] [bit] NULL,
+	[replace_clause] [varchar](500) NULL,
+	[field2_nm] [varchar](50) NULL,
+	[field2_op] [varchar](8) NULL,
+	[field2_clause] [varchar](250) NULL,
+	[must_update] [bit] NULL,
+	[comments] [varchar](max) NULL,
+	[created] [datetime] NULL,
+	[update_cnt] [int] NULL,
+	[select_sql] [varchar](max) NULL,
+	[update_sql] [varchar](max) NULL,
+	[result_msg] [varchar](500) NULL,
+	[row_id] [int] NULL,
+	[stg_file] [varchar](100) NULL,
+ CONSTRAINT [PK_ImportCorrections] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+ALTER TABLE [dbo].[ImportCorrections] ADD  CONSTRAINT [DF_ImportCorrections_must_update]  DEFAULT ((0)) FOR [must_update]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ImportCorrectionsStaging](
+	[id] [int] NOT NULL,
+	[action] [varchar](50) NULL,
+	[command] [varchar](max) NULL,
+	[table_nm] [varchar](max) NULL,
+	[field_nm] [varchar](50) NULL,
+	[search_clause] [varchar](max) NULL,
+	[filter_field_nm] [varchar](max) NULL,
+	[filter_op] [varchar](8) NULL,
+	[filter_clause] [varchar](250) NULL,
+	[not_clause] [varchar](max) NULL,
+	[exact_match] [varchar](max) NULL,
+	[cs] [varchar](max) NULL,
+	[replace_clause] [varchar](max) NULL,
+	[field2_nm] [varchar](max) NULL,
+	[field2_op] [varchar](8) NULL,
+	[field2_clause] [varchar](max) NULL,
+	[must_update] [varchar](max) NULL,
+	[comments] [varchar](max) NULL,
+	[created]  AS (getdate())
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+ALTER TABLE [dbo].[ImportCorrectionsStaging] ADD  CONSTRAINT [DF_ImportCorrectionsStaging_must_update]  DEFAULT ((0)) FOR [must_update]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ImportErrors](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[table] [varchar](50) NOT NULL,
+	[field] [varchar](50) NOT NULL,
+	[msg] [varchar](2000) NOT NULL,
+	[cnt] [int] NOT NULL,
+ CONSTRAINT [PK_ImportErrors] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ImportState](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[import_root] [varchar](450) NULL,
+	[import_file] [varchar](150) NULL,
+	[cor_files] [varchar](500) NULL,
+	[start_stage] [int] NULL,
+	[stop_stage] [int] NULL,
+	[start_row] [int] NULL,
+	[stop_row] [int] NULL,
+	[restore_s1_s2] [bit] NULL,
+	[restore_s3_s2] [bit] NULL,
+	[log_level] [int] NULL,
+	[import_eppo] [bit] NULL,
+	[import_id] [int] NULL,
+	[file_type] [varchar](10) NULL,
+	[cor_file_cnt] [int] NULL,
+ CONSTRAINT [PK_ImportState] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[JapChemical](
+	[id] [int] NOT NULL,
+	[name] [varchar](150) NULL,
+	[type] [varchar](50) NULL,
+ CONSTRAINT [PK_JapChemList] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_JapChemList_nm] UNIQUE NONCLUSTERED 
+(
+	[name] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[MosaicVirus](
+	[Species] [varchar](60) NULL,
+	[Crops] [varchar](40) NULL,
+	[Genus] [varchar](35) NULL,
+	[Subfamily] [varchar](35) NULL,
+	[Family] [varchar](35) NULL,
+	[Order] [varchar](35) NULL,
+	[Class] [varchar](35) NULL,
+	[Subphylum] [varchar](35) NULL,
+	[Phylum] [varchar](35) NULL,
+	[Kingdom] [varchar](35) NULL,
+	[Realm] [varchar](35) NULL,
+	[Genome] [varchar](35) NULL,
+	[Vector] [varchar](35) NULL,
+	[OPPO_code] [varchar](16) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[MosaicVirusStaging](
+	[Species] [varchar](max) NULL,
+	[Crops] [varchar](max) NULL,
+	[Genus] [varchar](max) NULL,
+	[Subfamily] [varchar](max) NULL,
+	[Family] [varchar](max) NULL,
+	[Order] [varchar](max) NULL,
+	[Class] [varchar](max) NULL,
+	[Subphylum] [varchar](max) NULL,
+	[Phylum] [varchar](max) NULL,
+	[Kingdom] [varchar](max) NULL,
+	[Realm] [varchar](max) NULL,
+	[Genome] [varchar](max) NULL,
+	[Vector] [varchar](max) NULL,
+	[OPPO_code] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[Pathogen](
+	[pathogen_id] [int] IDENTITY(1,1) NOT NULL,
+	[pathogen_nm] [varchar](100) NULL,
+	[pathogenType_nm] [varchar](100) NULL,
+	[pathogenType_id] [int] NULL,
+	[subtype] [varchar](50) NULL,
+	[latin_nm] [varchar](150) NULL,
+	[alt_latin_nms] [varchar](200) NULL,
+	[alt_common_nms] [varchar](200) NULL,
+	[ph_common_nms] [varchar](50) NULL,
+	[crops] [varchar](360) NULL,
+	[taxonomy] [varchar](250) NULL,
+	[biological_cure] [varchar](600) NULL,
+	[notes] [varchar](500) NULL,
+	[urls] [varchar](500) NULL,
+	[image] [varchar](500) NULL,
+	[binomial_nm] [varchar](50) NULL,
+	[synonyms] [varchar](1500) NULL,
+ CONSTRAINT [PK_Pathogen] PRIMARY KEY CLUSTERED 
+(
+	[pathogen_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [IX_Pathogen_nm] UNIQUE NONCLUSTERED 
+(
+	[pathogen_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+ALTER TABLE [dbo].[Pathogen]  WITH NOCHECK ADD  CONSTRAINT [FK_Pathogen_PathogenType] FOREIGN KEY([pathogenType_id])
+REFERENCES [dbo].[PathogenType] ([pathogenType_id])
+
+ALTER TABLE [dbo].[Pathogen] NOCHECK CONSTRAINT [FK_Pathogen_PathogenType]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[PathogenChemical](
+	[pathogen_id] [int] NULL,
+	[chemical_id] [int] NULL,
+	[pathogenType_id] [int] NULL,
+	[pathogen_nm] [varchar](100) NULL,
+	[chemical_nm] [varchar](100) NULL,
+	[created] [datetime] NOT NULL
+) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_PathogenChemical] ON [dbo].[PathogenChemical]
+(
+	[pathogen_id] ASC,
+	[chemical_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE UNIQUE NONCLUSTERED INDEX [IX_PathogenChemical_1] ON [dbo].[PathogenChemical]
+(
+	[pathogen_nm] ASC,
+	[chemical_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_PathogenChemical_chemical] ON [dbo].[PathogenChemical]
+(
+	[chemical_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_PathogenChemical_pathogen] ON [dbo].[PathogenChemical]
+(
+	[pathogen_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+ALTER TABLE [dbo].[PathogenChemical] ADD  CONSTRAINT [DF_PathogenChemical_created]  DEFAULT (getdate()) FOR [created]
+
+ALTER TABLE [dbo].[PathogenChemical]  WITH NOCHECK ADD  CONSTRAINT [FK_PathogenChemical_Chemical] FOREIGN KEY([chemical_nm])
+REFERENCES [dbo].[Chemical] ([chemical_nm])
+
+ALTER TABLE [dbo].[PathogenChemical] CHECK CONSTRAINT [FK_PathogenChemical_Chemical]
+
+ALTER TABLE [dbo].[PathogenChemical]  WITH CHECK ADD  CONSTRAINT [FK_PathogenChemical_Pathogen] FOREIGN KEY([pathogen_nm])
+REFERENCES [dbo].[Pathogen] ([pathogen_nm])
+
+ALTER TABLE [dbo].[PathogenChemical] CHECK CONSTRAINT [FK_PathogenChemical_Pathogen]
+
+ALTER TABLE [dbo].[PathogenChemical]  WITH CHECK ADD  CONSTRAINT [FK_PathogenChemical_type] FOREIGN KEY([pathogenType_id])
+REFERENCES [dbo].[PathogenType] ([pathogenType_id])
+
+ALTER TABLE [dbo].[PathogenChemical] CHECK CONSTRAINT [FK_PathogenChemical_type]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[PathogenChemicalStaging](
+	[pathogen_nm] [varchar](200) NULL,
+	[chemical_nm] [varchar](100) NULL
+) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE NONCLUSTERED INDEX [IX_PathogenChemicalStaging_chemical_nm] ON [dbo].[PathogenChemicalStaging]
+(
+	[chemical_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+CREATE NONCLUSTERED COLUMNSTORE INDEX [UQ_PathogenChemicalStaging] ON [dbo].[PathogenChemicalStaging]
+(
+	[pathogen_nm],
+	[chemical_nm]
+)WITH (DROP_EXISTING = OFF, COMPRESSION_DELAY = 0, DATA_COMPRESSION = COLUMNSTORE) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[PathogenStaging](
+	[pathogen_nm] [varchar](50) NOT NULL,
+	[pathogenType_nm] [varchar](50) NULL,
+	[subtype] [varchar](25) NULL,
+	[latin_nm] [varchar](120) NULL,
+	[alt_latin_nms] [varchar](500) NULL,
+	[alt_common_nms] [varchar](650) NULL,
+	[ph_common_nms] [varchar](50) NULL,
+	[crops] [varchar](2000) NULL,
+	[taxonomy] [varchar](650) NULL,
+	[biological_cure] [varchar](max) NULL,
+	[notes] [varchar](3500) NULL,
+	[urls] [varchar](250) NULL,
+ CONSTRAINT [PK_PathogenStaging] PRIMARY KEY CLUSTERED 
+(
+	[pathogen_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[PathogenType](
+	[pathogenType_id] [int] IDENTITY(1,1) NOT NULL,
+	[pathogenType_nm] [varchar](50) NOT NULL,
+ CONSTRAINT [PK_PathogenType] PRIMARY KEY CLUSTERED 
+(
+	[pathogenType_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE UNIQUE NONCLUSTERED INDEX [UQ_PathogenType_nm] ON [dbo].[PathogenType]
+(
+	[pathogenType_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[PathogenTypeStaging](
+	[pathogenType_id] [int] NULL,
+	[pathogenType_nm] [varchar](50) NULL,
+ CONSTRAINT [UQ_PathogenTypeStaging] UNIQUE NONCLUSTERED 
+(
+	[pathogenType_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[PathogenWikiUrlStaging](
+	[id] [int] NOT NULL,
+	[pathogen_nm] [nvarchar](max) NULL,
+	[url] [nvarchar](max) NULL,
+	[image] [nvarchar](max) NULL,
+	[taxonomy] [nvarchar](max) NULL,
+	[binomial_nm] [nvarchar](max) NULL,
+	[synonyms] [nvarchar](max) NULL,
+	[status] [nvarchar](max) NULL,
+ CONSTRAINT [PK_PathogenWikiUrlStaging] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[PestHandler](
+	[id] [int] NOT NULL,
+	[region] [varchar](50) NOT NULL,
+	[province] [varchar](50) NOT NULL,
+	[city] [varchar](50) NOT NULL,
+	[address] [varchar](250) NOT NULL,
+	[company_nm] [varchar](50) NOT NULL,
+	[owner] [varchar](50) NULL,
+	[activity] [varchar](50) NOT NULL,
+	[type] [varchar](50) NOT NULL,
+	[license_app_ty] [varchar](50) NOT NULL,
+	[expiry] [date] NOT NULL,
+	[license_num] [varchar](50) NOT NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[PestHandlerStaging](
+	[id] [int] NULL,
+	[region] [varchar](50) NULL,
+	[province] [varchar](50) NULL,
+	[city] [varchar](50) NULL,
+	[address] [varchar](250) NULL,
+	[company_nm] [varchar](50) NULL,
+	[owner] [varchar](50) NULL,
+	[activity] [varchar](50) NULL,
+	[type] [varchar](50) NULL,
+	[license_app_ty] [varchar](50) NULL,
+	[expiry] [varchar](50) NULL,
+	[license_num] [varchar](50) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[PreCautionaryStatement](
+	[Code] [varchar](50) NOT NULL,
+	[Lang_nm] [varchar](10) NULL,
+	[Lang_code] [varchar](2) NULL,
+	[Phrase] [varchar](250) NULL,
+ CONSTRAINT [PK_PreCautionaryStatement] PRIMARY KEY CLUSTERED 
+(
+	[Code] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[Product](
+	[product_id] [int] IDENTITY(1,1) NOT NULL,
+	[product_nm] [varchar](50) NOT NULL,
+ CONSTRAINT [PK_Product] PRIMARY KEY CLUSTERED 
+(
+	[product_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_Product_nm] UNIQUE NONCLUSTERED 
+(
+	[product_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ProductCompany](
+	[product_id] [int] NOT NULL,
+	[company_id] [int] NOT NULL,
+	[product_nm] [varchar](50) NULL,
+	[company_nm] [varchar](100) NULL,
+ CONSTRAINT [PK_ProductCompany] PRIMARY KEY CLUSTERED 
+(
+	[product_id] ASC,
+	[company_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+ALTER TABLE [dbo].[ProductCompany]  WITH CHECK ADD  CONSTRAINT [FK_ProductCompany_company] FOREIGN KEY([company_id])
+REFERENCES [dbo].[Company] ([company_id])
+
+ALTER TABLE [dbo].[ProductCompany] CHECK CONSTRAINT [FK_ProductCompany_company]
+
+ALTER TABLE [dbo].[ProductCompany]  WITH CHECK ADD  CONSTRAINT [FK_ProductCompany_product] FOREIGN KEY([product_id])
+REFERENCES [dbo].[Product] ([product_id])
+
+ALTER TABLE [dbo].[ProductCompany] CHECK CONSTRAINT [FK_ProductCompany_product]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ProductCompanyStaging](
+	[product_nm] [varchar](50) NULL,
+	[company_nm] [varchar](100) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ProductStaging](
+	[product_nm] [varchar](50) NOT NULL,
+ CONSTRAINT [PK_ProductStaging] PRIMARY KEY CLUSTERED 
+(
+	[product_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ProductUse](
+	[product_id] [int] NOT NULL,
+	[use_id] [int] NOT NULL,
+	[product_nm] [varchar](50) NULL,
+	[use_nm] [varchar](50) NULL,
+	[created]  AS (getdate()),
+ CONSTRAINT [PK_ProductUse] PRIMARY KEY CLUSTERED 
+(
+	[product_id] ASC,
+	[use_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_ProductUse_product_id] ON [dbo].[ProductUse]
+(
+	[product_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE NONCLUSTERED INDEX [IX_ProductUse_product_nm] ON [dbo].[ProductUse]
+(
+	[product_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_ProductUse_type_id] ON [dbo].[ProductUse]
+(
+	[use_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE NONCLUSTERED INDEX [IX_ProductUse_usr_nm] ON [dbo].[ProductUse]
+(
+	[use_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+ALTER TABLE [dbo].[ProductUse]  WITH CHECK ADD  CONSTRAINT [FK_ProductUse_Product] FOREIGN KEY([product_id])
+REFERENCES [dbo].[Product] ([product_id])
+
+ALTER TABLE [dbo].[ProductUse] CHECK CONSTRAINT [FK_ProductUse_Product]
+
+ALTER TABLE [dbo].[ProductUse]  WITH CHECK ADD  CONSTRAINT [FK_ProductUse_Use] FOREIGN KEY([use_id])
+REFERENCES [dbo].[Use] ([use_id])
+
+ALTER TABLE [dbo].[ProductUse] CHECK CONSTRAINT [FK_ProductUse_Use]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ProductUseStaging](
+	[product_nm] [varchar](50) NULL,
+	[use_nm] [varchar](50) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[ReqUnusedRtns](
+	[schema_nm] [varchar](32) NOT NULL,
+	[rtn_nm] [varchar](50) NOT NULL,
+	[ty_code] [varchar](2) NOT NULL,
+	[ordinal] [int] NOT NULL,
+	[reason] [varchar](100) NULL,
+ CONSTRAINT [IX_ReqUnusedRtns] UNIQUE NONCLUSTERED 
+(
+	[rtn_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[S2UpdateLog](
+	[_id] [int] IDENTITY(1,1) NOT NULL,
+	[fixup_id] [int] NULL,
+	[id] [int] NULL,
+	[old_pathogens] [varchar](400) NULL,
+	[new_pathogens] [varchar](400) NULL,
+	[old_crops] [varchar](400) NULL,
+	[new_crops] [varchar](400) NULL,
+	[old_entry_mode] [varchar](100) NULL,
+	[new_entry_mode] [varchar](100) NULL,
+	[old_chemical] [varchar](100) NULL,
+	[new_chemical] [varchar](100) NULL,
+ CONSTRAINT [PK_S2UpdateLog] PRIMARY KEY CLUSTERED 
+(
+	[_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_S2UpdateLog_fixup_id] ON [dbo].[S2UpdateLog]
+(
+	[fixup_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_S2UpdateLog_s2] ON [dbo].[S2UpdateLog]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[S2UpdateSummary](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[fixup_row_id] [int] NULL,
+	[imp_file_nm] [varchar](255) NULL,
+	[xl_row] [int] NULL,
+	[row_cnt] [int] NULL,
+	[search_clause] [varchar](255) NULL,
+	[replace_clause] [varchar](255) NULL,
+ CONSTRAINT [PK_S2UpdateSummary] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_S2UpdateSummary_fixup] ON [dbo].[S2UpdateSummary]
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+CREATE NONCLUSTERED INDEX [IX_S2UpdateSummary_rows] ON [dbo].[S2UpdateSummary]
+(
+	[row_cnt] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[staging1](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[company] [varchar](500) NULL,
+	[ingredient] [varchar](500) NULL,
+	[product] [varchar](200) NULL,
+	[concentration] [varchar](200) NULL,
+	[formulation_type] [varchar](20) NULL,
+	[uses] [varchar](200) NULL,
+	[toxicity_category] [varchar](200) NULL,
+	[registration] [varchar](100) NULL,
+	[expiry] [varchar](200) NULL,
+	[entry_mode] [varchar](200) NULL,
+	[crops] [varchar](500) NULL,
+	[pathogens] [varchar](1000) NULL,
+	[rate] [varchar](200) NULL,
+	[mrl] [varchar](200) NULL,
+	[phi] [varchar](200) NULL,
+	[phi_resolved] [varchar](120) NULL,
+	[reentry_period] [varchar](250) NULL,
+	[notes] [varchar](250) NULL,
+	[comments] [varchar](500) NULL,
+	[created] [datetime] NULL,
+ CONSTRAINT [PK_staging1] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[staging1_bak](
+	[id] [int] NOT NULL,
+	[company] [varchar](max) NULL,
+	[ingredient] [varchar](max) NULL,
+	[product] [varchar](max) NULL,
+	[concentration] [varchar](max) NULL,
+	[formulation_type] [varchar](max) NULL,
+	[uses] [varchar](max) NULL,
+	[toxicity_category] [varchar](max) NULL,
+	[registration] [varchar](max) NULL,
+	[expiry] [varchar](max) NULL,
+	[entry_mode] [varchar](max) NULL,
+	[crops] [varchar](max) NULL,
+	[pathogens] [varchar](max) NULL,
+	[rate] [varchar](200) NULL,
+	[mrl] [varchar](200) NULL,
+	[phi] [varchar](200) NULL,
+	[reentry_period] [varchar](250) NULL,
+	[notes] [varchar](250) NULL,
+ CONSTRAINT [PK_staging1_bak] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[staging2](
+	[id] [int] NOT NULL,
+	[company] [varchar](70) NULL,
+	[ingredient] [varchar](250) NULL,
+	[product] [varchar](100) NULL,
+	[concentration] [varchar](100) NULL,
+	[formulation_type] [varchar](7) NULL,
+	[uses] [varchar](100) NULL,
+	[toxicity_category] [int] NULL,
+	[registration] [varchar](65) NULL,
+	[expiry] [varchar](30) NULL,
+	[entry_mode] [varchar](60) NULL,
+	[crops] [varchar](250) NULL,
+	[pathogens] [varchar](360) NULL,
+	[rate] [varchar](200) NULL,
+	[mrl] [varchar](200) NULL,
+	[phi] [varchar](200) NULL,
+	[phi_resolved] [varchar](120) NULL,
+	[reentry_period] [varchar](250) NULL,
+	[notes] [varchar](250) NULL,
+	[comments] [varchar](500) NULL,
+	[created] [datetime] NULL,
+ CONSTRAINT [PK_staging2] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE NONCLUSTERED INDEX [IX_s1_tst_221018_chemical] ON [dbo].[staging2]
+(
+	[ingredient] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE NONCLUSTERED INDEX [IX_s1_tst_221018_crops] ON [dbo].[staging2]
+(
+	[crops] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE NONCLUSTERED INDEX [IX_ss1_tst_221018_pathogens] ON [dbo].[staging2]
+(
+	[pathogens] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE NONCLUSTERED INDEX [IX_staging2_chemical] ON [dbo].[staging2]
+(
+	[ingredient] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE NONCLUSTERED INDEX [IX_staging2_crops] ON [dbo].[staging2]
+(
+	[crops] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE NONCLUSTERED INDEX [IX_staging2_pathogens] ON [dbo].[staging2]
+(
+	[pathogens] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+ALTER TABLE [dbo].[staging2]  WITH CHECK ADD  CONSTRAINT [FK_staging2_staging1] FOREIGN KEY([id])
+REFERENCES [dbo].[staging1] ([id])
+
+ALTER TABLE [dbo].[staging2] CHECK CONSTRAINT [FK_staging2_staging1]
+
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+-- =========================================================
+-- Author:      Terry Watts
+-- Create date: 30-JAN-2024
+-- Description: debug aid - stores the current
+--  corrections table fixup id stored  the session context
+--  in S2UpdateLog
+--  and inserts a summary row in the S2UpdateSummary table
+-- It watches for changes in crops, entry_mode, pathogens
+-- =========================================================
+CREATE TRIGGER [dbo].[sp_Staging2_update_trigger]
+ON [dbo].[staging2] AFTER UPDATE
+AS
+BEGIN
+
+   DECLARE
+       @inserted staging2_tbl
+      ,@deleted  staging2_tbl
+
+   INSERT INTO @inserted SELECT * FROM inserted;
+   INSERT INTO @deleted  SELECT * FROM deleted;
+   EXEC sp_update_trigger_s2_crops @inserted, @deleted
+
+   RETURN;
+END
+/*
+   SET NOCOUNT ON;
+   DECLARE
+    @fn               VARCHAR(35) = N'S2_UPDATE_TRIGGER'
+   ,@fixup_row_id     INT       -- xl row id
+   ,@imp_file_nm      VARCHAR(400)
+   ,@msg              VARCHAR(200)
+   ,@nl               VARCHAR(2) = CHAR(13) + CHAR(10)
+   ,@new_crops        VARCHAR(200)
+   ,@old_crops        VARCHAR(200)
+   ,@replace_clause   VARCHAR(200)
+   ,@row_cnt          INT
+   ,@search_clause    VARCHAR(200)
+   ,@xl_row           INT       -- xl row id
+
+   SELECT @row_cnt = COUNT(*) FROM inserted;
+
+   SET @fixup_row_id   = dbo.fnGetCtxFixupRowId();
+   SET @search_clause  = dbo.fnGetCtxFixupSrchCls();
+   SET @replace_clause = dbo.fnGetCtxFixupRepCls();
+   SET @xl_row         = dbo.fnGetCtxFixupStgId();
+   SET @imp_file_nm    = dbo.fnGetCtxFixupFile()
+   EXEC sp_log 1, @fn, '000: starting @fixup_row_id: ',@fixup_row_id, ', @imp_file_nm: [',@imp_file_nm, '], @fixup_stg_id: ', @xl_row, ', @search_clause: [',@search_clause,']';
+
+   ---------------------------------------------------------------------------------------
+   -- Log update summary
+   ---------------------------------------------------------------------------------------
+   INSERT INTO S2UpdateSummary 
+          (fixup_row_id, xl_row, row_cnt, search_clause, replace_clause, imp_file_nm)
+   SELECT @fixup_row_id,@xl_row,@row_cnt,@search_clause,@replace_clause,@imp_file_nm;
+
+   EXEC sp_log 1, @fn, '010: @fixup_row_id: ',@fixup_row_id;
+
+   ---------------------------------------------------------------------------------------
+   -- Log update details
+   ---------------------------------------------------------------------------------------
+   INSERT INTO S2UpdateLog (fixup_id, id, old_pathogens, new_pathogens, old_crops, new_crops, old_entry_mode, new_entry_mode, old_chemical, new_chemical)
+   SELECT @fixup_row_id, d.id, d.pathogens, i.pathogens,d.crops, i.crops,d.entry_mode, i.entry_mode,d.ingredient,i.ingredient
+   FROM deleted d JOIN inserted i ON d.id=i.id
+   WHERE d.pathogens <> i.pathogens OR d.crops<> i.crops OR d.entry_mode <> i.entry_mode;
+
+   -- Once inserted in to the log tables run invariant chks
+   IF @imp_file_nm LIKE '%Crops%'
+   BEGIN
+      IF EXISTS 
+      (
+         SELECT 1 FROM inserted i JOIN deleted d ON i.id = d.id
+         WHERE i.crops LIKE '%Green beansbeans%' AND d.crops NOT LIKE '%Green beansbeans%'
+      )
+--      OR (crops LIKE '%Lettuce and otherCrucifers%'))
+      BEGIN
+         SELECT @imp_file_nm AS [file], @fixup_row_id AS fixup_row, @xl_row, i.id
+         ,i.entry_mode AS i_entry_mode, d.entry_mode AS d_entry_mode
+         ,i.crops AS i_crops, d.crops AS d_crops
+         FROM inserted i JOIN deleted d ON i.id = d.id
+         ;
+
+         SELECT TOP  1
+          @new_crops = i.crops
+         ,@old_crops = d.crops
+         FROM inserted i JOIN deleted d ON i.id = d.id
+         ;
+
+         SET @msg = CONCAT(
+          'update error'                         , @nl
+         ,'file:          ' ,@imp_file_nm        , @nl
+         ,'row:           ' ,@xl_row             , @nl
+         ,'search_clause  [',@search_clause, ']' , @nl
+         ,'replace_clause:[',@replace_clause,']' , @nl
+         ,'new crops:     [',@new_crops,']'      , @nl
+         ,'old crops:     [',@old_crops,']'      , @nl
+         );
+
+         EXEC sp_log 4, @fn, '020: ',@msg;
+         EXEC sp_raise_exception 53152, @msg, @fn=@fn;
+      END
+   END
+END
+*/
+/*
+PRINT Ut.dbo.fnGetSessionContextAsInt(N'COR_LOG_FLG');
+*/
+
+ALTER TABLE [dbo].[staging2] DISABLE TRIGGER [sp_Staging2_update_trigger]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[staging3](
+	[id] [int] NOT NULL,
+	[company] [varchar](60) NULL,
+	[ingredient] [varchar](100) NULL,
+	[product] [varchar](50) NULL,
+	[concentration] [varchar](50) NULL,
+	[formulation_type] [varchar](50) NULL,
+	[uses] [varchar](50) NULL,
+	[toxicity_category] [varchar](50) NULL,
+	[registration] [varchar](100) NULL,
+	[expiry] [varchar](100) NULL,
+	[entry_mode] [varchar](60) NULL,
+	[crops] [varchar](200) NULL,
+	[pathogens] [varchar](200) NULL,
+	[rate] [varchar](200) NULL,
+	[mrl] [varchar](200) NULL,
+	[phi] [varchar](200) NULL,
+	[phi_resolved] [varchar](120) NULL,
+	[reentry_period] [varchar](250) NULL,
+	[notes] [varchar](250) NULL,
+	[comments] [varchar](500) NULL,
+	[created] [datetime] NULL,
+ CONSTRAINT [PK_staging3] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+EXEC sys.sp_addextendedproperty @name=N'MS_Description', @value=N'resolved to days' , @level0type=N'SCHEMA',@level0name=N'dbo', @level1type=N'TABLE',@level1name=N'staging3', @level2type=N'COLUMN',@level2name=N'phi_resolved'
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[staging4](
+	[id] [int] NOT NULL,
+	[company] [varchar](500) NULL,
+	[ingredient] [varchar](500) NULL,
+	[product] [varchar](200) NULL,
+	[concentration] [varchar](200) NULL,
+	[formulation_type] [varchar](20) NULL,
+	[uses] [varchar](200) NULL,
+	[toxicity_category] [varchar](200) NULL,
+	[registration] [varchar](100) NULL,
+	[expiry] [varchar](200) NULL,
+	[entry_mode] [varchar](200) NULL,
+	[crops] [varchar](500) NULL,
+	[pathogens] [varchar](1000) NULL,
+	[rate] [varchar](200) NULL,
+	[mrl] [varchar](200) NULL,
+	[phi] [varchar](200) NULL,
+	[phi_resolved] [varchar](200) NULL,
+	[reentry_period] [varchar](250) NULL,
+	[notes] [varchar](250) NULL,
+	[comments] [varchar](500) NULL,
+	[created] [datetime] NULL,
+ CONSTRAINT [PK_staging4] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[TableDef](
+	[table_id] [int] NOT NULL,
+	[table_nm] [varchar](50) NOT NULL,
+	[table_type] [varchar](50) NULL,
+	[sub_type] [varchar](50) NULL,
+	[non_null_flds] [varchar](500) NULL,
+ CONSTRAINT [PK_TableDef] PRIMARY KEY CLUSTERED 
+(
+	[table_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[TableType](
+	[id] [float] NOT NULL,
+	[name] [varchar](35) NULL,
+	[desc] [varchar](100) NULL,
+ CONSTRAINT [PK_TableType] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+SET ANSI_PADDING ON
+
+CREATE UNIQUE NONCLUSTERED INDEX [IX_TableType_nm] ON [dbo].[TableType]
+(
+	[name] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, SORT_IN_TEMPDB = OFF, IGNORE_DUP_KEY = OFF, DROP_EXISTING = OFF, ONLINE = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[temp](
+	[F1] [nvarchar](255) NULL,
+	[F2] [nvarchar](255) NULL,
+	[F3] [nvarchar](255) NULL,
+	[F4] [nvarchar](255) NULL,
+	[F5] [nvarchar](255) NULL,
+	[F6] [nvarchar](255) NULL,
+	[F7] [nvarchar](255) NULL,
+	[F8] [nvarchar](255) NULL,
+	[F9] [nvarchar](255) NULL,
+	[F10] [nvarchar](255) NULL,
+	[F11] [nvarchar](255) NULL,
+	[F12] [nvarchar](255) NULL,
+	[F13] [nvarchar](255) NULL,
+	[F14] [nvarchar](255) NULL,
+	[F15] [nvarchar](255) NULL,
+	[F16] [nvarchar](255) NULL,
+	[F17] [nvarchar](255) NULL,
+	[F18] [nvarchar](255) NULL,
+	[F19] [nvarchar](255) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[temp2](
+	[F1] [nvarchar](255) NULL,
+	[F2] [nvarchar](255) NULL,
+	[F3] [nvarchar](255) NULL,
+	[F4] [nvarchar](255) NULL,
+	[F5] [nvarchar](255) NULL,
+	[F6] [nvarchar](255) NULL,
+	[F7] [nvarchar](255) NULL,
+	[F8] [nvarchar](255) NULL,
+	[F9] [nvarchar](255) NULL,
+	[F10] [nvarchar](255) NULL,
+	[F11] [nvarchar](255) NULL,
+	[F12] [nvarchar](255) NULL,
+	[F13] [nvarchar](255) NULL,
+	[F14] [nvarchar](255) NULL,
+	[F15] [nvarchar](255) NULL,
+	[F16] [nvarchar](255) NULL,
+	[F17] [nvarchar](255) NULL,
+	[F18] [nvarchar](255) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[tmp](
+	[F1] [nvarchar](255) NULL,
+	[F2] [nvarchar](255) NULL,
+	[F3] [nvarchar](255) NULL,
+	[F4] [nvarchar](255) NULL,
+	[F5] [nvarchar](255) NULL,
+	[F6] [nvarchar](255) NULL,
+	[F7] [nvarchar](255) NULL,
+	[F8] [nvarchar](255) NULL,
+	[F9] [nvarchar](255) NULL,
+	[F10] [nvarchar](255) NULL,
+	[F11] [nvarchar](255) NULL,
+	[F12] [nvarchar](255) NULL,
+	[F13] [nvarchar](255) NULL,
+	[F14] [nvarchar](255) NULL,
+	[F15] [nvarchar](255) NULL,
+	[F16] [nvarchar](255) NULL,
+	[F17] [nvarchar](255) NULL,
+	[F18] [nvarchar](255) NULL,
+	[F19] [nvarchar](255) NULL,
+	[F20] [nvarchar](255) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[Type](
+	[type_id] [int] IDENTITY(1,1) NOT NULL,
+	[type_nm] [varchar](50) NOT NULL,
+ CONSTRAINT [PK_Type] PRIMARY KEY CLUSTERED 
+(
+	[type_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_Type] UNIQUE NONCLUSTERED 
+(
+	[type_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[TypeStaging](
+	[type_id] [int] NULL,
+	[type_nm] [varchar](50) NULL,
+ CONSTRAINT [UQ_TypeStaging] UNIQUE NONCLUSTERED 
+(
+	[type_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[UnregisteredItem](
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[unreg_item] [varchar](500) NULL,
+	[table] [varchar](20) NULL,
+ CONSTRAINT [PK_UnregisteredItem] PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[Use](
+	[use_id] [int] NOT NULL,
+	[use_nm] [varchar](50) NOT NULL,
+ CONSTRAINT [PK_Use] PRIMARY KEY CLUSTERED 
+(
+	[use_id] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY],
+ CONSTRAINT [UQ_Use_nm] UNIQUE NONCLUSTERED 
+(
+	[use_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[UseStaging](
+	[use_id] [int] NULL,
+	[use_nm] [varchar](50) NULL,
+ CONSTRAINT [UQ_UseStaging_nm] UNIQUE NONCLUSTERED 
+(
+	[use_nm] ASC
+)WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[Warehouse](
+	[region] [varchar](50) NOT NULL,
+	[company_nm] [varchar](50) NOT NULL,
+	[warehouse_nm] [varchar](50) NOT NULL,
+	[address] [varchar](250) NOT NULL,
+	[type] [varchar](50) NOT NULL,
+	[expiry] [date] NOT NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+CREATE TABLE [dbo].[WarehouseStaging](
+	[region] [varchar](50) NULL,
+	[company_nm] [varchar](50) NULL,
+	[warehouse_nm] [varchar](50) NULL,
+	[address] [varchar](250) NULL,
+	[type] [varchar](50) NULL,
+	[expiry] [varchar](50) NULL
+) ON [PRIMARY]
+
+GO
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
 -- =============================================
 -- Function SC: <fn_nm>
 -- Description: 
@@ -112,7 +2547,7 @@ GO
 -- Author:      
 -- Create date: 
 -- =============================================
-ALTER FUNCTION [dbo].[FkExists](@fk VARCHAR(128))
+CREATE FUNCTION [dbo].[FkExists](@fk VARCHAR(128))
 RETURNS BIT
 AS
 BEGIN
@@ -129,6 +2564,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =====================================================
 -- Author:      Terry Watts
 -- Create date: 06-JUL-2023
@@ -138,7 +2574,7 @@ GO
 -- Changes:
 -- 241206: changed name from fnInitialCap to fnCamelCase
 -- =====================================================
-ALTER FUNCTION [dbo].[fnCamelCase]( @s VARCHAR(MAX))
+CREATE FUNCTION [dbo].[fnCamelCase]( @s VARCHAR(MAX))
   RETURNS VARCHAR(MAX)
 AS
 BEGIN 
@@ -164,6 +2600,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===========================================
 -- Author:      Terry Watts
 -- Create date: 18-DEC-2019
@@ -178,7 +2615,7 @@ GO
 -- POST01: if both NOT NULL AND a = b  1
 -- POST01: if both NOT NULL AND a<>b   0
 -- ===========================================
-ALTER   FUNCTION [dbo].[fnCaseSensistiveCompare]
+CREATE   FUNCTION [dbo].[fnCaseSensistiveCompare]
 (
     @a  VARCHAR(MAX)
    ,@b  VARCHAR(MAX)
@@ -242,6 +2679,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =========================================================
 -- Author:      Terry Watts
 -- Create date: 05-JAN-2021
@@ -249,7 +2687,7 @@ GO
 --              approx equal check for floating point types
 -- Returns 1 if equal, 0 otherwise
 -- =========================================================
-ALTER   FUNCTION [dbo].[fnChkEquals]( @a SQL_VARIANT, @b SQL_VARIANT)
+CREATE   FUNCTION [dbo].[fnChkEquals]( @a SQL_VARIANT, @b SQL_VARIANT)
 RETURNS BIT
 AS
 BEGIN
@@ -366,6 +2804,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 09-MAY-2020
@@ -378,7 +2817,7 @@ GO
 --
 -- Tests: test.test_029_fnChkRtnExists
 -- ============================================================================================================================
-ALTER   FUNCTION [dbo].[fnChkRtnExists]
+CREATE   FUNCTION [dbo].[fnChkRtnExists]
 (
     @qrn VARCHAR(120)
 )
@@ -414,6 +2853,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =================================================================
 -- Author:      Terry Watts
 -- Create date: 04-JAN-2021
@@ -422,7 +2862,7 @@ GO
 --              0 if a = b with the signifcance of epsilon 
 --             -1 if a significantly less than b within +/- Epsilon, 0 otherwise
 -- =================================================================
-ALTER   FUNCTION [dbo].[fnCompareFloats](@a FLOAT(24), @b FLOAT(24))
+CREATE   FUNCTION [dbo].[fnCompareFloats](@a FLOAT(24), @b FLOAT(24))
 RETURNS INT
 AS
 BEGIN
@@ -440,6 +2880,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================================================================
 -- Author:      Terry Watts
 -- Create date: 04-JAN-2021
@@ -449,7 +2890,7 @@ GO
 --             -1 if a significantly less than b within +/- Epsilon, 0 otherwise
 -- DROP FUNCTION [dbo].[fnCompareFloats2]
 -- =============================================================================================
-ALTER   FUNCTION [dbo].[fnCompareFloats2](@a FLOAT(24), @b FLOAT(24), @epsilon FLOAT(24) = 0.00001)
+CREATE   FUNCTION [dbo].[fnCompareFloats2](@a FLOAT(24), @b FLOAT(24), @epsilon FLOAT(24) = 0.00001)
 RETURNS INT
 AS
 BEGIN
@@ -491,6 +2932,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==========================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-FEB-2021
@@ -501,7 +2943,7 @@ GO
 --
 -- RETURNS: 1 if string contains whitspace, 0 otherwise
 -- ==========================================================================================
-ALTER   FUNCTION [dbo].[fnContainsWhitespace]( @s VARCHAR(4000))
+CREATE   FUNCTION [dbo].[fnContainsWhitespace]( @s VARCHAR(4000))
 RETURNS BIT
 AS
 BEGIN
@@ -531,6 +2973,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==================================================================================================
 -- Author:      Terry Watts
 -- Create date: 10-DEC-2024
@@ -546,7 +2989,7 @@ GO
 -- Postconditions: output valid SQL body part to find the unregistered
 --                 items for valid inoputs parameters
 -- ==================================================================================================
-ALTER FUNCTION [dbo].[fnCrtFndUnregisterdItemsSql]
+CREATE FUNCTION [dbo].[fnCrtFndUnregisterdItemsSql]
 (
     @is_multi_value  BIT
    ,@stg_field_nm    NVARCHAR(40)
@@ -620,6 +3063,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================================================================================
 -- Author:      Terry Watts
 -- Create date: 25-FEB-2024
@@ -628,7 +3072,7 @@ GO
 -- Changes:
 -- 08-MAR-2024: increased @spreadsheet_file parameter len from 60 to 500 as the file path was being truncated
 -- =============================================================================================================
-ALTER   FUNCTION [dbo].[fnCrtOpenRowsetSqlForXlsx]
+CREATE   FUNCTION [dbo].[fnCrtOpenRowsetSqlForXlsx]
 (
     @table              VARCHAR(60)
    ,@fields             VARCHAR(MAX)  -- comma sep field string
@@ -679,6 +3123,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 08-JUL-2023
@@ -687,7 +3132,7 @@ GO
 -- CHANGES: 231006:fixed issue with field name convention change:
 --   Staging 1 id field nme is 'id' Staging 2 id is 'id'
 -- ===============================================================
-ALTER FUNCTION [dbo].[fnCrtSqlForListOccurences]
+CREATE FUNCTION [dbo].[fnCrtSqlForListOccurences]
 (
     @table           NVARCHAR(100)
    ,@field           NVARCHAR(100)
@@ -732,12 +3177,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =====================================================================
 -- Author:      Terry Watts
 -- Create date: 13-NOV-2024
 -- Description: Creates the sql t create a table from an existing table
 -- =====================================================================
-ALTER FUNCTION [dbo].[fnCrtTblSqlFrmTbl]
+CREATE FUNCTION [dbo].[fnCrtTblSqlFrmTbl]
 (
    @qrn VARCHAR(80)
 )
@@ -806,6 +3252,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =================================================
 -- Author:      Terry Watts
 -- Create date: 24-NOV-2023
@@ -821,7 +3268,7 @@ GO
 --
 -- Tests:
 -- =============================================
-ALTER   FUNCTION [dbo].[fnDeSquareBracket](@s VARCHAR(4000))
+CREATE   FUNCTION [dbo].[fnDeSquareBracket](@s VARCHAR(4000))
 RETURNS VARCHAR(4000)
 AS
 BEGIN
@@ -839,13 +3286,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =================================================================
 -- Author:      Terry Watts
 -- Create date: 27-NOV-2024
 -- Description: returns rex for multiple search special characters
 -- Returns the input replaces using the replace cls upto ndx chars
 -- ================================================================
-ALTER   FUNCTION [dbo].[fnEscapeMultiple]( @search_clause VARCHAR(MAX), @ndx int, @depth INT)
+CREATE   FUNCTION [dbo].[fnEscapeMultiple]( @search_clause VARCHAR(MAX), @ndx int, @depth INT)
 RETURNS VARCHAR(MAX)
 AS
 BEGIN
@@ -915,12 +3363,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===============================================================
 -- Author:      Terry watts
 -- Create date: 30-MAR-2020
 -- Description: returns true if the file exists, false otherwise
 -- ===============================================================
-ALTER FUNCTION [dbo].[fnFileExists](@path varchar(512))
+CREATE FUNCTION [dbo].[fnFileExists](@path varchar(512))
 RETURNS BIT
 AS
 BEGIN
@@ -935,12 +3384,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2024
 -- Description: returns the fixed up range
 -- =============================================
-ALTER FUNCTION [dbo].[fnFixupXlRange](@range VARCHAR(100))
+CREATE FUNCTION [dbo].[fnFixupXlRange](@range VARCHAR(100))
 RETURNS VARCHAR(100)
 AS
 BEGIN
@@ -975,13 +3425,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ========================================================================================
 -- Author:      Terry Watts
 -- Create date: 09-JUL-2023
 -- Description: returns the collation string for case sensitive or insensitve searches
 --    0 = case insensitive, 1 = case sensitive
 -- ========================================================================================
-ALTER   FUNCTION [dbo].[fnGetCollation]( @case_sensitive BIT)
+CREATE   FUNCTION [dbo].[fnGetCollation]( @case_sensitive BIT)
 RETURNS VARCHAR(60)
 AS
 BEGIN
@@ -996,13 +3447,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 19-AUG-2023
 -- Description: returns the cor_id value used in the Staging2 update trigger
 --    to determine if need a new entry in the correction log
 -- ==============================================================================
-ALTER   FUNCTION [dbo].[fnGetCtxCorId]()
+CREATE   FUNCTION [dbo].[fnGetCtxCorId]()
 RETURNS VARCHAR(30)
 AS
 BEGIN
@@ -1020,12 +3472,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==============================================================
 -- Author:      Terry Watts
 -- Create date: 06-JAN-2025
 -- Description: returns the file row id for the current s2 fixup
 -- ==============================================================
-ALTER FUNCTION [dbo].[fnGetCtxFixupFile]()
+CREATE FUNCTION [dbo].[fnGetCtxFixupFile]()
 RETURNS NVARCHAR(500)
 AS
 BEGIN
@@ -1038,12 +3491,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==================================================================
 -- Author:      Terry Watts
 -- Create date: 06-JAN-2025
 -- Description: returns the file row id key for the current s2 fixup
 -- ==================================================================
-ALTER FUNCTION [dbo].[fnGetCtxFixupFileKey]()
+CREATE FUNCTION [dbo].[fnGetCtxFixupFileKey]()
 RETURNS NVARCHAR(60)
 AS
 BEGIN
@@ -1056,12 +3510,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =========================================================
 -- Author:      Terry Watts
 -- ALTER date: 06-JAN-2025
 -- Description: returns the current s2 fixup search clause
 -- =========================================================
-ALTER FUNCTION [dbo].[fnGetCtxFixupRepCls]()
+CREATE FUNCTION [dbo].[fnGetCtxFixupRepCls]()
 RETURNS NVARCHAR(500)
 AS
 BEGIN
@@ -1074,12 +3529,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ============================================================
 -- Author:      Terry Watts
 -- ALTER date: 06-JAN-2025
 -- Description: returns the current s2 fixup search clause key
 -- ============================================================
-ALTER FUNCTION [dbo].[fnGetCtxFixupRepClsKey]()
+CREATE FUNCTION [dbo].[fnGetCtxFixupRepClsKey]()
 RETURNS NVARCHAR(60)
 AS
 BEGIN
@@ -1092,12 +3548,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===========================================================================================
 -- Author:      Terry Watts
 -- Create date: 06-JAN-2025
 -- Description: returns the rtn log level key for the given UQ rtn name in the session context
 -- ===========================================================================================
-ALTER FUNCTION [dbo].[fnGetCtxFixupRowId]()
+CREATE FUNCTION [dbo].[fnGetCtxFixupRowId]()
 RETURNS INT
 AS
 BEGIN
@@ -1110,12 +3567,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===========================================================================================
 -- Author:      Terry Watts
 -- Create date: 06-JAN-2025
 -- Description: returns the rtn log level key for the given UQ rtn name in the session context
 -- ===========================================================================================
-ALTER FUNCTION [dbo].[fnGetCtxFixupRowIdKey]()
+CREATE FUNCTION [dbo].[fnGetCtxFixupRowIdKey]()
 RETURNS NVARCHAR(60)
 AS
 BEGIN
@@ -1128,12 +3586,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =========================================================
 -- Author:      Terry Watts
 -- Create date: 06-JAN-2025
 -- Description: returns the current s2 fixup search clause
 -- =========================================================
-ALTER FUNCTION [dbo].[fnGetCtxFixupSrchCls]()
+CREATE FUNCTION [dbo].[fnGetCtxFixupSrchCls]()
 RETURNS NVARCHAR(500)
 AS
 BEGIN
@@ -1146,12 +3605,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ============================================================
 -- Author:      Terry Watts
 -- Create date: 06-JAN-2025
 -- Description: returns the current s2 fixup search clause key
 -- ============================================================
-ALTER FUNCTION [dbo].[fnGetCtxFixupSrchClsKey]()
+CREATE FUNCTION [dbo].[fnGetCtxFixupSrchClsKey]()
 RETURNS NVARCHAR(60)
 AS
 BEGIN
@@ -1164,12 +3624,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==============================================================
 -- Author:      Terry Watts
 -- Create date: 06-JAN-2025
 -- Description: returns the file row id for the current s2 fixup
 -- ==============================================================
-ALTER FUNCTION [dbo].[fnGetCtxFixupStgId]()
+CREATE FUNCTION [dbo].[fnGetCtxFixupStgId]()
 RETURNS INT
 AS
 BEGIN
@@ -1182,12 +3643,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==================================================================
 -- Author:      Terry Watts
 -- Create date: 06-JAN-2025
 -- Description: returns the file row id key for the current s2 fixup
 -- ==================================================================
-ALTER FUNCTION [dbo].[fnGetCtxFixupStgIdKey]()
+CREATE FUNCTION [dbo].[fnGetCtxFixupStgIdKey]()
 RETURNS NVARCHAR(60)
 AS
 BEGIN
@@ -1200,6 +3662,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =====================================================
 -- Author:      Terry Watts
 -- Create date: 24-DEC-2024
@@ -1207,7 +3670,7 @@ GO
 --
 -- Changes:
 -- =====================================================
-ALTER FUNCTION [dbo].[fnGetCtxLogToFile]()
+CREATE FUNCTION [dbo].[fnGetCtxLogToFile]()
   RETURNS BIT
 AS
 BEGIN 
@@ -1225,6 +3688,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =================================================================================
 -- Author:      Terry Watts
 -- Create date: 19-Sep-2024
@@ -1237,7 +3701,7 @@ GO
 -- CHANGES:
 -- 240919: made return null if no extension - not '' as is the case with split fn
 -- =================================================================================
-ALTER   FUNCTION [dbo].[fnGetFileExtension](@path VARCHAR(MAX))
+CREATE   FUNCTION [dbo].[fnGetFileExtension](@path VARCHAR(MAX))
 RETURNS VARCHAR(200)
 AS
 BEGIN
@@ -1272,6 +3736,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 03-Nov-2023
@@ -1283,7 +3748,7 @@ GO
 -- CHANGES:
 -- 240307: added @with_ext flag parameter to signal to get either the file with or without the extension
 -- ======================================================================================================
-ALTER   FUNCTION [dbo].[fnGetFileNameFromPath](@path VARCHAR(MAX), @with_ext BIT)
+CREATE   FUNCTION [dbo].[fnGetFileNameFromPath](@path VARCHAR(MAX), @with_ext BIT)
 RETURNS VARCHAR(200)
 AS
 BEGIN
@@ -1323,12 +3788,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:       TerryWatts
 -- Create date: 06-AUG-2023
 -- Description: Get first number from string
 -- =============================================
-ALTER   FUNCTION [dbo].[fnGetFirstNumberFromString](@s VARCHAR(MAX))
+CREATE   FUNCTION [dbo].[fnGetFirstNumberFromString](@s VARCHAR(MAX))
 RETURNS VARCHAR(MAX)
 AS
 BEGIN
@@ -1358,6 +3824,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-APR-2024
@@ -1369,7 +3836,7 @@ GO
 --
 -- Test: test.test_089_fnGetFullTypeName
 -- ================================================================================================
-ALTER   FUNCTION [dbo].[fnGetFullTypeName]
+CREATE   FUNCTION [dbo].[fnGetFullTypeName]
 (
     @ty_nm  VARCHAR(20)
    ,@len    INT
@@ -1394,13 +3861,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =================================================
 -- Author:      Terry Watts
 -- Create date: 08-JUL-2023
 -- Description: Creates the SQL to
 -- to list the rows in a table for the given id set
 -- =================================================
-ALTER   FUNCTION [dbo].[fnGetIdsInTableForCriteriaSql]( 
+CREATE   FUNCTION [dbo].[fnGetIdsInTableForCriteriaSql]( 
     @table           VARCHAR(100)
    ,@field           VARCHAR(100)
    ,@where_clause    VARCHAR(MAX)
@@ -1427,6 +3895,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===================================================================
 -- Author:      Terry Watts
 -- Create date: 08-JUL-2023
@@ -1437,7 +3906,7 @@ GO
 --   231006: fixed issue with field name convention change:
 --   Staging 1 id field nme is 'id' Staging 2 id is' id'
 -- ===================================================================
-ALTER FUNCTION [dbo].[fnGetIdsInTablesForCriteriaSql]
+CREATE FUNCTION [dbo].[fnGetIdsInTablesForCriteriaSql]
 (
     @table1       NVARCHAR(100)
    ,@field1       NVARCHAR(100)
@@ -1471,6 +3940,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 06-NOV-2023
@@ -1482,7 +3952,7 @@ GO
 --
 -- Changes:
 -- =============================================================================
-ALTER   FUNCTION [dbo].[fnGetImportFormatIdFromName]( @path VARCHAR(250))
+CREATE   FUNCTION [dbo].[fnGetImportFormatIdFromName]( @path VARCHAR(250))
 RETURNS int
 AS
 BEGIN
@@ -1514,6 +3984,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================================================================================
 -- Author:      Terry Watts
 -- Create date: 21-AUG-2023
@@ -1528,7 +3999,7 @@ GO
 -- 231103: just use the file name not the whole path to determine the type
 -- 231106: made 231025 a new format. It is the same format as 230721 but the set of corrections are different
 -- ===========================================================================================================
-ALTER   FUNCTION [dbo].[fnGetImportIdFromName]( @path VARCHAR(250))
+CREATE   FUNCTION [dbo].[fnGetImportIdFromName]( @path VARCHAR(250))
 RETURNS int
 AS
 BEGIN
@@ -1558,6 +4029,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 29-MAR-2024
@@ -1567,7 +4039,7 @@ GO
 --
 -- Changes:
 -- ===========================================================================================================
-ALTER   FUNCTION [dbo].[fnGetImportRoot]()
+CREATE   FUNCTION [dbo].[fnGetImportRoot]()
 RETURNS VARCHAR(500)
 AS
 BEGIN
@@ -1585,12 +4057,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =================================================================================
 -- Author:      Terry Watts
 -- Create date: 02-AUG-2023
 -- Description: returns the standard session kjey for import root: [Import Root]
 -- =================================================================================
-ALTER   FUNCTION [dbo].[fnGetKeyImportRoot]()
+CREATE   FUNCTION [dbo].[fnGetKeyImportRoot]()
 RETURNS NVARCHAR(60)
 AS
 BEGIN
@@ -1608,12 +4081,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 25-NOV-2023
 -- Description: returns the log level
 -- =============================================
-ALTER   FUNCTION [dbo].[fnGetLogLevel]()
+CREATE   FUNCTION [dbo].[fnGetLogLevel]()
 RETURNS INT
 AS
 BEGIN
@@ -1631,12 +4105,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 25-NOV-2023
 -- Description: returns the log level key
 -- =============================================
-ALTER   FUNCTION [dbo].[fnGetLogLevelKey] ()
+CREATE   FUNCTION [dbo].[fnGetLogLevelKey] ()
 RETURNS NVARCHAR(50)
 AS
 BEGIN
@@ -1654,12 +4129,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 15-JAN-2020
 -- Description: returns standard NL char(s)
 -- =============================================
-ALTER   FUNCTION [dbo].[fnGetNL]()
+CREATE   FUNCTION [dbo].[fnGetNL]()
 RETURNS VARCHAR(2)
 AS
 BEGIN
@@ -1674,6 +4150,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================================================================
 -- Author:      Terry watts
 -- Create date: 24-APR-2024
@@ -1682,7 +4159,7 @@ GO
 --
 -- Test: test.test_086_sp_crt_tst_hlpr_script
 -- ================================================================================================
-ALTER   FUNCTION [dbo].[fnGetNTabs]( @n    INT)
+CREATE   FUNCTION [dbo].[fnGetNTabs]( @n    INT)
 RETURNS VARCHAR(50)
 AS
 BEGIN
@@ -1705,6 +4182,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =====================================================================================================
 -- Author:      Terry Watts
 -- Create date: 11-MAY-2024
@@ -1719,7 +4197,7 @@ GO
 -- POST 00: @sub returns the @ndx substring from @input_str using sep to separate the items
 --          or 
 -- =====================================================================================================
-ALTER FUNCTION [dbo].[fnGetNthSubstring]
+CREATE FUNCTION [dbo].[fnGetNthSubstring]
 (
     @input_str NVARCHAR(4000)
    ,@sep       NVARCHAR(100)
@@ -1783,6 +4261,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================================
 -- Author:      Terry Watts
 -- Create date: 27-MAY-2020
@@ -1790,7 +4269,7 @@ GO
 --              1 based numbering but [0] and [1] return 
 --                the first element in the sequence
 -- =============================================================
-ALTER FUNCTION [dbo].[fnGetNthSubstring2]
+CREATE FUNCTION [dbo].[fnGetNthSubstring2]
 (
     @input_str    NVARCHAR(4000)
    ,@sep          NVARCHAR(100)
@@ -1898,13 +4377,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================
 -- Author:      Terry Watts
 -- Create date: 06-AUG-2023
 -- Description: Gets teh first numeric pair from a string 
 -- e.g: dbo.fnGetNumericPairFromString('234 thf 15-24 5') -< 15-24
 -- ==================================================================
-ALTER   FUNCTION [dbo].[fnGetNumericPairFromString] ( @s VARCHAR(MAX))
+CREATE   FUNCTION [dbo].[fnGetNumericPairFromString] ( @s VARCHAR(MAX))
 RETURNS VARCHAR(MAX)
 AS
 BEGIN
@@ -1924,13 +4404,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===========================================================================================
 -- Author:      Terry Watts
 -- Create date: 18-NOV-2024
 -- Description: returns the rtn log level for the given UQ rtn name in the session context
 --              or NULL if not exist in the ctx
 -- ===========================================================================================
-ALTER   FUNCTION [dbo].[fnGetRtnLogLevel]( @rtn_nm VARCHAR(64))
+CREATE   FUNCTION [dbo].[fnGetRtnLogLevel]( @rtn_nm VARCHAR(64))
 RETURNS INT
 AS
 BEGIN
@@ -1945,12 +4426,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===========================================================================================
 -- Author:      Terry Watts
 -- Create date: 18-NOV-2024
 -- Description: returns the rtn log level key for the given UQ rtn name in the session context
 -- ===========================================================================================
-ALTER   FUNCTION [dbo].[fnGetRtnLogLevelKey]( @rtn_nm NVARCHAR(64))
+CREATE   FUNCTION [dbo].[fnGetRtnLogLevelKey]( @rtn_nm NVARCHAR(64))
 RETURNS NVARCHAR(60)
 AS
 BEGIN
@@ -1965,6 +4447,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 16-APR-2024
@@ -1974,7 +4457,7 @@ GO
 --
 -- See Also: fnGetSessionContextAsString, sp_set_session_context
 -- ===============================================================
-ALTER   FUNCTION [dbo].[fnGetSessionContextAsBit](@key NVARCHAR(100))
+CREATE   FUNCTION [dbo].[fnGetSessionContextAsBit](@key NVARCHAR(100))
 RETURNS INT
 BEGIN
    RETURN CONVERT(BIT, SESSION_CONTEXT(@key));
@@ -1987,6 +4470,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 
 -- ===============================================================
 -- Author:      Terry Watts
@@ -2001,7 +4485,7 @@ GO
 -- 14-JUL-2023: default = -1 (not found) was 0 before
 -- 06-FEB-2024: simply returns value if key found else NULL
 -- ===============================================================
-ALTER   FUNCTION [dbo].[fnGetSessionContextAsInt](@key NVARCHAR(100))
+CREATE   FUNCTION [dbo].[fnGetSessionContextAsInt](@key NVARCHAR(100))
 RETURNS INT
 BEGIN
    RETURN CONVERT(INT, SESSION_CONTEXT(@key));
@@ -2018,6 +4502,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================================
 -- Author:      Terry Watts
 -- Create date: 27-DEC-2021
@@ -2027,7 +4512,7 @@ GO
 --
 -- See Also: fnGetSessionContextAsInt, sp_set_session_context
 -- ============================================================
-ALTER   FUNCTION [dbo].[fnGetSessionContextAsString](@key NVARCHAR(100))
+CREATE   FUNCTION [dbo].[fnGetSessionContextAsString](@key NVARCHAR(100))
 RETURNS VARCHAR(MAX)
 BEGIN
    RETURN CONVERT(VARCHAR(MAX), SESSION_CONTEXT(@key));
@@ -2046,6 +4531,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 05-NOV-2024
@@ -2055,7 +4541,7 @@ GO
 --
 -- CHANGES:
 -- ===============================================================
-ALTER   FUNCTION [dbo].[fnGetSessionContextImportRoot]()
+CREATE   FUNCTION [dbo].[fnGetSessionContextImportRoot]()
 RETURNS VARCHAR(450)
 BEGIN
    RETURN CONVERT(VARCHAR(450),  SESSION_CONTEXT(dbo.fnGetKeyImportRoot()));
@@ -2069,13 +4555,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 19-AUG-2023
 -- Description: returns the cor_id key used in the Staging2 update trigger
 --    to determine if need a new entry in the correction log
 -- ==============================================================================
-ALTER   FUNCTION [dbo].[fnGetSessionKeyCorId] ()
+CREATE   FUNCTION [dbo].[fnGetSessionKeyCorId] ()
 RETURNS NVARCHAR(30)
 AS
 BEGIN
@@ -2090,12 +4577,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 19-AUG-2023
 -- Description: returns the import_id key
 -- ==============================================================================
-ALTER   FUNCTION [dbo].[fnGetSessionKeyImportId] ()
+CREATE   FUNCTION [dbo].[fnGetSessionKeyImportId] ()
 RETURNS NVARCHAR(30)
 AS
 BEGIN
@@ -2114,6 +4602,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================================================================================
 -- Author:      Terry Watts
 -- Create date: 29-MAR-2024
@@ -2123,7 +4612,7 @@ GO
 --
 -- Changes:
 -- ===========================================================================================================
-ALTER   FUNCTION [dbo].[fnGetSessionKeyImportRoot]()
+CREATE   FUNCTION [dbo].[fnGetSessionKeyImportRoot]()
 RETURNS NVARCHAR(50)
 AS
 BEGIN
@@ -2138,12 +4627,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 19-AUG-2023
 -- Description: returns the import_id integer
 -- ==============================================================================
-ALTER   FUNCTION [dbo].[fnGetSessionValueImportId] ()
+CREATE   FUNCTION [dbo].[fnGetSessionValueImportId] ()
 RETURNS INT
 AS
 BEGIN
@@ -2162,13 +4652,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================
 -- Author:      Terry Watts
 -- Create date: 12-NOV-2023
 -- Description: returns the type name from the type code
 --e.g. sysobjects xtype code 
 -- ======================================================
-ALTER   FUNCTION [dbo].[fnGetTyNmFrmTyCode]
+CREATE   FUNCTION [dbo].[fnGetTyNmFrmTyCode]
 (
    @ty_code VARCHAR(2)
 )
@@ -2223,6 +4714,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===================================================================
 -- Author:      Terry Watts
 -- Create date: 08-DEC-2024
@@ -2232,7 +4724,7 @@ GO
 --
 -- TESTS:
 -- ===================================================================
-ALTER   FUNCTION [dbo].[fnGetTypeCat](@ty VARCHAR(25))
+CREATE   FUNCTION [dbo].[fnGetTypeCat](@ty VARCHAR(25))
 RETURNS VARCHAR(25)
 AS
 BEGIN
@@ -2260,13 +4752,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =====================================================
 -- Author:      Terry Watts
 -- Create date: 06-JUL-2023
 -- Description: Make first character upper case
 --              and all the subsequent chars lower case
 -- =====================================================
-ALTER   FUNCTION [dbo].[fnInitialCap]( @s VARCHAR(MAX))
+CREATE   FUNCTION [dbo].[fnInitialCap]( @s VARCHAR(MAX))
   RETURNS VARCHAR(MAX)
 AS
 BEGIN 
@@ -2298,12 +4791,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 01-FEB-2021
 -- Description: determines if a sql_variant is of type BIT
 -- ====================================================================
-ALTER   FUNCTION [dbo].[fnIsBool](@v SQL_VARIANT)
+CREATE   FUNCTION [dbo].[fnIsBool](@v SQL_VARIANT)
 RETURNS BIT
 AS
 BEGIN
@@ -2318,12 +4812,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 01-FEB-2021
 -- Description: determines if a sql_variant is of type BIT
 -- ====================================================================
-ALTER   FUNCTION [dbo].[fnIsBoolType](@v SQL_VARIANT)
+CREATE   FUNCTION [dbo].[fnIsBoolType](@v SQL_VARIANT)
 RETURNS BIT
 AS
 BEGIN
@@ -2338,6 +4833,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ========================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2023
@@ -2347,7 +4843,7 @@ GO
 -- Postconditions:
 --   POST01: returns 1 if the the file name has an .xlsx extension, 0 otherwise
 -- ========================================================================================
-ALTER   FUNCTION [dbo].[fnIsExcel](@filePath VARCHAR(500))
+CREATE   FUNCTION [dbo].[fnIsExcel](@filePath VARCHAR(500))
 RETURNS BIT
 AS
 BEGIN
@@ -2365,6 +4861,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================
 -- Author:      Terry Watts
 -- Create date: 04-JAN-2021
@@ -2372,7 +4869,7 @@ GO
 -- approximate type: {float, real or numeric}
 -- test: [test].[t 025 fnIsFloat]
 -- ================================================
-ALTER   FUNCTION [dbo].[fnIsFloat](@v SQL_VARIANT)
+CREATE   FUNCTION [dbo].[fnIsFloat](@v SQL_VARIANT)
 RETURNS BIT
 AS
 BEGIN
@@ -2401,6 +4898,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================
 -- Author:      Terry Watts
 -- Create date: 04-JAN-2021
@@ -2408,7 +4906,7 @@ GO
 -- approximate type: {float, real or numeric}
 -- test: [test].[t 025 fnIsFloat]
 -- ================================================
-ALTER   FUNCTION [dbo].[fnIsFloatType](@ty VARCHAR(20))
+CREATE   FUNCTION [dbo].[fnIsFloatType](@ty VARCHAR(20))
 RETURNS BIT
 AS
 BEGIN
@@ -2423,12 +4921,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 01-FEB-2021
 -- Description: determines if a sql_variant is of type GUID
 -- ====================================================================
-ALTER   FUNCTION [dbo].[fnIsGuidType](@v SQL_VARIANT)
+CREATE   FUNCTION [dbo].[fnIsGuidType](@v SQL_VARIANT)
 RETURNS BIT
 AS
 BEGIN
@@ -2454,6 +4953,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 01-FEB-2021
@@ -2465,7 +4965,7 @@ GO
 -- Changes:
 -- 241128: added optional check for non negative ints
 -- ====================================================================
-ALTER   FUNCTION [dbo].[fnIsInt]( @v SQL_VARIANT)
+CREATE   FUNCTION [dbo].[fnIsInt]( @v SQL_VARIANT)
 RETURNS BIT
 AS
 BEGIN
@@ -2484,6 +4984,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 01-FEB-2021
@@ -2494,7 +4995,7 @@ GO
 -- Changes:
 -- 241128: added optional check for non negative ints
 -- ====================================================================
-ALTER   FUNCTION [dbo].[fnIsIntType]( @ty VARCHAR(20))
+CREATE   FUNCTION [dbo].[fnIsIntType]( @ty VARCHAR(20))
 RETURNS BIT
 AS
 BEGIN
@@ -2512,6 +5013,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =========================================================
 -- Author:      Terry Watts
 -- Create date: 06-DEc-2024
@@ -2532,7 +5034,7 @@ GO
 -- Post 05: NON NULL < NULL returns 0
 -- Post 06: different types try to convert to strings and then compare
 -- =========================================================
-ALTER FUNCTION [dbo].[fnIsLessThan]( @a SQL_VARIANT, @b SQL_VARIANT)
+CREATE FUNCTION [dbo].[fnIsLessThan]( @a SQL_VARIANT, @b SQL_VARIANT)
 RETURNS BIT
 AS
 BEGIN
@@ -2628,12 +5130,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 01-FEB-2021
 -- Description: determines if a sql_variant is of type string
 -- ====================================================================
-ALTER   FUNCTION [dbo].[fnIsText](@v SQL_VARIANT)
+CREATE   FUNCTION [dbo].[fnIsText](@v SQL_VARIANT)
 RETURNS BIT
 AS
 BEGIN
@@ -2647,6 +5150,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =====================================================================
 -- Author:      Terry Watts
 -- Create date: 31-OCT-2024
@@ -2656,7 +5160,7 @@ GO
 -- PRECONDITIONS: @ty is just the datatype without ()
 -- e.g. 'VARCHAR' is OK but 'VARCHAR(20)' the output is undefined
 -- =====================================================================
-ALTER   FUNCTION [dbo].[fnIsTextType](@ty   VARCHAR(500))
+CREATE   FUNCTION [dbo].[fnIsTextType](@ty   VARCHAR(500))
 RETURNS BIT
 AS
 BEGIN
@@ -2674,13 +5178,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 01-FEB-2021
 -- Description: determines if a sql_variant is an
 -- integral type: {int, smallint, tinyint, bigint, money, smallmoney}
 -- ====================================================================
-ALTER   FUNCTION [dbo].[fnIsTime](@v SQL_VARIANT)
+CREATE   FUNCTION [dbo].[fnIsTime](@v SQL_VARIANT)
 RETURNS BIT
 AS
 BEGIN
@@ -2695,13 +5200,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 08-DEC-2024
 -- Description: Returns true if a time type
 --              Handles single and array types like INT and VARCHAR(MAX)
 -- ====================================================================
-ALTER   FUNCTION [dbo].[fnIsTimeType](@ty VARCHAR(20))
+CREATE   FUNCTION [dbo].[fnIsTimeType](@ty VARCHAR(20))
 RETURNS BIT
 AS
 BEGIN
@@ -2716,6 +5222,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 08-DEC-2024
@@ -2726,7 +5233,7 @@ GO
 -- Changes:
 -- 241128: added optional check for non negative ints
 -- ====================================================================
-ALTER   FUNCTION [dbo].[fnIsTxtInt]( @v VARCHAR(50), @must_be_positive BIT)
+CREATE   FUNCTION [dbo].[fnIsTxtInt]( @v VARCHAR(50), @must_be_positive BIT)
 RETURNS BIT
 AS
 BEGIN
@@ -2795,6 +5302,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===============================================================================================
 -- Author:      Terry Watts
 -- Create date: 13-JAN-2020
@@ -2805,7 +5313,7 @@ GO
 --
 -- RETURNS: 1 if is whitspace, 0 otherwise
 -- ===============================================================================================
-ALTER   FUNCTION [dbo].[fnIsWhitespace]( @t NCHAR) 
+CREATE   FUNCTION [dbo].[fnIsWhitespace]( @t NCHAR) 
 RETURNS BIT
 AS
 BEGIN
@@ -2822,12 +5330,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 08-JAN-2020
 -- Description: fnLen deals with the trailing spaces bug in Len
 -- ===============================================================
-ALTER   FUNCTION [dbo].[fnLen]( @v VARCHAR(8000))
+CREATE   FUNCTION [dbo].[fnLen]( @v VARCHAR(8000))
 RETURNS INT
 AS
 BEGIN
@@ -2848,6 +5357,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================================
 -- Author:      Terry Watts
 -- Create date: 23-JUN-2023
@@ -2855,7 +5365,7 @@ GO
 --              the beginning of a string
 -- 23-JUN-2023: Fix handle all wspc like spc, tab, \n \r CHAR(160)
 -- ==================================================================
-ALTER   FUNCTION [dbo].[fnLTrim]
+CREATE   FUNCTION [dbo].[fnLTrim]
 (
     @s VARCHAR(MAX)
 )
@@ -2890,13 +5400,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 16-DEC-2021
 -- Description: Removes specific characters from 
 --              the beginning end of a string
 -- =============================================
-ALTER   FUNCTION [dbo].[fnLTrim2]
+CREATE   FUNCTION [dbo].[fnLTrim2]
 (
     @str VARCHAR(MAX)
    ,@trim_chr VARCHAR(1)
@@ -2942,7 +5453,8 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
-ALTER   FUNCTION [dbo].[fnMax] (@p1 INT, @p2 INT)
+
+CREATE   FUNCTION [dbo].[fnMax] (@p1 INT, @p2 INT)
 RETURNS INT
 AS
 BEGIN
@@ -2957,7 +5469,8 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
-ALTER   FUNCTION [dbo].[fnMin] (@p1 INT, @p2 INT)
+
+CREATE   FUNCTION [dbo].[fnMin] (@p1 INT, @p2 INT)
 RETURNS INT
 AS
 BEGIN
@@ -2971,12 +5484,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 22-MAR-2020
 -- Description: Pads Left
 -- =============================================    
-ALTER FUNCTION [dbo].[fnPadLeft]( @s VARCHAR(500), @width INT)
+CREATE FUNCTION [dbo].[fnPadLeft]( @s VARCHAR(500), @width INT)
 RETURNS VARCHAR (4000)
 AS
 BEGIN
@@ -2993,12 +5507,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================    
 -- Author:      Terry Watts
 -- Create date: 22-MAR-2020
 -- Description: Pads Left
 -- =============================================    
-ALTER   FUNCTION [dbo].[fnPadLeft2]( @s VARCHAR(500), @width INT, @pad VARCHAR(1)=' ')
+CREATE   FUNCTION [dbo].[fnPadLeft2]( @s VARCHAR(500), @width INT, @pad VARCHAR(1)=' ')
 RETURNS VARCHAR (1000)
 AS
 BEGIN
@@ -3032,12 +5547,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================    
 -- Author:  Terry Watts
 -- Create date: 04-OCT-2019
 -- Description: Pads Right
 -- =============================================    
-ALTER   FUNCTION [dbo].[fnPadRight]( @s VARCHAR(500), @width INT)
+CREATE   FUNCTION [dbo].[fnPadRight]( @s VARCHAR(500), @width INT)
 RETURNS VARCHAR (1000)
 AS
 BEGIN
@@ -3061,12 +5577,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================    
 -- Author:      Terry Watts
 -- Create date: 23-JUN-2023
 -- Description: Pads Right with specified padding character
 -- =============================================    
-ALTER   FUNCTION [dbo].[fnPadRight2]
+CREATE   FUNCTION [dbo].[fnPadRight2]
 (
     @s      VARCHAR(MAX)
    ,@width  INT
@@ -3098,6 +5615,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===============================================================
 -- Author:      Terry watts
 -- Create date: 30-MAR-2020
@@ -3106,7 +5624,7 @@ GO
 -- INPUT:  'a,b,c,d,e,f';
 -- OUTPUT: 'a','b','c','d','e','f'
 -- ===============================================================
-ALTER FUNCTION [dbo].[fnQuoteItems](@s VARCHAR(MAX))
+CREATE FUNCTION [dbo].[fnQuoteItems](@s VARCHAR(MAX))
 RETURNS VARCHAR(MAX)
 AS
 BEGIN
@@ -3124,13 +5642,14 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ================================================================
 -- Author:      Terry Watts
 -- Create date: 27-NOV-2024
 -- Description: returns rex for multiple search special characters
 -- Returns the input replaces using the replace cls upto ndx chars
 -- ================================================================
-ALTER FUNCTION [dbo].[fnRegExMultiple]( @input VARCHAR(MAX), @pattern VARCHAR(1000), @replace_clause VARCHAR(MAX), @ndx int)
+CREATE FUNCTION [dbo].[fnRegExMultiple]( @input VARCHAR(MAX), @pattern VARCHAR(1000), @replace_clause VARCHAR(MAX), @ndx int)
 RETURNS VARCHAR(MAX)
 AS
 BEGIN
@@ -3167,12 +5686,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==========================================================
 -- Author:      Terry Watts>
 -- Create date: 01-JUL-2023
 -- Description: Replace alternatie for hanling wsp, comma
 -- ==========================================================
-ALTER   FUNCTION [dbo].[fnReplace](@src VARCHAR(MAX), @old VARCHAR(MAX), @new VARCHAR(MAX)) 
+CREATE   FUNCTION [dbo].[fnReplace](@src VARCHAR(MAX), @old VARCHAR(MAX), @new VARCHAR(MAX)) 
 RETURNS VARCHAR(MAX)
 AS
 BEGIN
@@ -3215,13 +5735,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==========================================================================
 -- Author:      Terry Watts
 -- Create date: 08-JAN-2020
 -- Description: Removes specific characters from the right end of a string
 -- 23-JUN-2023: Fix handle all wspc like spc, tab, \n \r CHAR(160)
 -- ==========================================================================
-ALTER   FUNCTION [dbo].[fnRTrim]
+CREATE   FUNCTION [dbo].[fnRTrim]
 (
    @s VARCHAR(MAX)
 )
@@ -3250,12 +5771,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 16-DEC-2021
 -- Description: Removes specific characters from the right end of a string
 -- =============================================
-ALTER   FUNCTION [dbo].[fnRTrim2]
+CREATE   FUNCTION [dbo].[fnRTrim2]
 (
     @str VARCHAR(MAX)
    ,@trim_chr VARCHAR(1)
@@ -3290,13 +5812,14 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===============================================================================
 -- Author:      Terry Watts
 -- Create date: 05-JUL-2023
 -- Description: trims whitespace and sets to NULL if trimmed clause is empty
 --              Trims [] as well
 -- ===============================================================================
-ALTER FUNCTION [dbo].[fnScrubParameter] (@clause NVARCHAR(MAX))
+CREATE FUNCTION [dbo].[fnScrubParameter] (@clause NVARCHAR(MAX))
 RETURNS NVARCHAR(MAX)
 AS
 BEGIN
@@ -3323,12 +5846,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===============================================================================
 -- Author:      Terry Watts
 -- Create date: 04-JUL-2023
 -- Description: standardises (replaces) combinations of & and space -> ' and'
 -- ===============================================================================
-ALTER   FUNCTION [dbo].[fnStandardiseAnds] (@s VARCHAR(MAX))
+CREATE   FUNCTION [dbo].[fnStandardiseAnds] (@s VARCHAR(MAX))
 RETURNS VARCHAR(MAX)
 AS
 BEGIN
@@ -3352,13 +5876,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================================
 -- Author:      Terry Watts
 -- Create date: 08-FEB-2020
 -- Description: returns true (1) if table exists else false (0)
 -- schema default is dbo
 -- =============================================================
-ALTER   FUNCTION [dbo].[fnTableExists](@qrn VARCHAR(60))
+CREATE   FUNCTION [dbo].[fnTableExists](@qrn VARCHAR(60))
 RETURNS BIT
 AS
 BEGIN
@@ -3383,6 +5908,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================================
 -- Author:      Terry Watts
 -- Create date: 10-OCT-2019
@@ -3390,7 +5916,7 @@ GO
 --                normally untrimmable CHAR(160)
 -- 23-JUN-2023: Fix handle all wspc like spc, tab, \n \r CHAR(160)
 -- ================================================================
-ALTER   FUNCTION [dbo].[fnTrim]( @s VARCHAR(4000)
+CREATE   FUNCTION [dbo].[fnTrim]( @s VARCHAR(4000)
 )
 RETURNS VARCHAR(4000)
 AS
@@ -3409,13 +5935,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 16-DEC-2021
 -- Description: Removes specific characters from 
 --              the beginning end of a string
 -- =============================================
-ALTER   FUNCTION [dbo].[fnTrim2]
+CREATE   FUNCTION [dbo].[fnTrim2]
 (
     @str VARCHAR(MAX)
    ,@trim_chr VARCHAR(1)
@@ -3433,7 +5960,8 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 
 GO
-ALTER FUNCTION [dbo].[Regex_Format](@input [nvarchar](max), @pattern [nvarchar](max), @format [nvarchar](max))
+
+CREATE FUNCTION [dbo].[Regex_Format](@input [nvarchar](max), @pattern [nvarchar](max), @format [nvarchar](max))
 RETURNS [nvarchar](max) WITH EXECUTE AS CALLER
 AS 
 EXTERNAL NAME [RegEx].[Regex].[Regex_Format]
@@ -3444,7 +5972,8 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 
 GO
-ALTER FUNCTION [dbo].[Regex_Format_Opt](@input [nvarchar](max), @pattern [nvarchar](max), @format [nvarchar](max), @options [int])
+
+CREATE FUNCTION [dbo].[Regex_Format_Opt](@input [nvarchar](max), @pattern [nvarchar](max), @format [nvarchar](max), @options [int])
 RETURNS [nvarchar](max) WITH EXECUTE AS CALLER
 AS 
 EXTERNAL NAME [RegEx].[Regex].[Regex_Format_Opt]
@@ -3455,7 +5984,8 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 
 GO
-ALTER FUNCTION [dbo].[Regex_IsMatch](@input [nvarchar](max), @pattern [nvarchar](max))
+
+CREATE FUNCTION [dbo].[Regex_IsMatch](@input [nvarchar](max), @pattern [nvarchar](max))
 RETURNS [bit] WITH EXECUTE AS CALLER
 AS 
 EXTERNAL NAME [RegEx].[Regex].[Regex_IsMatch]
@@ -3466,7 +5996,8 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 
 GO
-ALTER FUNCTION [dbo].[Regex_IsMatch_Opt](@input [nvarchar](max), @pattern [nvarchar](max), @options [int])
+
+CREATE FUNCTION [dbo].[Regex_IsMatch_Opt](@input [nvarchar](max), @pattern [nvarchar](max), @options [int])
 RETURNS [bit] WITH EXECUTE AS CALLER
 AS 
 EXTERNAL NAME [RegEx].[Regex].[Regex_IsMatch_Opt]
@@ -3477,7 +6008,8 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 
 GO
-ALTER FUNCTION [dbo].[Regex_Match](@input [nvarchar](max), @pattern [nvarchar](max))
+
+CREATE FUNCTION [dbo].[Regex_Match](@input [nvarchar](max), @pattern [nvarchar](max))
 RETURNS [nvarchar](max) WITH EXECUTE AS CALLER
 AS 
 EXTERNAL NAME [RegEx].[Regex].[Regex_Match]
@@ -3488,7 +6020,8 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 
 GO
-ALTER FUNCTION [dbo].[Regex_Match_Count](@input [nvarchar](max), @pattern [nvarchar](max))
+
+CREATE FUNCTION [dbo].[Regex_Match_Count](@input [nvarchar](max), @pattern [nvarchar](max))
 RETURNS [int] WITH EXECUTE AS CALLER
 AS 
 EXTERNAL NAME [RegEx].[Regex].[Regex_Match_Count]
@@ -3499,7 +6032,8 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 
 GO
-ALTER FUNCTION [dbo].[Regex_Match_Count_Opt](@input [nvarchar](max), @pattern [nvarchar](max), @options [int])
+
+CREATE FUNCTION [dbo].[Regex_Match_Count_Opt](@input [nvarchar](max), @pattern [nvarchar](max), @options [int])
 RETURNS [int] WITH EXECUTE AS CALLER
 AS 
 EXTERNAL NAME [RegEx].[Regex].[Regex_Match_Count_Opt]
@@ -3510,7 +6044,8 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 
 GO
-ALTER FUNCTION [dbo].[Regex_Match_Opt](@input [nvarchar](max), @pattern [nvarchar](max), @options [int])
+
+CREATE FUNCTION [dbo].[Regex_Match_Opt](@input [nvarchar](max), @pattern [nvarchar](max), @options [int])
 RETURNS [nvarchar](max) WITH EXECUTE AS CALLER
 AS 
 EXTERNAL NAME [RegEx].[Regex].[Regex_Match_Opt]
@@ -3521,7 +6056,8 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 
 GO
-ALTER FUNCTION [dbo].[Regex_Options](@IgnoreCase [bit], @MultiLine [bit], @ExplicitCapture [bit], @Compiled [bit], @SingleLine [bit], @IgnorePatternWhitespace [bit], @RightToLeft [bit], @ECMAScript [bit], @CultureInvariant [bit])
+
+CREATE FUNCTION [dbo].[Regex_Options](@IgnoreCase [bit], @MultiLine [bit], @ExplicitCapture [bit], @Compiled [bit], @SingleLine [bit], @IgnorePatternWhitespace [bit], @RightToLeft [bit], @ECMAScript [bit], @CultureInvariant [bit])
 RETURNS [int] WITH EXECUTE AS CALLER
 AS 
 EXTERNAL NAME [RegEx].[Regex].[Regex_Options]
@@ -3532,7 +6068,8 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 
 GO
-ALTER FUNCTION [dbo].[Regex_Replace](@input [nvarchar](max), @pattern [nvarchar](max), @replacement [nvarchar](max))
+
+CREATE FUNCTION [dbo].[Regex_Replace](@input [nvarchar](max), @pattern [nvarchar](max), @replacement [nvarchar](max))
 RETURNS [nvarchar](max) WITH EXECUTE AS CALLER
 AS 
 EXTERNAL NAME [RegEx].[Regex].[Regex_Replace]
@@ -3543,7 +6080,8 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 
 GO
-ALTER FUNCTION [dbo].[Regex_Replace_Opt](@input [nvarchar](max), @pattern [nvarchar](max), @replacement [nvarchar](max), @options [int])
+
+CREATE FUNCTION [dbo].[Regex_Replace_Opt](@input [nvarchar](max), @pattern [nvarchar](max), @replacement [nvarchar](max), @options [int])
 RETURNS [nvarchar](max) WITH EXECUTE AS CALLER
 AS 
 EXTERNAL NAME [RegEx].[Regex].[Regex_Replace_Opt]
@@ -3554,7 +6092,8 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 
 GO
-ALTER FUNCTION [dbo].[Regex_Match_All](@input [nvarchar](max), @pattern [nvarchar](max))
+
+CREATE FUNCTION [dbo].[Regex_Match_All](@input [nvarchar](max), @pattern [nvarchar](max))
 RETURNS  TABLE (
 	[index] [int] NULL,
 	[length] [int] NULL,
@@ -3569,7 +6108,8 @@ SET ANSI_NULLS OFF
 SET QUOTED_IDENTIFIER OFF
 
 GO
-ALTER FUNCTION [dbo].[Regex_Match_All_Opt](@input [nvarchar](max), @pattern [nvarchar](max), @options [int])
+
+CREATE FUNCTION [dbo].[Regex_Match_All_Opt](@input [nvarchar](max), @pattern [nvarchar](max), @options [int])
 RETURNS  TABLE (
 	[index] [int] NULL,
 	[length] [int] NULL,
@@ -3585,13 +6125,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 06-AUG-2023
 -- Description: returns a table of single characters and their ascii code - 1 character per row
 -- Reference:   https://stackoverflow.com/questions/59407743/sql-query-to-print-each-character-of-a-string-sql-server
 -- ======================================================================================================================
-ALTER   FUNCTION [dbo].[fnGetChars] (@String VARCHAR(4000))
+CREATE   FUNCTION [dbo].[fnGetChars] (@String VARCHAR(4000))
 RETURNS table
 AS RETURN
     WITH N AS(
@@ -3622,13 +6163,14 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===========================================================
 -- Author:      Terry Watts
 -- Create date: 16-AUG-2023
 -- Description: Gets the chars and ASCII codes for the pathogens
 --              at id in Staging2.
 -- ===========================================================
-ALTER FUNCTION [dbo].[fnGetPathogenChars](
+CREATE FUNCTION [dbo].[fnGetPathogenChars](
    @id int)
 RETURNS TABLE
 AS RETURN
@@ -3648,12 +6190,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 12-OCT-2023
 -- Description: Lists the table FKs for the @primary_table parameter
 -- ====================================================================
-ALTER   FUNCTION [dbo].[fnListFKeysForPrimaryTable](@primary_table VARCHAR(4000))
+CREATE   FUNCTION [dbo].[fnListFKeysForPrimaryTable](@primary_table VARCHAR(4000))
 RETURNS table
 AS
    RETURN
@@ -3671,6 +6214,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 23-MAR-2024
@@ -3679,7 +6223,7 @@ GO
 --
 -- CHANGES:
 -- ======================================================================================================
-ALTER   FUNCTION [dbo].[fnListMatchingS12Pathogens]
+CREATE   FUNCTION [dbo].[fnListMatchingS12Pathogens]
 (
    @pathFilter VARCHAR(200)
 )
@@ -3702,6 +6246,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 23-MAR-2024
@@ -3710,7 +6255,7 @@ GO
 --
 -- CHANGES:
 -- ======================================================================================================
-ALTER FUNCTION [dbo].[fnListUpdateChangesForFixupId]
+CREATE FUNCTION [dbo].[fnListUpdateChangesForFixupId]
 (
    @fixup_id INT
 )
@@ -3729,6 +6274,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 12-BEB-2025
@@ -3738,7 +6284,7 @@ GO
 --
 -- CHANGES:
 -- ======================================================================================================
-ALTER FUNCTION [dbo].[fnListUpdateChangesForNewCrops]
+CREATE FUNCTION [dbo].[fnListUpdateChangesForNewCrops]
 (
    @srch_cls VARCHAR(300)
 )
@@ -3758,6 +6304,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 11-JAN-2025
@@ -3767,7 +6314,7 @@ GO
 --
 -- CHANGES:
 -- ======================================================================================================
-ALTER FUNCTION [dbo].[fnListUpdateChangesForNewPathogens]
+CREATE FUNCTION [dbo].[fnListUpdateChangesForNewPathogens]
 (
    @srch_cls VARCHAR(300)
 )
@@ -3787,6 +6334,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 12-BEB-2025
@@ -3796,7 +6344,7 @@ GO
 --
 -- CHANGES:
 -- ======================================================================================================
-ALTER FUNCTION [dbo].[fnListUpdateChangesForOldCrops]
+CREATE FUNCTION [dbo].[fnListUpdateChangesForOldCrops]
 (
    @srch_cls VARCHAR(300)
 )
@@ -3816,6 +6364,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 10-JAN-2025
@@ -3825,7 +6374,7 @@ GO
 --
 -- CHANGES:
 -- ======================================================================================================
-ALTER FUNCTION [dbo].[fnListUpdateChangesForOldPathogens]
+CREATE FUNCTION [dbo].[fnListUpdateChangesForOldPathogens]
 (
    @srch_cls VARCHAR(300)
 )
@@ -3846,12 +6395,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 14-OCT-2024
 -- Description: utility function to view likely pathogens use when correcting imports
 -- ======================================================================================================================
-ALTER   FUNCTION [dbo].[fnVwPathogens](@clause VARCHAR(4000))
+CREATE   FUNCTION [dbo].[fnVwPathogens](@clause VARCHAR(4000))
 RETURNS TABLE
 AS RETURN
    SELECT TOP 100 pathogen_nm, pathogenType_nm
@@ -3868,6 +6418,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 14-MAR-2024
@@ -3876,7 +6427,7 @@ GO
 --
 -- see also: fnVwS12PathogensExact for exact matches
 -- ======================================================================================================================
-ALTER FUNCTION[dbo].[fnVwS12Pathogens](@clause VARCHAR(4000))
+CREATE FUNCTION[dbo].[fnVwS12Pathogens](@clause VARCHAR(4000))
 RETURNS TABLE
 AS RETURN
    SELECT TOP 100 id,s2_pathogens, s2_crops, s1_crops,s1_pathogens
@@ -3918,6 +6469,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================
 -- Author:      Terry Watts
 -- Create date: 19-NOV-2024
@@ -3927,7 +6479,7 @@ GO
 --
 -- Tests: test_037_fnCompareStrings
 -- ======================================================================================
-ALTER   FUNCTION [dbo].[fnCompareStrings]( @a VARCHAR(MAX), @b VARCHAR(MAX))
+CREATE   FUNCTION [dbo].[fnCompareStrings]( @a VARCHAR(MAX), @b VARCHAR(MAX))
 RETURNS @t TABLE
 (
     A             VARCHAR(MAX) -- STRING characters             for A
@@ -4127,12 +6679,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 30-NOV-2024
 -- Description: Chemical Search Utility in S1,S2
 -- =============================================
-ALTER   FUNCTION [dbo].[fnFindChemicalInS12](@ingredient VARCHAR(60))
+CREATE   FUNCTION [dbo].[fnFindChemicalInS12](@ingredient VARCHAR(60))
 RETURNS
 @t TABLE
 (
@@ -4178,12 +6731,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 29-NOV-2024
 -- Description: Pathogen Search Utility
 -- =============================================
-ALTER   FUNCTION [dbo].[fnFindPathogen](@pathogen VARCHAR(60))
+CREATE   FUNCTION [dbo].[fnFindPathogen](@pathogen VARCHAR(60))
 RETURNS
 @t TABLE
 (
@@ -4251,12 +6805,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 29-NOV-2024
 -- Description: Pathogen Search Utility in S1,S2
 -- =============================================
-ALTER   FUNCTION [dbo].[fnFindPathogenInS12](@pathogen VARCHAR(60))
+CREATE   FUNCTION [dbo].[fnFindPathogenInS12](@pathogen VARCHAR(60))
 RETURNS
 @t TABLE
 (
@@ -4303,6 +6858,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ========================================================================================
 -- Author:      Terry Watts
 -- Create date: 21-JUN-20223
@@ -4312,7 +6868,7 @@ GO
 --    *** NB: use list_unregistered_pathogens_vw in preference to fnListPathogens()
 --    as fnListPathogens returns a false leading space on some items
 -- ========================================================================================
-ALTER FUNCTION [dbo].[fnFndPathogens]
+CREATE FUNCTION [dbo].[fnFndPathogens]
 (
    @srch_cls VARCHAR(200)
 )
@@ -4355,13 +6911,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===========================================================
 -- Author:      Terry Watts
 -- Create date: 16-AUG-2023
 -- Description: Corrections Audit helper.
 --  Use this to track which changes were applied to a reord.
 -- ===========================================================
-ALTER   FUNCTION [dbo].[fnGetAuditForId]( @id INT)
+CREATE   FUNCTION [dbo].[fnGetAuditForId]( @id INT)
 RETURNS @t TABLE 
 (
     ids            VARCHAR(MAX)  NULL
@@ -4426,12 +6983,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =================================================================
 -- Author:      Terry Wayys
 -- Create date: 13-NOV-2024
 -- Description: returns the column info for the given table or view
 -- =================================================================
-ALTER FUNCTION [dbo].[fnGetCols4Tbl]
+CREATE FUNCTION [dbo].[fnGetCols4Tbl]
 (
    @tbl_or_vw VARCHAR(80)
 )
@@ -4479,12 +7037,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================
 -- Author:      Terry Watts
 -- Create date: 14-NOV-2024
 -- Description: gets the EPPO code for a name (latin or english)
 -- ================================================================
-ALTER   FUNCTION [dbo].[fnGetEppoCodeForPathogen](@name VARCHAR(MAX))
+CREATE   FUNCTION [dbo].[fnGetEppoCodeForPathogen](@name VARCHAR(MAX))
 RETURNS @t TABLE
 (
     eppo_code  VARCHAR(8)
@@ -4515,6 +7074,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 20-SEP-2024
@@ -4526,7 +7086,7 @@ GO
 --
 -- CHANGES:
 -- ======================================================================================================
-ALTER FUNCTION [dbo].[fnGetFileDetails]( @filePath VARCHAR(600))
+CREATE FUNCTION [dbo].[fnGetFileDetails]( @filePath VARCHAR(600))
 RETURNS
 @t TABLE
 (
@@ -4619,6 +7179,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry watts
 -- Create date: 05-APR-2024
@@ -4626,7 +7187,7 @@ GO
 --
 -- Usage SELECT def FROM dbo.[fnGrepSchema]('test', '%name%', '%content filter%') 
 -- =============================================
-ALTER   FUNCTION [dbo].[fnGetFnOutputCols]
+CREATE   FUNCTION [dbo].[fnGetFnOutputCols]
 (
     @q_rtn_nm     VARCHAR(60)
 )
@@ -4660,13 +7221,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 6-AUG-2023
 -- Description: extracts numeric values 
 -- but not nn-mm pairs
 -- =============================================
-ALTER   FUNCTION [dbo].[fnGetNumbersFromString]( @s VARCHAR(MAX))
+CREATE   FUNCTION [dbo].[fnGetNumbersFromString]( @s VARCHAR(MAX))
 RETURNS @t TABLE
 (
    value VARCHAR(MAX)
@@ -4715,12 +7277,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =================================================
 -- Author:      Terry Watts
 -- Create date: 6-AUG-2023
 -- Description: extracts numeric pairs like 35-101
 -- =================================================
-ALTER   FUNCTION [dbo].[fnGetNumericPairsFromString](@s VARCHAR(MAX))
+CREATE   FUNCTION [dbo].[fnGetNumericPairsFromString](@s VARCHAR(MAX))
 RETURNS @t TABLE
 (
    value VARCHAR(MAX)
@@ -4766,6 +7329,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================================================================
 -- Author:      Terry watts
 -- Create date: 05-APR-2024
@@ -4777,7 +7341,7 @@ GO
 --
 -- Test:
 -- ================================================================================================
-ALTER   FUNCTION [dbo].[fnGetOutputColumnsForTf]
+CREATE   FUNCTION [dbo].[fnGetOutputColumnsForTf]
 (
     @schema_nm    VARCHAR(40)
    ,@rtn_nm       VARCHAR(60)
@@ -4810,12 +7374,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ================================================
 -- Author:      Terry Watts
 -- Create date: 31-OCT-2024
 -- Description: returns pathogens that effect crops
 -- ================================================
-ALTER FUNCTION [dbo].[fnGetPathogensByCropAndType]
+CREATE FUNCTION [dbo].[fnGetPathogensByCropAndType]
 (
     @crop_nm            VARCHAR(60)
    ,@pathogen_type_nm   VARCHAR(60)
@@ -4850,13 +7415,14 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 31-OCT-2024
 -- Description: Lists the diseases for a given crop
 --                uses the LIKE command
 -- =============================================
-ALTER FUNCTION [dbo].[fnGetPathogensForCrop]
+CREATE FUNCTION [dbo].[fnGetPathogensForCrop]
 (
    @crop_nm VARCHAR(60)
 )
@@ -4894,12 +7460,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 16-OCT-2024
 -- Description: 
 -- =============================================
-ALTER   FUNCTION [dbo].[fnGetPathogensForCropAndPathogenFilter]
+CREATE   FUNCTION [dbo].[fnGetPathogensForCropAndPathogenFilter]
 (
     @crop      VARCHAR(60)
    ,@pathogen  VARCHAR(60)
@@ -4934,6 +7501,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===============================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2023
@@ -4943,7 +7511,7 @@ GO
 -- Postconditions:
 --   POST01: returns 1 row [file_path, range]
 -- ===============================================================================================
-ALTER FUNCTION [dbo].[fnGetRangeFromFileName](@filePath_inc_rng VARCHAR(600))
+CREATE FUNCTION [dbo].[fnGetRangeFromFileName](@filePath_inc_rng VARCHAR(600))
 RETURNS
 @t TABLE
 (
@@ -4997,6 +7565,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 11-NOV-2023
@@ -5019,7 +7588,7 @@ GO
 -- CHANGES:
 -- 17-DEC-2024: now gets the rtn details from  test.RtnDetails table
 -- ============================================================================================================================
-ALTER   FUNCTION [dbo].[fnGetRtnDef]()
+CREATE   FUNCTION [dbo].[fnGetRtnDef]()
 RETURNS
 @rtnDef TABLE
 (
@@ -5229,6 +7798,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ============================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 09-MAY-2020
@@ -5245,7 +7815,7 @@ GO
 --
 -- Tests: test.test_029_fnChkRtnExists
 -- ============================================================================================================================
-ALTER   FUNCTION [dbo].[fnGetRtnDetails]
+CREATE   FUNCTION [dbo].[fnGetRtnDetails]
 (
     @qrn VARCHAR(120)
 )
@@ -5308,6 +7878,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 11-DEC-2024
@@ -5315,7 +7886,7 @@ GO
 --
 -- Params: @rtn_nm is not schema quaklified
 -- ======================================================================================================================
-ALTER   FUNCTION [dbo].[fnGetRtnPrms] (@qrn VARCHAR(100))
+CREATE   FUNCTION [dbo].[fnGetRtnPrms] (@qrn VARCHAR(100))
 RETURNS @t table
 (
     ordinal    INT
@@ -5358,6 +7929,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ============================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 21-NOV-2024
@@ -5370,7 +7942,7 @@ GO
 --
 -- Tests: test.test_029_fnChkRtnExists
 -- ============================================================================================================================
-ALTER FUNCTION [dbo].[fnGetStagingTables]
+CREATE FUNCTION [dbo].[fnGetStagingTables]
 (
     @inc_core BIT
 )
@@ -5410,6 +7982,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ============================================================================
 -- Description:   Lists the S2 updates for the crops field from s2_updateLog
 -- Preconditions: 
@@ -5421,7 +7994,7 @@ GO
 --
 -- CHANGES:
 -- ============================================================================
-ALTER FUNCTION [dbo].[fnList_S2Updates_Crops]( @crop_clause NVARCHAR(400))
+CREATE FUNCTION [dbo].[fnList_S2Updates_Crops]( @crop_clause NVARCHAR(400))
 RETURNS @T table
 (
     fixup_id      INT
@@ -5458,6 +8031,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ============================================================================
 -- Description: Lists the S2 updates for the pathogens field from s2_updateLog
 -- EXEC tSQLt.Run 'test.test_<nnn>_List_S2Updates_Pathogens';
@@ -5466,7 +8040,7 @@ GO
 -- Author:      Terry Watts
 -- Create date: 10-JAN-2024
 -- ============================================================================
-ALTER FUNCTION [dbo].[fnList_S2Updates_Pathogens]( @pathogen_clause NVARCHAR(400))
+CREATE FUNCTION [dbo].[fnList_S2Updates_Pathogens]( @pathogen_clause NVARCHAR(400))
 RETURNS @T table
 (
     fixup_id      INT
@@ -5505,13 +8079,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================================
 -- Author:      Terry Watts
 -- Create date: 22-OCT-20223
 -- Description: List the individual entry modes and the id
 --          from Staging2             
 -- ================================================================
-ALTER   FUNCTION [dbo].[fnListChemicalActions]()
+CREATE   FUNCTION [dbo].[fnListChemicalActions]()
 RETURNS 
 @t TABLE (chemical_nm VARCHAR(100), action_nm VARCHAR(50))
 AS
@@ -5538,12 +8113,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===================================================
 -- Author:      Terry Watts
 -- Create date: 26-JUL-20223
 -- Description: List the Chemicals (Ingredients)
 -- ===================================================
-ALTER FUNCTION [dbo].[fnListDistinctChemicalsInS2]()
+CREATE FUNCTION [dbo].[fnListDistinctChemicalsInS2]()
 RETURNS @t TABLE (chemical VARCHAR(250))
 AS
 BEGIN
@@ -5567,13 +8143,14 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===================================================
 -- Author:      Terry Watts
 -- Create date: 17-JUL-2023
 -- Description: List the Crops in order - use to
 --    look for duplicates and misspellings and errors
 -- ===================================================
-ALTER FUNCTION [dbo].[fnListDistinctCropsInS2]()
+CREATE FUNCTION [dbo].[fnListDistinctCropsInS2]()
 RETURNS
 @t TABLE (crop VARCHAR(250))
 AS
@@ -5597,6 +8174,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ========================================================================================
 -- Author:      Terry Watts
 -- Create date: 21-JUN-20223
@@ -5606,7 +8184,7 @@ GO
 --    *** NB: use list_unregistered_pathogens_vw in preference to fnListPathogens()
 --    as fnListPathogens yields a false leading space on some items
 -- ========================================================================================
-ALTER FUNCTION [dbo].[fnListDistinctPathogensInS2]()
+CREATE FUNCTION [dbo].[fnListDistinctPathogensInS2]()
 RETURNS 
 @t TABLE (pathogen VARCHAR(400))
 AS
@@ -5631,6 +8209,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =======================================================
 -- Author:      Terry Watts
 -- Create date: 11-OCT-2023
@@ -5639,7 +8218,7 @@ GO
 --  1 table       (tbl_nm,NULL)
 --  1 FK nm       (NULL,fk_nm)
 -- =======================================================
-ALTER FUNCTION [dbo].[fnListFKeys]
+CREATE FUNCTION [dbo].[fnListFKeys]
 (
     @tbl_nm VARCHAR(100) = NULL
    ,@fk_nm  VARCHAR(100) = NULL
@@ -5692,13 +8271,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================================
 -- Author:      Terry Watts
 -- Create date: 21-JUN-20223
 -- Description: List the Pathogens in order 
 --  - use to look for duplicates and misspellings and errors
 -- ============================================================
-ALTER   FUNCTION [dbo].[fnListPathogens2]()
+CREATE   FUNCTION [dbo].[fnListPathogens2]()
 RETURNS 
 @t TABLE (id INT, pathogen VARCHAR(400))
 AS
@@ -5725,6 +8305,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===========================================================
 -- Author:      Terry Watts
 -- Create date: 16-NOV-2023
@@ -5733,7 +8314,7 @@ GO
 -- This rtn is like fnListPathogens which operates on Staging2
 -- 
 -- ===========================================================
-ALTER   FUNCTION [dbo].[fnListPathogensS1]()
+CREATE   FUNCTION [dbo].[fnListPathogensS1]()
 RETURNS 
 @t TABLE (pathogen VARCHAR(400))
 AS
@@ -5760,13 +8341,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =================================================================
 -- Author:      Terry Watts
 -- Create date: 19-AUG-20223
 -- Description: List the Products in order - 
 --  use to help look for duplicates and misspellings and errors
 -- =================================================================
-ALTER   FUNCTION [dbo].[fnListProducts]()
+CREATE   FUNCTION [dbo].[fnListProducts]()
 RETURNS 
 @t TABLE (pathogen VARCHAR(250))
 AS
@@ -5791,13 +8373,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===================================================
 -- Author:      Terry Watts
 -- Create date: 17-JUL-2023
 -- Description: List the Companies in Staging2
 --    look for duplicates and misspellings and errors
 -- ===================================================
-ALTER   FUNCTION [dbo].[fnListS2Companies]()
+CREATE   FUNCTION [dbo].[fnListS2Companies]()
 RETURNS
 @t TABLE (company VARCHAR(250))
 AS
@@ -5821,13 +8404,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================================
 -- Author:      Terry Watts
 -- Create date: 22-OCT-20223
 -- Description: List the individual entry modes and the id
 --          from Staging2             
 -- ================================================================
-ALTER   FUNCTION [dbo].[fnListSingleChemicalActions]()
+CREATE   FUNCTION [dbo].[fnListSingleChemicalActions]()
 RETURNS 
 @t TABLE (chemical_nm VARCHAR(100), action_nm VARCHAR(50))
 AS
@@ -5856,12 +8440,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 03-DEc-2024
 -- Description: lists the dbo and or test tables
 -- =============================================
-ALTER FUNCTION [dbo].[fnListTables](@schema_nm VARCHAR(32))
+CREATE FUNCTION [dbo].[fnListTables](@schema_nm VARCHAR(32))
 RETURNS
 @t TABLE
 (
@@ -5890,6 +8475,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==========================================================================
 -- Author:      Terry watts
 -- Create date: 08-OCT-2024
@@ -5898,7 +8484,7 @@ GO
 --
 -- CALLED BY: sp_list_items a helper rtn for fixing LRAP import errors
 -- ==========================================================================
-ALTER   FUNCTION [dbo].[fnParseParameter]
+CREATE   FUNCTION [dbo].[fnParseParameter]
 (
     @table     VARCHAR(60)
    ,@filters   VARCHAR(4000)
@@ -5976,13 +8562,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      TerryWatts
 -- Create date: 24-JUN-2023
 -- Description: gets the list of chemicals for
 --    a given crop and pathogen
 -- =============================================
-ALTER   FUNCTION [dbo].[fnRptGetChemicalForCropPathogen]
+CREATE   FUNCTION [dbo].[fnRptGetChemicalForCropPathogen]
 (
     @crop      VARCHAR(60)
    ,@pathogen  VARCHAR(60)
@@ -6019,13 +8606,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      TerryWatts
 -- Create date: 24-JUN-2023
 -- Description: gets the list of chemicals for 
 --    a given crop and pathogen
 -- =============================================
-ALTER   FUNCTION [dbo].[fnRptGetChemicalForPathogenCrop]
+CREATE   FUNCTION [dbo].[fnRptGetChemicalForPathogenCrop]
 (
     @pathogen  VARCHAR(60)
    ,@crop      VARCHAR(60)
@@ -6060,13 +8648,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===========================================================================
 -- Author:      Terry Watts
 -- Create date: 28-OCT-2023
 -- Description: returns the chemicals and products that can be used against
 --              the pathogens that effect crops
 -- ===========================================================================
-ALTER   FUNCTION [dbo].[fnRptGetChemicalProductForCropPathogenActionUse]
+CREATE   FUNCTION [dbo].[fnRptGetChemicalProductForCropPathogenActionUse]
 (
     @crop_nm      VARCHAR(60)
    ,@pathogen_nm  VARCHAR(60)
@@ -6124,12 +8713,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:       TerryWatts
 -- Create date: 24-JUN-2023
 -- Description: gets the crops for a given pathogen
 -- =============================================
-ALTER   FUNCTION [dbo].[fnRptGetCropsAffectedByPathogen]( @pathogen VARCHAR(60))
+CREATE   FUNCTION [dbo].[fnRptGetCropsAffectedByPathogen]( @pathogen VARCHAR(60))
 RETURNS 
 @t TABLE 
 (
@@ -6160,12 +8750,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 18-OCT-2024
 -- Description: 
 -- =============================================
-ALTER   FUNCTION [dbo].[fnSplitKeys]
+CREATE   FUNCTION [dbo].[fnSplitKeys]
 (
    @keys VARCHAR(4000)
   ,@sep1 VARCHAR(1)
@@ -6196,6 +8787,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 04-DEC-2024
@@ -6204,7 +8796,7 @@ GO
 -- and makes a map of the key value pairs it contains
 -- returning it as a table.
 -- ==============================================================================
-ALTER   FUNCTION [dbo].[fnSplitKeyValuePairs]
+CREATE   FUNCTION [dbo].[fnSplitKeyValuePairs]
 (
    @s    VARCHAR(4000)
   ,@sep1 VARCHAR(1) -- separator used between the kv pairs
@@ -6245,6 +8837,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==============================================================================================================
 -- Author:      Terry Watts
 -- Create date: 12-NOV-2023
@@ -6274,7 +8867,7 @@ GO
 -- 241227: default schema is now the schema found in the sys rtns for the given rtn in @qrn
 --         will throw a div by zero error if PRE 02 violated
 -- ==============================================================================================================
-ALTER FUNCTION [dbo].[fnSplitQualifiedName]
+CREATE FUNCTION [dbo].[fnSplitQualifiedName]
 (
    @qrn VARCHAR(150) -- qualified routine name
 )
@@ -6333,6 +8926,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 10-JAN-2025
@@ -6340,7 +8934,7 @@ GO
 --
 -- CHANGES:
 -- =========================================================================================================
-ALTER FUNCTION [dbo].[ListIneffectiveCorrections](@file NVARCHAR(500))
+CREATE FUNCTION [dbo].[ListIneffectiveCorrections](@file NVARCHAR(500))
 RETURNS @t TABLE
 (
      stg_id           INT
@@ -6370,6 +8964,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==================================================================================================================================================
 -- Procedure:   dbo._main_import
 -- Description: Main entry point for Importing 1 Ph DepAg LRAP (List of Registered Agructural Pesticides) file
@@ -6424,7 +9019,7 @@ GO
 --
 -- CHANGES:
 -- ==================================================================================================================================================
-ALTER PROCEDURE [dbo].[_main_import]
+CREATE PROCEDURE [dbo].[_main_import]
     @import_root     VARCHAR(500)   = NULL
    ,@import_file     VARCHAR(500)   = NULL    -- exclude path, (and range if XL) assume in @import_root
    ,@cor_files       VARCHAR(500)   = NULL    -- coma sep list, file name only - assume in @import_root
@@ -6845,6 +9440,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ====================================================================
 -- Procedure:   sp_pathogens_wiki_urls
 -- Description: soft imports the wikipedia data for the Pathogen table
@@ -6866,7 +9462,7 @@ id	pathogen_nm	url	image	taxonomy	binomial_nm	synonyms	status
 -- row 3: gives the % of rows with data for the column
 -- row 4: is the first data row
 -- ====================================================================
-ALTER PROCEDURE [dbo].[ImportPathogensWikiUrl]
+CREATE PROCEDURE [dbo].[ImportPathogensWikiUrl]
     @file             VARCHAR(500)
    ,@display_table    BIT  = 0
    ,@row_cnt          INT  = NULL OUT
@@ -6974,6 +9570,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ====================================================
 -- Procedure:   dbo.LRAP_Imprt_S09_mrg_mn
 -- Description: Merge the  mn tables <- staging tables
@@ -6985,7 +9582,7 @@ GO
 -- POSTCONDITIONS:
 --    POST 01: main tables updated
 -- ====================================================
-ALTER PROCEDURE [dbo].[LRAP_Imprt_S09_merge_mn]
+CREATE PROCEDURE [dbo].[LRAP_Imprt_S09_merge_mn]
 AS
 BEGIN
    DECLARE
@@ -7016,6 +9613,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ====================================================
 -- Procedure:   sp_SetFixupRowId
 -- Description: sets the row id during staging2 fixup
@@ -7024,7 +9622,7 @@ GO
 -- Author:      Terry Watts
 -- Create date: 06-JAN-2025
 -- ====================================================
-ALTER PROCEDURE [dbo].[SetCtxFixupFile] @file NVARCHAR(500)
+CREATE PROCEDURE [dbo].[SetCtxFixupFile] @file NVARCHAR(500)
 AS
 BEGIN
    SET NOCOUNT ON;
@@ -7045,6 +9643,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ====================================================
 -- Procedure:   sp_SetFixupRowId
 -- Description: sets the row id during staging2 fixup
@@ -7053,7 +9652,7 @@ GO
 -- Author:      Terry Watts
 -- ALTER date: 06-JAN-2025
 -- ====================================================
-ALTER PROCEDURE [dbo].[SetCtxFixupRepCls] @SrchCls NVARCHAR(500)
+CREATE PROCEDURE [dbo].[SetCtxFixupRepCls] @SrchCls NVARCHAR(500)
 AS
 BEGIN
    SET NOCOUNT ON;
@@ -7074,6 +9673,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ====================================================
 -- Procedure:   sp_SetFixupRowId
 -- Description: sets the row id during staging2 fixup
@@ -7083,7 +9683,7 @@ GO
 -- Author:      06-JAN-2025
 -- Create date: 
 -- ====================================================
-ALTER PROCEDURE [dbo].[SetCtxFixupRowId] @row_id INT
+CREATE PROCEDURE [dbo].[SetCtxFixupRowId] @row_id INT
 AS
 BEGIN
    SET NOCOUNT ON;
@@ -7104,6 +9704,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ====================================================
 -- Procedure:   sp_SetFixupRowId
 -- Description: sets the row id during staging2 fixup
@@ -7112,7 +9713,7 @@ GO
 -- Author:      Terry Watts
 -- Create date: 06-JAN-2025
 -- ====================================================
-ALTER PROCEDURE [dbo].[SetCtxFixupSrchCls] @SrchCls NVARCHAR(500)
+CREATE PROCEDURE [dbo].[SetCtxFixupSrchCls] @SrchCls NVARCHAR(500)
 AS
 BEGIN
    SET NOCOUNT ON;
@@ -7133,6 +9734,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ====================================================
 -- Procedure:   sp_SetFixupRowId
 -- Description: sets the row id during staging2 fixup
@@ -7141,7 +9743,7 @@ GO
 -- Author:      Terry Watts
 -- Create date: 06-JAN-2025
 -- ====================================================
-ALTER PROCEDURE [dbo].[SetCtxFixupStgId] @row_id INT
+CREATE PROCEDURE [dbo].[SetCtxFixupStgId] @row_id INT
 AS
 BEGIN
    SET NOCOUNT ON;
@@ -7160,6 +9762,8 @@ GO
 SET ANSI_NULLS ON
 
 SET QUOTED_IDENTIFIER ON
+
+GO
 
 -- =====================================================
 -- Author:      Terry Watts
@@ -7180,6 +9784,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 03-APR-2020
@@ -7190,7 +9795,7 @@ GO
    -- set @tmp = LEFT(CONCAT(REPLICATE( '  ', @sf), REPLACE(LEFT( @tmp, 500), @NL, '--')), 500);
    -- set @tmp = LEFT(CONCAT( REPLACE(LEFT( @tmp, 500), @NL, '--')), 500);
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_appLog_display]
+CREATE PROCEDURE [dbo].[sp_appLog_display]
     @rtns   VARCHAR(MAX) = NULL -- like 'dbo.fnA,test.sp_b'
    ,@msg    VARCHAR(4000)= NULL     -- no %%
    ,@level  INT          = NULL
@@ -7259,6 +9864,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===========================================================================
 -- Procedure:   sp_assert_all_data_tbls_pop
 -- Description: checks all the non staging tables except the excluded ones
@@ -7268,7 +9874,7 @@ GO
 -- Author:      
 -- Create date: 
 -- ===========================================================================
-ALTER PROCEDURE [dbo].[sp_assert_all_data_tbls_pop]
+CREATE PROCEDURE [dbo].[sp_assert_all_data_tbls_pop]
     @mn_tbls   BIT = 1
    ,@inc_eppo  BIT = 0
 AS
@@ -7322,13 +9928,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry watts
 -- Create date: 21-JAN-2020
 -- Description: 1 line check null or mismatch and throw message
 --              ASSUMES data types are the same
 -- =============================================
-ALTER   PROCEDURE [dbo].[sp_assert_equal]
+CREATE   PROCEDURE [dbo].[sp_assert_equal]
     @a         SQL_VARIANT
    ,@b         SQL_VARIANT
    ,@msg0      VARCHAR(200)   = NULL
@@ -7415,13 +10022,14 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry watts
 -- Create date: 30-MAR-2020
 -- Description: assert the given file exists or throws exception @ex_num* 'the file[<@file>] does not exist', @state
 -- * if @ex_num default: 53200, state=1
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_assert_file_exists]
+CREATE PROCEDURE [dbo].[sp_assert_file_exists]
     @file      VARCHAR(500)
    ,@msg1      VARCHAR(200)   = NULL
    ,@msg2      VARCHAR(200)   = NULL
@@ -7507,13 +10115,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 27-MAR-2020
 -- Description: asserts that a is greater than b
 --              raises an exception if not
 -- =============================================
-ALTER   PROCEDURE [dbo].[sp_assert_gtr_than]
+CREATE   PROCEDURE [dbo].[sp_assert_gtr_than]
        @a         SQL_VARIANT
       ,@b         SQL_VARIANT
       ,@msg       VARCHAR(200)  = NULL
@@ -7602,13 +10211,14 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ========================================================
 -- Author:      Terry Watts
 -- Create date: 27-MAR-2020
 -- Description: Raises exception if a is not less than b
 --              or if Either is NULL
 -- ========================================================
-ALTER PROCEDURE [dbo].[sp_assert_less_than]
+CREATE PROCEDURE [dbo].[sp_assert_less_than]
     @a         SQL_VARIANT
    ,@b         SQL_VARIANT
    ,@msg       VARCHAR(200)   = NULL
@@ -7689,12 +10299,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===============================================
 -- Author:      Terry Watts
 -- Create date: 27-MAR-2020
 -- Description: Raises exception if a is not <= b
 -- ===============================================
-ALTER PROCEDURE [dbo].[sp_assert_less_than_or_equal]
+CREATE PROCEDURE [dbo].[sp_assert_less_than_or_equal]
     @a      SQL_VARIANT
    ,@b      SQL_VARIANT
    ,@msg1   VARCHAR(200)  = NULL
@@ -7779,12 +10390,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 09-JUN-2020
 -- Description: Raises exception if @a is empty
 -- =============================================
-ALTER  PROCEDURE [dbo].[sp_assert_not_empty]
+CREATE  PROCEDURE [dbo].[sp_assert_not_empty]
     @val       VARCHAR(3999)
    ,@msg1      VARCHAR(2000)  = NULL
    ,@msg2      VARCHAR(200)   = NULL
@@ -7873,12 +10485,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 27-MAR-2020
 -- Description: Raises exception if exp = act
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_assert_not_equal]
+CREATE PROCEDURE [dbo].[sp_assert_not_equal]
     @a         SQL_VARIANT
    ,@b         SQL_VARIANT
    ,@msg       VARCHAR(200)   = NULL
@@ -7972,12 +10585,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 27-MAR-2020
 -- Description: Raises exception if @a is NULL
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_assert_not_null]
+CREATE PROCEDURE [dbo].[sp_assert_not_null]
     @val       SQL_VARIANT
    ,@prm_nm    VARCHAR(200)   = NULL -- this should be the parameter name
    ,@msg1      VARCHAR(200)   = NULL
@@ -8065,12 +10679,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 27-MAR-2020
 -- Description: Raises exception if @a is null or empty
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_assert_not_null_or_empty]
+CREATE PROCEDURE [dbo].[sp_assert_not_null_or_empty]
     @val       VARCHAR(3999)
    ,@msg1      VARCHAR(200)   = NULL
    ,@msg2      VARCHAR(200)   = NULL
@@ -8160,6 +10775,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===========================================================================================
 -- Author:      Terry Watts
 -- Create date: 09-MAY-2020
@@ -8171,7 +10787,7 @@ GO
 -- 10-NOV-2023: changed parameter @fn to @calling_fn as @fn is used to log and also in tests
 -- 24-APR-2024: added feature to check if exist or not exist
 -- ===========================================================================================
-ALTER PROCEDURE [dbo].[sp_assert_rtn_exists]
+CREATE PROCEDURE [dbo].[sp_assert_rtn_exists]
     @qrn          VARCHAR(120)
    ,@should_exist BIT            = 1
    ,@msg1         VARCHAR(200) = NULL
@@ -8227,6 +10843,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 --========================================================================================
 -- Author:      Terry Watts
 -- Create date: 21-Nov-2024
@@ -8236,7 +10853,7 @@ GO
 --       'ActionStaging','PathogenTypeStaging','TypeStaging','UseStaging'
 --    else checks all staging tables
 --========================================================================================
-ALTER PROCEDURE [dbo].[sp_assert_stgng_tbls_not_pop]
+CREATE PROCEDURE [dbo].[sp_assert_stgng_tbls_not_pop]
    @clr_primary_tables BIT = 0
 AS
 BEGIN
@@ -8285,6 +10902,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 08-FEB-2020
@@ -8295,7 +10913,7 @@ GO
 -- @ex_num default @ex_num=62250
 -- @ex_msg default is '[<table spec>] does not exist.'
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_assert_table_exists]
+CREATE PROCEDURE [dbo].[sp_assert_table_exists]
     @table_spec   VARCHAR(60)    -- LIKE dbo.
    ,@ex_num       INT            = NULL OUT
    ,@ex_msg       VARCHAR(500)   = NULL OUT
@@ -8338,12 +10956,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===================================================================
 -- Author:      Terry Watts
 -- Create Date: 05-FEB-2024
 -- Description: Asserts that the given table does not have any rows
 -- ===================================================================
-ALTER PROCEDURE [dbo].[sp_assert_tbl_not_pop]
+CREATE PROCEDURE [dbo].[sp_assert_tbl_not_pop]
     @table     VARCHAR(60)
    ,@log_level INT = 0
 AS
@@ -8366,6 +10985,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================
 -- Author:      Terry Watts
 -- Create Date: 06-AUG-2023
@@ -8377,7 +10997,7 @@ GO
 --
 -- Called by sp_chk_tbl_not_pop
 -- ======================================================================
-ALTER PROCEDURE [dbo].[sp_assert_tbl_pop]
+CREATE PROCEDURE [dbo].[sp_assert_tbl_pop]
     @table        VARCHAR(60)
    ,@msg          VARCHAR(MAX)  = NULL
    ,@display_msgs BIT           = 0
@@ -8453,6 +11073,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================================================
 -- Author:      Terry Watts
 -- Create date: 08-AUG-2023
@@ -8469,7 +11090,7 @@ GO
 -- 231103: turned auto increment off so SET IDENTITY_INSERT ON/OFF not needed
 -- 241006: increased max error count from default 10 to 1000
 -- =============================================================================
-ALTER   PROCEDURE [dbo].[sp_bulk_insert_LRAP]
+CREATE   PROCEDURE [dbo].[sp_bulk_insert_LRAP]
     @import_tsv_file VARCHAR(360)
    ,@view            VARCHAR(60)
    ,@clr_first       BIT
@@ -8563,6 +11184,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ========================================================
 -- Author:      Terry Watts
 -- Create date: 01-AUG-2023
@@ -8591,7 +11213,7 @@ GO
 -- Tests:
 --    [test 012 sp_jh_imp_stg_1_bulk_insert]
 -- ========================================================
-ALTER PROCEDURE [dbo].[sp_bulk_insert_pesticide_register_221018]
+CREATE PROCEDURE [dbo].[sp_bulk_insert_pesticide_register_221018]
     @import_file VARCHAR(360)
    ,@clr_first       BIT
 AS
@@ -8619,6 +11241,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==============================================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 19-JUN-2023
@@ -8656,7 +11279,7 @@ GO
 -- Tests:
 --    [test 012 sp_jh_imp_stg_1_bulk_insert]
 -- ==============================================================================================================================================================================
-ALTER PROCEDURE [dbo].[sp_bulk_insert_pesticide_register_230721]
+CREATE PROCEDURE [dbo].[sp_bulk_insert_pesticide_register_230721]
     @imprt_csv_file    VARCHAR(360)
    ,@clr_first    BIT
 AS
@@ -8688,6 +11311,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 
 -- ==============================================================================================================================================================================
 -- Author:      Terry Watts
@@ -8726,7 +11350,7 @@ GO
 -- Tests:
 --    
 -- ==============================================================================================================================================================================
-ALTER   PROCEDURE [dbo].[sp_bulk_insert_pesticide_register_240502]
+CREATE   PROCEDURE [dbo].[sp_bulk_insert_pesticide_register_240502]
      @imprt_csv_file    VARCHAR(360)
    ,@clr_first    BIT
 AS
@@ -8775,12 +11399,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =========================================================================
 -- Author:      Terry watts
 -- Create date: 28-OCT-2024
 -- Description: checks the field @field in table @table has no null entries
 -- =========================================================================
-ALTER   PROCEDURE [dbo].[sp_check_field_not_null]
+CREATE   PROCEDURE [dbo].[sp_check_field_not_null]
     @table VARCHAR(60)
    ,@field VARCHAR(60)
 AS
@@ -8803,13 +11428,14 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 01-JUL-2023
 -- Description: Helper fn to test a fixup
 -- operation
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_chk_fixup_clause]
+CREATE PROCEDURE [dbo].[sp_chk_fixup_clause]
     @fixup_clause VARCHAR(200)
    ,@col          VARCHAR(60) = 'pathogens'
    ,@table        VARCHAR(60) = 'staging2'
@@ -8847,6 +11473,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 --==========================================================================================================
 -- Author:           Terry Watts
 -- Create date:      30-Nov-2024
@@ -8858,7 +11485,7 @@ GO
 -- POST 01: returns 0 and all the specified fields in the specified table have at least 1 item of data each
 -- OR throws exception 56321, msg: 'mandatory field:['<@table?'].'<field> has all Null values
 --==========================================================================================================
-ALTER   PROCEDURE [dbo].[sp_chk_flds_have_some_data]
+CREATE   PROCEDURE [dbo].[sp_chk_flds_have_some_data]
     @table_nm        VARCHAR(60)
    ,@non_null_flds   VARCHAR(1000)= NULL
    ,@display_results BIT           = 0
@@ -8961,6 +11588,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 --================================================================================================
 -- Author:           Terry Watts
 -- Create date:      15-Nov-2024
@@ -8972,7 +11600,7 @@ GO
 -- POST 01: returns 0 and no inccurrences in any of the specified fields in the specified table 
 -- OR throws exception 56321, msg: 'mandatory field:['<@table?'].'<field> has Null value
 --================================================================================================
-ALTER   PROCEDURE [dbo].[sp_chk_flds_not_null]
+CREATE   PROCEDURE [dbo].[sp_chk_flds_not_null]
     @table            VARCHAR(60)
    ,@non_null_flds    VARCHAR(1000)= NULL
    ,@display_results  BIT           = 0
@@ -9065,13 +11693,14 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:       Terry Watts
 -- Create date:  01-AUG-2022
 -- Description:  Checks table counts
 -- RETURNS       1 if match, 0 otherwise
 -- ======================================================================================================
-ALTER   PROCEDURE [dbo].[sp_chk_table_count]
+CREATE   PROCEDURE [dbo].[sp_chk_table_count]
     @table  VARCHAR(60)
    ,@exp    INT
 AS
@@ -9111,13 +11740,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================================================================
 -- Author:      Terry Watts
 -- Create date: 12-FEB-2024
 -- Description: helper rtn to check a table does not  contain any items in the given field
 --    If it does logs an error and adds to the error table
 -- ============================================================================================
-ALTER   PROCEDURE [dbo].[sp_chk_table_not_contains]
+CREATE   PROCEDURE [dbo].[sp_chk_table_not_contains]
     @table              VARCHAR(60)
    ,@field_nm           VARCHAR(50)
    ,@operator           VARCHAR(30) -- 'LIKE', 'IN', 'IS NULL'
@@ -9196,6 +11826,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ====================================================================================================================================================
 -- Author:       Terry Watts
 -- Create date:  06-NOV-2023
@@ -9223,7 +11854,7 @@ GO
 -- TESTS
 -- test_016_sp_clear_staging_tables
 -- ===========================================================================================================================================
-ALTER PROCEDURE [dbo].[sp_clear_staging_tables]
+CREATE PROCEDURE [dbo].[sp_clear_staging_tables]
    @clr_primary_tables BIT = 0
 AS
 BEGIN
@@ -9303,6 +11934,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =========================================================================
 -- Author:      Terry watts
 -- Create date: 24-DEC-2024
@@ -9317,7 +11949,7 @@ GO
 -- POST 01: raise exception if failed to copy the file
 -- POST 02: if there is an OS copy error then exception 70301, <dos error>
 -- =========================================================================
-ALTER PROCEDURE [dbo].[sp_copy_file]
+CREATE PROCEDURE [dbo].[sp_copy_file]
     @src_file   VARCHAR(500)   = NULL
    ,@dst_file   VARCHAR(500)   = NULL
    ,@chk_exists BIT = 0 -- chk exists after copy
@@ -9402,6 +12034,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===================================================================================
 -- Author:      Terry Watts
 -- Create date: 20-JUN-2023
@@ -9411,7 +12044,7 @@ GO
 -- 231103: turned auto increment off so SET IDENTITY_INSERT ON/OFF not needed
 -- 231106: increase S2 pathogens col sz from 180 to 360 - as issues in 231005 import
 -- ===================================================================================
-ALTER   PROCEDURE [dbo].[sp_cpy_s1_s2]
+CREATE   PROCEDURE [dbo].[sp_cpy_s1_s2]
 AS
 BEGIN
    DECLARE 
@@ -9522,6 +12155,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 09-JUL-2023
@@ -9531,7 +12165,7 @@ GO
 -- CHANGES:
 -- 231103: turned auto increment off so SET IDENTITY_INSERT ON/OFF not needed
 -- ==============================================================================
-ALTER PROCEDURE [dbo].[sp_cpy_s2_s3]
+CREATE PROCEDURE [dbo].[sp_cpy_s2_s3]
 AS
 BEGIN
    DECLARE
@@ -9600,6 +12234,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date10-JANL-2024
@@ -9609,7 +12244,7 @@ GO
 --
 -- CHANGES:
 -- ==============================================================================
-ALTER PROCEDURE [dbo].[sp_cpy_s2_s4]
+CREATE PROCEDURE [dbo].[sp_cpy_s2_s4]
 AS
 BEGIN
    DECLARE
@@ -9680,12 +12315,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 09-JUL-2023
 -- Description: Restores Staging2 from Staging3 cache.
 -- ===============================================================
-ALTER PROCEDURE [dbo].[sp_cpy_s3_s2]
+CREATE PROCEDURE [dbo].[sp_cpy_s3_s2]
 AS
 BEGIN
    DECLARE @fn VARCHAR(35)  = N'CPY_S3_S2'
@@ -9750,12 +12386,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 09-JUL-2023
 -- Description: Restores Staging2 from Staging4 cache.
 -- ===============================================================
-ALTER PROCEDURE [dbo].[sp_cpy_s4_s2]
+CREATE PROCEDURE [dbo].[sp_cpy_s4_s2]
 AS
 BEGIN
    DECLARE @fn VARCHAR(35)  = N'CPY_S4_S2'
@@ -9873,6 +12510,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ====================================================================
 -- Author:      Terry watts
 -- Create date: 12-NOV-2024
@@ -9883,7 +12521,7 @@ GO
 -- Create a new staging table named {@table} from the CSV with a text column for each field in the header
 -- split the csl into a list of {, [<field_name>] VARCHAR(500) lines
 -- ====================================================================
-ALTER PROCEDURE [dbo].[sp_crt_tbl_frm_file]
+CREATE PROCEDURE [dbo].[sp_crt_tbl_frm_file]
     @table           VARCHAR(60)
    ,@file            VARCHAR(500)
    ,@sql             VARCHAR(3950) OUT
@@ -9958,12 +12596,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =====================================================================
 -- Author:      Terry Watts
 -- Create date: 13-NOV-2024
 -- Description: Creates the sql t create a table from an existing table
 -- =====================================================================
-ALTER   PROCEDURE [dbo].[sp_crt_tbl_sql_frm_tbl]
+CREATE   PROCEDURE [dbo].[sp_crt_tbl_sql_frm_tbl]
    @qrn VARCHAR(80)
 AS
 BEGIN
@@ -10004,6 +12643,8 @@ GO
 SET ANSI_NULLS ON
 
 SET QUOTED_IDENTIFIER ON
+
+GO
 
 -- =============================================
 -- Author:      Terry Watts
@@ -10047,6 +12688,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===========================================================
 -- Author:      Terry watts
 -- Create date: 20-SEP-2024
@@ -10055,7 +12697,7 @@ GO
 -- Postconditions:
 -- POST 01 raise exception if failed to delete the file
 -- ===========================================================
-ALTER PROCEDURE [dbo].[sp_delete_file]
+CREATE PROCEDURE [dbo].[sp_delete_file]
     @file_path    VARCHAR(500)   = NULL
    ,@chk_exists   BIT = 0 -- chk exists in the first place
    ,@fn           VARCHAR(35)    = N'*'
@@ -10112,6 +12754,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =================================================================
 -- Author:      Terry Watts
 -- Create date: 09-FEB-2024
@@ -10121,7 +12764,7 @@ GO
 --
 -- POSTCONDITIONS:
 -- =================================================================
-ALTER   PROCEDURE [dbo].[sp_delete_table]
+CREATE   PROCEDURE [dbo].[sp_delete_table]
    @table VARCHAR(60)
 AS
 BEGIN
@@ -10156,6 +12799,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==========================================================================================
 -- Author:      Terry watts=
 -- Create date: 13-NOV-2024
@@ -10172,7 +12816,7 @@ GO
 --         and error msg logged  OR
 -- POST03: if successful return 0
 -- ===========================================================================================
-ALTER   PROCEDURE [dbo].[sp_eppo_fixup_stgng_dates]
+CREATE   PROCEDURE [dbo].[sp_eppo_fixup_stgng_dates]
    @table VARCHAR(60)
 AS
 BEGIN
@@ -10298,6 +12942,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-JUN-2023
@@ -10334,7 +12979,7 @@ GO
 -- 240201: XL imports using openrowset to the xl file directly limit the field width to 255
 --         so we are using a second field to hold chars 256-end then concat this to the search field here
 -- ========================================================================================================
-ALTER PROCEDURE [dbo].[sp_fixup_import_corrections]
+CREATE PROCEDURE [dbo].[sp_fixup_import_corrections]
 AS
 BEGIN
    DECLARE
@@ -10444,12 +13089,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 29-JUL-2023
 -- Description: fixup the japChemList import
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_fixup_jap_chemical]
+CREATE PROCEDURE [dbo].[sp_fixup_jap_chemical]
 AS
 BEGIN
    DECLARE
@@ -10475,12 +13121,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===================================================
 -- Author:      Terry Watts
 -- Create date: 28-JUL-2023
 -- Description: sp_fixup  helper
 -- ===================================================
-ALTER   PROCEDURE [dbo].[sp_fixup_jap_chemical_hlpr]
+CREATE   PROCEDURE [dbo].[sp_fixup_jap_chemical_hlpr]
     @search_clause   VARCHAR(1000)
    ,@replace_clause  VARCHAR(1000)
    ,@case_sensitive  BIT = 0
@@ -10511,6 +13158,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===================================================================================
 -- Author:      Terry Watts
 -- Create date: 26-JUN-2023
@@ -10554,7 +13202,7 @@ GO
 -- 16-JUL-2023 refactored
 -- 21-JAN-2024 replace uses, 'Insecticide/fu ngicide' with 'Insecticide,fungicide'
 -- ===================================================================================
-ALTER PROCEDURE [dbo].[sp_fixup_s1]
+CREATE PROCEDURE [dbo].[sp_fixup_s1]
    @fixup_cnt INT OUTPUT
 AS
 BEGIN
@@ -10634,6 +13282,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ---------------------------------------------------------------------------------------------------------------------
 -- Author:      Terry Watts
 -- Create date: 29-JAN-2024
@@ -10656,7 +13305,7 @@ GO
 -- 241105: Remove header rows 
 -- 250107: pathogens: remove trailing commas
 -- ---------------------------------------------------------------------------------------------------------------------
-ALTER   PROCEDURE [dbo].[sp_fixup_s1_pathogens]
+CREATE   PROCEDURE [dbo].[sp_fixup_s1_pathogens]
       @fixup_cnt       INT = 0 OUT
 AS
 BEGIN
@@ -10721,6 +13370,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================================================================
 -- Author:      Terry Watts
 -- Create date: 16-JUL-2023
@@ -10737,7 +13387,7 @@ GO
 -- CHANGES:
 -- 21-JAN-2024 Added check for no double quotes in the uses field 
 -- ================================================================================================
-ALTER   PROCEDURE [dbo].[sp_fixup_s1_postcondition_checks] 
+CREATE   PROCEDURE [dbo].[sp_fixup_s1_postcondition_checks] 
 AS
 BEGIN
    DECLARE
@@ -10820,6 +13470,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- --------------------------------------------------------------------------------------------------------------------------=
 -- Author:      Terry Watts
 -- Create date: 16=JUL=2023
@@ -10840,7 +13491,7 @@ GO
 -- 231015: factored the update sql, cunting and msg to a helper fn: sp_fixup_s1_preprocess_hlpr
 -- 240121: remove double quotes from uses
 -- --------------------------------------------------------------------------------------------------------------------------=
-ALTER PROCEDURE [dbo].[sp_fixup_s1_preprocess]
+CREATE PROCEDURE [dbo].[sp_fixup_s1_preprocess]
       @fixup_cnt       INT OUT
 AS
 BEGIN
@@ -11046,6 +13697,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =========================================================================
 -- Author:      Terry Watts
 -- Create date: 15-OCT-2023
@@ -11053,7 +13705,7 @@ GO
 --              Handles errors from sp_executesql by chk the ret
 --              Doubles up single quotes
 -- =========================================================================
-ALTER PROCEDURE [dbo].[sp_fixup_s1_preprocess_hlpr]
+CREATE PROCEDURE [dbo].[sp_fixup_s1_preprocess_hlpr]
     @field     VARCHAR(60)
    ,@key       VARCHAR(200)
    ,@value     VARCHAR(200)
@@ -11116,12 +13768,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 03-AUG-2023
 -- Description: Fixup for the rate column 
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_fixup_s1_rate]
+CREATE PROCEDURE [dbo].[sp_fixup_s1_rate]
       @fixup_cnt     INT OUT --- = NULL 
 AS
 BEGIN
@@ -11167,13 +13820,14 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 16-JUL-2023
 -- Description: Removes the page headers and 
 -- other occasional headers
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_fixup_s1_rem_hdrs]
+CREATE PROCEDURE [dbo].[sp_fixup_s1_rem_hdrs]
       @fixup_cnt       INT = NULL OUT
 AS
 BEGIN
@@ -11239,6 +13893,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =======================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 22-JUN-2023
@@ -11305,7 +13960,7 @@ GO
 -- 250103: added the action column to hold actions like SKIP,STOP so that when skipping we dont lose the command
 -- 250106: at the end of the fixup run fixup commas (leading, trailing) and internal double commas
 -- =======================================================================================================================================================
-ALTER PROCEDURE [dbo].[sp_fixup_S2]
+CREATE PROCEDURE [dbo].[sp_fixup_S2]
     @start_row          INT            = 1      -- only work on the first imp file
    ,@stop_row           INT            = 100000 -- only work on the first imp file
    ,@row_count          INT            OUTPUT
@@ -11716,12 +14371,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:       Terry Watts
 -- Create date:  04-AUG-2023
 -- Description:  sp_fixup_s1_mrl row helper
 -- ======================================================================================================
-ALTER   PROCEDURE [dbo].[sp_fixup_s2_mrl_hlpr]
+CREATE   PROCEDURE [dbo].[sp_fixup_s2_mrl_hlpr]
        @search_clause   VARCHAR(100)
       ,@replace_clause  VARCHAR(100)
       ,@fixup_cnt       INT OUT
@@ -11754,6 +14410,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 22-JUN-2023
@@ -11807,7 +14464,7 @@ GO
 -- 240324: improved validation
 -- 241221: added comments, but only for the current list of tables that have a comments field
 -- ==========================================================================================================
-ALTER PROCEDURE [dbo].[sp_fixup_S2_row]
+CREATE PROCEDURE [dbo].[sp_fixup_S2_row]
     @id              INT
    ,@command         VARCHAR(100)
    ,@table_nm        NVARCHAR(60)
@@ -12146,6 +14803,8 @@ SET ANSI_NULLS ON
 
 SET QUOTED_IDENTIFIER ON
 
+GO
+
 --IF OBJECT_ID('dbo.sp_fnChkEquals', 'SP') IS NULL 
 --BEGIN
 -- =========================================================
@@ -12322,6 +14981,8 @@ GO
 SET ANSI_NULLS ON
 
 SET QUOTED_IDENTIFIER ON
+
+GO
 
 
 -- ======================================================================================
@@ -12563,6 +15224,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 --========================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 07-NOV-2024
@@ -12592,7 +15254,7 @@ GO
 -- 250107: @ not_clause: not like '' should not be scripted as NOT LIKE'%%' BUT like NOT LIKE''''
 -- 250107: field2: if null or empty and ADD dont add comma only
 -- ==============================================================================================
-ALTER PROCEDURE [dbo].[sp_fnCrtUpdateSql]
+CREATE PROCEDURE [dbo].[sp_fnCrtUpdateSql]
 (
     @table_nm        NVARCHAR(60)
    ,@field_nm        NVARCHAR(60)
@@ -12840,6 +15502,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =================================================================================================
 -- Author:      Terry Watts
 -- Create date: 04-NOV-2024
@@ -12874,7 +15537,7 @@ GO
 -- POSTCONDITIONS:
 -- POST 01: RETURNS the total count of unregistered items
 -- =================================================================================================
-ALTER PROCEDURE [dbo].[sp_fnd_unregistered_dynamic_data]
+CREATE PROCEDURE [dbo].[sp_fnd_unregistered_dynamic_data]
 AS
 BEGIN
    DECLARE
@@ -12935,6 +15598,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================================================================
 -- Author:      Terry Watts
 -- Create date: 17-NOV-2024
@@ -12952,7 +15616,7 @@ GO
 --    ProductStaging          populated or exception 63859, 'ProductStaging has null product_nm fields', 1;
 --    ProductUseStaging       populated or exception 63859, 'ProductUseStaging has null product_nm OR use_nm fields', 1;
 -- =============================================================================================
-ALTER   PROCEDURE [dbo].[sp_fnd_unregistered_dyndta_chk_precndtns]
+CREATE   PROCEDURE [dbo].[sp_fnd_unregistered_dyndta_chk_precndtns]
 AS
 BEGIN
    DECLARE
@@ -13025,6 +15689,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ========================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 17-NOV-2024
@@ -13062,7 +15727,7 @@ GO
 -- Changes:
 -- 241210: handle multi value fields differently
 -- ========================================================================================================================
-ALTER PROCEDURE [dbo].[sp_fnd_unregistered_dyndta_hlpr]
+CREATE PROCEDURE [dbo].[sp_fnd_unregistered_dyndta_hlpr]
     @stg_field_nm    NVARCHAR(60)
    ,@table_nm        NVARCHAR(60)   = NULL -- default is Staging2
    ,@pk_table_nm     NVARCHAR(60)   = NULL -- default is RTrim(@stg_field_nm, 's') + '_nm'
@@ -13157,6 +15822,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =======================================================
 -- Procedure:   sp_fndUnregPathogens
 -- Description: lists the unregistered pathogens in S2
@@ -13166,7 +15832,7 @@ GO
 -- Author:      Terry Watts
 -- Create date: 10-JAN-2024
 -- =======================================================
-ALTER PROCEDURE [dbo].[sp_fndUnregPathogens]
+CREATE PROCEDURE [dbo].[sp_fndUnregPathogens]
 AS
 BEGIN
    DECLARE
@@ -13198,13 +15864,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =================================================================
 -- Author:      Terry Watts
 -- Create date: 27-NOV-2024
 -- Description: returns rex for multiple search special characters
 -- Returns the input replaces using the replace cls upto ndx chars
 -- ================================================================
-ALTER   PROCEDURE [dbo].[sp_fnEscapeMultiple]
+CREATE   PROCEDURE [dbo].[sp_fnEscapeMultiple]
   @sc  VARCHAR(MAX) OUT
 , @ndx int, @depth INT
 --RETURNS VARCHAR(MAX)
@@ -13272,6 +15939,8 @@ GO
 SET ANSI_NULLS ON
 
 SET QUOTED_IDENTIFIER ON
+
+GO
 
 
 -- ======================================================================================================
@@ -13392,6 +16061,8 @@ SET ANSI_NULLS ON
 
 SET QUOTED_IDENTIFIER ON
 
+GO
+
 
 -- =============================================
 -- Author:      Terry Watts
@@ -13444,6 +16115,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==========================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2024
@@ -13454,7 +16126,7 @@ GO
 -- POSTCONDITIONS:
 -- POST 01: return header fields in the @fields OUT parameter
 -- ==========================================================================
-ALTER PROCEDURE [dbo].[sp_get_flds_frm_hdr]
+CREATE PROCEDURE [dbo].[sp_get_flds_frm_hdr]
  @import_file  VARCHAR(500)
 ,@range        VARCHAR(100) = NULL
 ,@fields       VARCHAR(4000) OUT            -- comma separated
@@ -13501,6 +16173,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2024
@@ -13527,7 +16200,7 @@ GO
 -- 02-DEC-2024: handling csv or tsv files, optionaly displaying the header,
 --              returning the file type 0: txt, 1: tsv
 -- ==========================================================================================================
-ALTER PROCEDURE [dbo].[sp_get_flds_frm_hdr_txt]
+CREATE PROCEDURE [dbo].[sp_get_flds_frm_hdr_txt]
     @file            VARCHAR(500)        -- include path
    ,@fields          VARCHAR(2000) OUT   -- comma separated list
    ,@display_tables  BIT = 0
@@ -13688,6 +16361,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-FEB-2024
@@ -13710,7 +16384,7 @@ GO
 -- 05-MAR-2024: put brackets around the field names to handle spaces reserved words etc.
 -- 05-MAR-2024: added parameter validation
 -- ==========================================================================================================
-ALTER   PROCEDURE [dbo].[sp_get_flds_frm_hdr_xl]
+CREATE   PROCEDURE [dbo].[sp_get_flds_frm_hdr_xl]
     @import_file  VARCHAR(500)                 -- include path, and optional range
    ,@range        VARCHAR(100) -- = N'Sheet1$'   -- for XL: like 'Table$' OR 'Table$A:B'
    ,@fields       VARCHAR(4000) OUT            -- comma separated list
@@ -13820,12 +16494,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-Oct-20243
 -- Description: gets the import type id for a given LRAP import - xls or tsv
 -- ===================================================================================
-ALTER PROCEDURE [dbo].[sp_get_LRAP_import_type]
+CREATE PROCEDURE [dbo].[sp_get_LRAP_import_type]
     @import_file  VARCHAR(500)
    ,@import_id    INT            OUT
 AS
@@ -13889,6 +16564,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =====================================================================================
 -- AUTHOR       Terry Watts
 -- CREATE DATE: 07-FEB-2024
@@ -13898,7 +16574,7 @@ GO
 --
 -- CHECKED PRECONDITIONS: PRE 01: @rtn must be registered
 -- =====================================================================================
-ALTER   PROCEDURE [dbo].[sp_import_CallRegister]
+CREATE   PROCEDURE [dbo].[sp_import_CallRegister]
     @import_file  VARCHAR(500) -- if xls includes optioanl tange
 AS
 BEGIN
@@ -13954,6 +16630,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===============================================================================================
 -- Author:      Terry Watts
 -- Create date: 08-NOV-2023
@@ -13984,7 +16661,7 @@ GO
 -- 240322: only handles 1 file: either a tsv or excel file
 -- 241130: check that corrections import data has either replace clause, a SQL cmd or a notes clause
 -- ===============================================================================================
-ALTER PROCEDURE [dbo].[sp_import_cor_file]
+CREATE PROCEDURE [dbo].[sp_import_cor_file]
     @cor_file_ir        VARCHAR(MAX) -- file path including range if an Excel file
    ,@cor_file_row_cnt   INT =NULL OUT
 AS
@@ -14129,6 +16806,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =====================================================================================================
 -- Author:      Terry Watts
 -- Create date: 14-DEC-2024
@@ -14162,7 +16840,7 @@ GO
 --
 -- CHANGES:
 -- =====================================================================================================
-ALTER PROCEDURE [dbo].[sp_import_cor_files]
+CREATE PROCEDURE [dbo].[sp_import_cor_files]
     @tot_cnt      INT         = 0    OUT -- total import correction rows from all cor files
    ,@file_cnt     INT         = NULL OUT
 AS
@@ -14274,6 +16952,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================
 -- Author:      Terry Watts
 -- Create date: 28-JUN-2023
@@ -14308,7 +16987,7 @@ GO
 -- Changes:
 -- 231109: added exceptions thrown if errors (see POSTCONDITIONS  )
 -- ======================================================================
-ALTER PROCEDURE [dbo].[sp_import_corrections_tsv]
+CREATE PROCEDURE [dbo].[sp_import_corrections_tsv]
     @import_tsv_file VARCHAR(360) -- Full path to import file
    ,@row_cnt         INT   = NULL      OUT
 AS
@@ -14419,6 +17098,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================================================
 -- Author:      Terry Watts
 -- Create date: 31-JAN-2024
@@ -14451,7 +17131,7 @@ GO
 -- Changes:
 --    240201: changed to use direct XL import: sp_import_XL_existing
 -- ==================================================================================================
-ALTER   PROCEDURE [dbo].[sp_import_corrections_xls]
+CREATE   PROCEDURE [dbo].[sp_import_corrections_xls]
     @import_xls_file VARCHAR(360) -- Full path to import file
    ,@range           VARCHAR(100) = 'Sheet1$A:S'
    ,@row_cnt         INT           = -1   OUT
@@ -14555,6 +17235,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =====================================================================================
 -- AUTHOR       Terry Watts
 -- CREATE DATE: 28-JAN-2025
@@ -14566,7 +17247,7 @@ GO
 --
 -- CHECKED PRECONDITIONS: PRE 01: @rtn must be registered
 -- =====================================================================================
-ALTER PROCEDURE [dbo].[sp_import_Crops]
+CREATE PROCEDURE [dbo].[sp_import_Crops]
     @import_file     VARCHAR(500)
    ,@display_tables  BIT = 0
 AS
@@ -14664,6 +17345,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =====================================================================
 -- Author:      Terry Watts
 -- Create date: 13-Nov-2024
@@ -14689,7 +17371,7 @@ GO
 -- POSTCONDITIONS:
 -- POST01: all eppo tables populated
 -- =====================================================================
-ALTER   PROCEDURE [dbo].[sp_import_eppo]
+CREATE   PROCEDURE [dbo].[sp_import_eppo]
     @folder           VARCHAR(500) = NULL
    ,@field_terminator NCHAR(1)      = NULL
    ,@exp_cnts         VARCHAR(2000)= NULL
@@ -14820,6 +17502,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =======================================================================
 -- Author:      Terry Watts
 -- Create date: 11-Nov-2024
@@ -14833,7 +17516,7 @@ GO
 -- PRECONDITIONS:
 -- PRE01: all params valid
 -- =======================================================================
-ALTER   PROCEDURE [dbo].[sp_import_eppo_file_helper]
+CREATE   PROCEDURE [dbo].[sp_import_eppo_file_helper]
     @table              VARCHAR(70)
    ,@file               VARCHAR(70)  = NULL   -- defaults to <table>.txt
    ,@field_terminator   NCHAR(1)      = ','
@@ -14900,6 +17583,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===================================================================================
 -- Author:      Terry Watts
 -- Create date: 11-Nov-2024
@@ -14925,7 +17609,7 @@ GO
 --
 -- CALLED BY: sp_import_eppo
 -- ===================================================================================
-ALTER PROCEDURE [dbo].[sp_import_eppo_files]
+CREATE PROCEDURE [dbo].[sp_import_eppo_files]
     @folder           VARCHAR(500)
    ,@field_terminator NCHAR(1)     = ','
    ,@exp_cnts         VARCHAR(2000)= NULL
@@ -15173,6 +17857,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================
 -- Author:      Terry Watts
 -- Create date: 11-Nov-2024
@@ -15188,7 +17873,7 @@ GO
 -- POST 02: only langages are {en, la}
 -- CALLED BY: sp_import_eppo
 -- ======================================================================================
-ALTER   PROCEDURE [dbo].[sp_import_eppo_fixup]
+CREATE   PROCEDURE [dbo].[sp_import_eppo_fixup]
 AS
 BEGIN
    SET NOCOUNT OFF;
@@ -15304,6 +17989,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =====================================================================
 -- Author:      Terry Watts
 -- Create date: 13-Nov-2024
@@ -15355,7 +18041,7 @@ GO
 --      EPPO_repco
 -- CALLED BY: sp_import_eppo
 -- =====================================================================
-ALTER PROCEDURE [dbo].[sp_import_eppo_merge]
+CREATE PROCEDURE [dbo].[sp_import_eppo_merge]
    @display_table    BIT = 0
 AS
 BEGIN
@@ -15674,6 +18360,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 05-NOV-2024
@@ -15694,7 +18381,7 @@ GO
 --
 -- CHANGES:
 -- ==============================================================================
-ALTER PROCEDURE [dbo].[sp_import_Fert_Handlers]
+CREATE PROCEDURE [dbo].[sp_import_Fert_Handlers]
     @file           VARCHAR(500)
    ,@folder         VARCHAR(600) = NULL
    ,@display_tables BIT          = 0
@@ -15805,6 +18492,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 25-FEB-2024
@@ -15845,7 +18533,7 @@ GO
 -- Changes:
 -- 240326: added an optional root dir which can be specified once by client code and the path constructed here
 -- ================================================================================================================================================
-ALTER PROCEDURE [dbo].[sp_import_file]
+CREATE PROCEDURE [dbo].[sp_import_file]
     @import_file  VARCHAR(1000)
    ,@import_root  VARCHAR(1000)  = NULL
    ,@table        VARCHAR(60)    = NULL
@@ -16172,12 +18860,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 28-JUL-2023
 -- Description: import of register
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_import_jap_chem]
+CREATE PROCEDURE [dbo].[sp_import_jap_chem]
 AS
 BEGIN
    DECLARE
@@ -16759,6 +19448,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================
 -- Procedure:   <proc_nm>
 -- EXEC tSQLt.Run 'test.test_021_sp_import_LRAP_file';
@@ -16785,7 +19475,7 @@ GO
 -- Changes:
 --
 -- ======================================================================================
-ALTER PROCEDURE [dbo].[sp_import_LRAP_file]
+CREATE PROCEDURE [dbo].[sp_import_LRAP_file]
     @import_file  VARCHAR(500)  -- include path, (and range if XL)
    ,@import_id    INT            --  1,2,3,4
 AS
@@ -16865,6 +19555,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2024
@@ -16886,7 +19577,7 @@ GO
 -- TESTS:
 -- CHANGES:
 -- ======================================================================================
-ALTER   PROCEDURE [dbo].[sp_import_LRAP_file_tsv]
+CREATE   PROCEDURE [dbo].[sp_import_LRAP_file_tsv]
     @import_file  VARCHAR(500)        -- include path, (and range if XL)
    ,@import_id    INT  -- handles imports ids {1:221018, 2:230721} default: 221018
    ,@clr_first    BIT
@@ -16956,6 +19647,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2024
@@ -16966,7 +19658,7 @@ GO
 -- TESTS:
 -- CHANGES:
 -- ======================================================================================
-ALTER PROCEDURE [dbo].[sp_import_LRAP_file_xls]
+CREATE PROCEDURE [dbo].[sp_import_LRAP_file_xls]
     @import_file  VARCHAR(500)  -- include path, (and range if XL)
    ,@import_id    INT = 1-- handles imports ids: acceptable values: (1,2) {1:221018, 2:230721} default: 221018
    ,@clr_first    BIT
@@ -17040,6 +19732,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2024
@@ -17063,7 +19756,7 @@ GO
 -- CHANGES:
 -- 
 -- ======================================================================================
-ALTER PROCEDURE [dbo].[sp_import_LRAP_file_xls_221018]
+CREATE PROCEDURE [dbo].[sp_import_LRAP_file_xls_221018]
     @import_file  VARCHAR(500)  -- include path, (and range if XL)
    ,@clr_first    BIT
 AS
@@ -17121,6 +19814,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2024
@@ -17144,7 +19838,7 @@ GO
 -- CHANGES:
 -- 
 -- ======================================================================================
-ALTER PROCEDURE [dbo].[sp_import_LRAP_file_xls_230721]
+CREATE PROCEDURE [dbo].[sp_import_LRAP_file_xls_230721]
     @import_file  VARCHAR(500)  -- include path, (and range if XL)
    ,@clr_first    BIT
    --    ,@range        VARCHAR(100)  = N'Sheet1$'
@@ -17199,6 +19893,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 20-OCT-2024
@@ -17219,7 +19914,7 @@ GO
 --
 -- CHANGES:
 -- ==========================================================================================================
-ALTER PROCEDURE [dbo].[sp_import_MosaicVirus]
+CREATE PROCEDURE [dbo].[sp_import_MosaicVirus]
     @file     VARCHAR(500)
    ,@folder         VARCHAR(600) = NULL
    ,@display_tables BIT          = 0
@@ -17334,6 +20029,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =====================================================================================
 -- AUTHOR       Terry Watts
 -- CREATE DATE: 30-NOV-2024
@@ -17345,7 +20041,7 @@ GO
 --
 -- CHECKED PRECONDITIONS: PRE 01: @rtn must be registered
 -- =====================================================================================
-ALTER PROCEDURE [dbo].[sp_import_Pathogens]
+CREATE PROCEDURE [dbo].[sp_import_Pathogens]
     @import_file     VARCHAR(500)
    ,@display_tables  BIT = 0
 AS
@@ -17554,6 +20250,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 08-OCT-2023
@@ -17582,7 +20279,7 @@ GO
 -- 231103: turned auto increment off so SET IDENTITY_INSERT ON/OFF not needed
 -- 240223: import either tsv or xlsx
 -- ==============================================================================
-ALTER PROCEDURE [dbo].[sp_import_pathogenType]
+CREATE PROCEDURE [dbo].[sp_import_pathogenType]
     @import_file    VARCHAR(500)
    ,@display_tables BIT = 0
 AS
@@ -17641,6 +20338,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-NOV-2024
@@ -17661,7 +20359,7 @@ GO
 --
 -- CHANGES:
 -- ==========================================================================================================
-ALTER PROCEDURE [dbo].[sp_import_PestHandlers]
+CREATE PROCEDURE [dbo].[sp_import_PestHandlers]
     @file            VARCHAR(500)
    ,@folder          VARCHAR(600) = NULL
    ,@display_tables  BIT          = 0
@@ -17781,6 +20479,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ========================================================
 -- Author:      Terry Watts
 -- Create date: 19-JUN-2023
@@ -17793,7 +20492,7 @@ GO
 --
 -- ERROR HANDLING by exception handling
 -- ========================================================
-ALTER PROCEDURE [dbo].[sp_import_pesticide_register_221008]
+CREATE PROCEDURE [dbo].[sp_import_pesticide_register_221008]
 AS
 BEGIN
    DECLARE
@@ -17841,6 +20540,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ========================================================
 -- Author:      Terry Watts
 -- Create date: 18-Nov-2024
@@ -17853,7 +20553,7 @@ GO
 -- POSTCONDITIONS:
 -- POST 01:PrecautionaryStatement table is populated
 -- ========================================================
-ALTER   PROCEDURE [dbo].[sp_import_PrecautionaryStatement]
+CREATE   PROCEDURE [dbo].[sp_import_PrecautionaryStatement]
     @file             VARCHAR(70)
    ,@field_terminator NCHAR(1)
    ,@non_null_flds    VARCHAR(500) = NULL
@@ -17908,6 +20608,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-JAN-2024
@@ -17997,7 +20698,7 @@ GO
 -- 240321: treating Pathogen as a primary data table to check the lRAP import pathogens
 -- 241130: optionally import the eppo files
 -- =========================================================================================
-ALTER PROCEDURE [dbo].[sp_import_static_data]
+CREATE PROCEDURE [dbo].[sp_import_static_data]
     @import_root     VARCHAR(500)   = NULL  -- default: 'D:\Dev\Farming\Data'
    ,@display_tables  BIT            = 0
    ,@import_eppo     BIT            = 0
@@ -18113,6 +20814,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================================================================================================
 -- Author:      Terry watts
 -- Create date: 02-NOV-2024
@@ -18136,7 +20838,7 @@ GO
 -- Preconditions:
 -- PRE 01: import_root must be specified
 -- =========================================================================================
-ALTER PROCEDURE [dbo].[sp_import_static_data_staging]
+CREATE PROCEDURE [dbo].[sp_import_static_data_staging]
     @import_root     VARCHAR(500)
    ,@display_tables  BIT         = 0
 AS
@@ -18332,6 +21034,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry watts
 -- Create date: 02-NOV-2024
@@ -18344,7 +21047,7 @@ GO
 --    TableType
 --    TypeStaging
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_import_system_static_data]
+CREATE PROCEDURE [dbo].[sp_import_system_static_data]
 AS
 BEGIN
    DECLARE
@@ -18440,6 +21143,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================================================================================
 -- Author:      Terry Watts
 -- Create date: 20-OCT-2024
@@ -18461,7 +21165,7 @@ GO
 --              calling sp first and then display the table
 -- 11-NOV-2024: added an optional view to control field mapping
 -- =============================================================================================================
-ALTER PROCEDURE [dbo].[sp_import_txt_file]
+CREATE PROCEDURE [dbo].[sp_import_txt_file]
     @table            VARCHAR(60)
    ,@file             VARCHAR(500)
    ,@folder           VARCHAR(600)  = NULL
@@ -18695,6 +21399,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =========================================================================
 -- Author:      Terry Watts
 -- Create date: 20-AUG-2023
@@ -18719,7 +21424,7 @@ GO
 -- 231107: imports to type_staging table not type
 -- 231107: removed FK removal - now see Preconditions
 -- ========================================================
-ALTER PROCEDURE [dbo].[sp_import_TypeStaging]
+CREATE PROCEDURE [dbo].[sp_import_TypeStaging]
       @import_file   VARCHAR(500)
      ,@range         VARCHAR(100)  = 'Sheet1$A:B'
      ,@row_cnt       INT           = NULL   OUT
@@ -18774,6 +21479,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 31-OCT-2023
@@ -18796,7 +21502,7 @@ GO
 -- CHANGES:
 -- 231103: turned auto increment off so SET IDENTITY_INSERT ON/OFF not needed
 -- ==========================================================================================================
-ALTER PROCEDURE [dbo].[sp_import_UseStaging]
+CREATE PROCEDURE [dbo].[sp_import_UseStaging]
     @imprt_tsv_file   VARCHAR(500)
    ,@display_table    BIT = 0
 AS
@@ -18899,6 +21605,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-NOV-2024
@@ -18924,7 +21631,7 @@ GO
 --
 -- CHANGES:
 -- ==========================================================================================================
-ALTER   PROCEDURE [dbo].[sp_import_WareHouse]
+CREATE   PROCEDURE [dbo].[sp_import_WareHouse]
     @file           VARCHAR(500)
    ,@folder         VARCHAR(600) = NULL
    ,@display_tables BIT = 0
@@ -19028,6 +21735,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===========================================================
 -- Author:      Terry Watts
 -- Create date: 31-JAN-2024
@@ -19041,7 +21749,7 @@ GO
 -- 05-MAR-2024: parameter changes: made fields optional; swopped @table and @fields order
 -- 08-MAR-2024: added @expect_rows parameter defult = yes(1)
 -- ===========================================================
-ALTER   PROCEDURE [dbo].[sp_import_XL_existing]
+CREATE   PROCEDURE [dbo].[sp_import_XL_existing]
 (
     @import_file  VARCHAR(500)              -- include path, (and range if XL)
    ,@range        VARCHAR(100)              -- like 'Corrections_221008$A:P' OR 'Corrections_221008$'
@@ -19130,6 +21838,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===========================================================================================
 -- Author:      Terry Watts
 -- Create date: 31-JAN-2024
@@ -19143,7 +21852,7 @@ GO
 -- 05-MAR-2024: parameter changes: made fields optional; swopped @table and @fields order
 -- 08-MAR-2024: added @expect_rows parameter defult = yes(1)
 -- ===========================================================================================
-ALTER   PROCEDURE [dbo].[sp_import_XL_new]
+CREATE   PROCEDURE [dbo].[sp_import_XL_new]
 (
     @import_file  VARCHAR(400)        -- path to xls
    ,@range        VARCHAR(100)        -- like 'Corrections_221008$A:P' OR 'Corrections_221008$'
@@ -19196,6 +21905,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Procedure:   sp_init_state
 -- Author:      Terry Watts
@@ -19207,7 +21917,7 @@ GO
 -- PRECONDITIONS:
 -- PRE 01: ImportState table pop
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_init_cor_files]
+CREATE PROCEDURE [dbo].[sp_init_cor_files]
     @cor_files   VARCHAR(500)   = NULL -- must be specified if stage < 5
    ,@import_root VARCHAR(500)
 AS
@@ -19249,12 +21959,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===================================================================
 -- Author:      Terry Watts
 -- Create date: 31-JUL-2023
 -- Description: Investigator for chemical name sync
 -- ===================================================================
-ALTER   PROCEDURE [dbo].[sp_investigate_chemical]
+CREATE   PROCEDURE [dbo].[sp_investigate_chemical]
    @name VARCHAR(250)
 AS
 BEGIN
@@ -19283,6 +21994,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==================================================================
 -- Author:      Terry Watts
 -- Create date: 03-AUG-2023
@@ -19297,7 +22009,7 @@ GO
 -- 230812: remove book,sht,row as these are no longer used
 -- 231006: updated with staging id field name convention change
 -- ==================================================================
-ALTER PROCEDURE [dbo].[sp_investigate_s2_crops]
+CREATE PROCEDURE [dbo].[sp_investigate_s2_crops]
     @where_subclause1   NVARCHAR(MAX)                -- must have characters
    ,@where_subclause2   NVARCHAR(MAX)  = NULL
    ,@where_subclause3   NVARCHAR(MAX)  = NULL
@@ -19454,6 +22166,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================
 -- Author:      Terry Watts
 -- Create date: 05-MaAY-2023
@@ -19469,7 +22182,7 @@ GO
 --         maintainance: fixed breaking changes
 -- 231019: general tidyup of commented out code
 -- ==================================================================
-ALTER   PROCEDURE [dbo].[sp_investigate_s2_pathogens]
+CREATE   PROCEDURE [dbo].[sp_investigate_s2_pathogens]
     @where_subclause1   NVARCHAR(MAX)                -- must have characters
    ,@where_subclause2   NVARCHAR(MAX)  = NULL
    ,@where_subclause3   NVARCHAR(MAX)  = NULL
@@ -19653,6 +22366,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 09-MAR-2024
@@ -19671,7 +22385,7 @@ GO
 -- Postconditions:
 -- POST01: returns the count of the rows selected
 -- ======================================================================================================
-ALTER PROCEDURE [dbo].[sp_list_AppLog]
+CREATE PROCEDURE [dbo].[sp_list_AppLog]
     @fnFilter     VARCHAR(50)  = NULL  -- DEFAULT = ALL
    ,@msgFilter    VARCHAR(128) = NULL  -- DEFAULT = ALL
    ,@minIdFilter  INT          = NULL  -- DEFAULT = ALL
@@ -19742,6 +22456,8 @@ GO
 SET ANSI_NULLS ON
 
 SET QUOTED_IDENTIFIER ON
+
+GO
 
 
 -- ===========================================================================================
@@ -19827,6 +22543,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 05-OCT-2023
@@ -19836,7 +22553,7 @@ GO
 -- 231007:removd row limit, added order by clause
 -- 231007: added views where ids only
 -- =============================================
-ALTER   PROCEDURE [dbo].[sp_list_useful_table_rows]
+CREATE   PROCEDURE [dbo].[sp_list_useful_table_rows]
 AS
 BEGIN
    SET NOCOUNT ON;
@@ -19877,6 +22594,8 @@ SET ANSI_NULLS ON
 
 SET QUOTED_IDENTIFIER ON
 
+GO
+
 
 -- ======================================================================================================
 -- Author:      Terry Watts
@@ -19916,6 +22635,8 @@ GO
 SET ANSI_NULLS ON
 
 SET QUOTED_IDENTIFIER ON
+
+GO
 
 
 -- ======================================================================================================
@@ -19962,6 +22683,8 @@ SET ANSI_NULLS ON
 
 SET QUOTED_IDENTIFIER ON
 
+GO
+
 
 -- Author:      Terry Watts
 -- Create date: 07-JUL-20223
@@ -20006,6 +22729,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =========================================================================
 -- Author:      Terry Watts
 -- Create date: 22-MAR-2020
@@ -20033,7 +22757,7 @@ GO
 --          2: dump cache first then print this msg on a new line immediatly
 -- 240422: separate lines into a separate display line if msg contains \r\n
 -- =================================================================================
-ALTER PROCEDURE [dbo].[sp_log]
+CREATE PROCEDURE [dbo].[sp_log]
  @level  INT = 1
 ,@fn     VARCHAR(35)=NULL
 ,@msg00  VARCHAR(MAX)=NULL,@msg01  VARCHAR(MAX)=NULL,@msg02  VARCHAR(MAX)=NULL,@msg03  VARCHAR(MAX)=NULL,@msg04  VARCHAR(MAX)=NULL,@msg05  VARCHAR(MAX)=NULL,@msg06  VARCHAR(MAX)=NULL,@msg07  VARCHAR(MAX)=NULL,@msg08  VARCHAR(MAX)=NULL,@msg09  VARCHAR(MAX)=NULL
@@ -20138,6 +22862,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-MAR-2020
@@ -20154,7 +22879,7 @@ GO
 -- 241221: error proc and error line do not always work - for example when executing SQL statements that
 --         return a low error number like the following: 207:Invalid column name    
 -- ========================================================================================================
-ALTER   PROCEDURE [dbo].[sp_log_exception]
+CREATE   PROCEDURE [dbo].[sp_log_exception]
        @fn        VARCHAR(35)
       ,@msg01     VARCHAR(4000) = NULL
       ,@msg02     VARCHAR(1000) = NULL
@@ -20250,6 +22975,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 19-AUG-2023
@@ -20305,7 +23031,7 @@ GO
 --         In which case we need to assign a new id and use that in the associated link tables.
 --         Make the main table id field auto incremental.
 -- ==================================================================================================================================================
-ALTER PROCEDURE [dbo].[sp_merge_mn_tbls]
+CREATE PROCEDURE [dbo].[sp_merge_mn_tbls]
 AS
 BEGIN
    SET NOCOUNT OFF;
@@ -20675,6 +23401,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 03-JAN-2025
@@ -20715,7 +23442,7 @@ GO
 --
 -- CHANGES:
 -- ==================================================================================================================================================
-ALTER PROCEDURE [dbo].[sp_merge_static_tbls]
+CREATE PROCEDURE [dbo].[sp_merge_static_tbls]
 AS
 BEGIN
    SET NOCOUNT OFF;
@@ -20980,6 +23707,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Procedudure: NM:dbo].[sp_mn_imprt_ini
 -- Description: main import routine init, set the import state tables
@@ -21057,7 +23785,7 @@ GO
 -- 240309: moved the tuncate applog to main as we dont get any logging of main import right now
 -- 240323: added sp_write_results_to_cor_file validation now so as to waste time processing if bad p
 -- ======================================================================================================
-ALTER PROCEDURE [dbo].[sp_mn_imprt_ini]
+CREATE PROCEDURE [dbo].[sp_mn_imprt_ini]
     @import_root     VARCHAR(450)
    ,@import_file     VARCHAR(150)    -- LRAP import file
    ,@cor_files       VARCHAR(500)   = NULL -- must be specified if stage < 5
@@ -21281,6 +24009,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =================================================================
 -- Author:      Terry Watts
 -- Create date: 05-FEB-2024
@@ -21330,7 +24059,7 @@ GO
 --
 -- CHANGES:
 -- =================================================================
-ALTER PROCEDURE [dbo].[sp_mn_imprt_stg_12_post_cks] @import_eppo bit = 0
+CREATE PROCEDURE [dbo].[sp_mn_imprt_stg_12_post_cks] @import_eppo bit = 0
 AS
 BEGIN
    DECLARE
@@ -21472,12 +24201,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==========================================================
 -- Author:      Terry Watts
 -- Create date: 08-NOV-2023
 -- Description: helper for sp_merge_normalised_tables
 -- ==========================================================
-ALTER   PROCEDURE [dbo].[sp_mrg_mn_tbls_hlpr]
+CREATE   PROCEDURE [dbo].[sp_mrg_mn_tbls_hlpr]
     @id        INT            OUTPUT
    ,@table_nm  VARCHAR(50)
 AS
@@ -21500,6 +24230,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 31-MAR-2024
@@ -21531,7 +24262,7 @@ GO
 --
 -- CHANGES:
 -- ==================================================================================================================================================
-ALTER PROCEDURE [dbo].[sp_mrg_mn_tbls_post_cks]
+CREATE PROCEDURE [dbo].[sp_mrg_mn_tbls_post_cks]
 AS
 BEGIN
    SET NOCOUNT OFF;
@@ -21692,12 +24423,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =================================================================
 -- Author:      Terry Watts
 -- Create date: 08-NOV-2023
 -- Description: precondition helper for sp_merge_normalised_tables
 -- =================================================================
-ALTER PROCEDURE [dbo].[sp_mrg_mn_tbls_precndtn_hlpr] 
+CREATE PROCEDURE [dbo].[sp_mrg_mn_tbls_precndtn_hlpr] 
     @id        INT            OUTPUT
    ,@table_nm  VARCHAR(50)
 AS
@@ -21719,6 +24451,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 
 -- ==================================================================================================================================================
 -- Author:      Terry Watts
@@ -21750,7 +24483,7 @@ GO
 --
 -- CHANGES:
 -- ==================================================================================================================================================
-ALTER   PROCEDURE [dbo].[sp_mrg_mn_tbls_val_precndtns]
+CREATE   PROCEDURE [dbo].[sp_mrg_mn_tbls_val_precndtns]
 AS
 BEGIN
    SET NOCOUNT OFF;
@@ -21827,6 +24560,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==========================================================================
 -- Author:      Terry watts
 -- Create date: 08-OCT-2024
@@ -21835,7 +24569,7 @@ GO
 --
 -- CALLED BY: sp_list_items a helper rtn for fixing LRAP import errors
 -- ==========================================================================
-ALTER   PROCEDURE [dbo].[sp_ParseParameter]
+CREATE   PROCEDURE [dbo].[sp_ParseParameter]
 
     @table     VARCHAR(60)
    ,@filters   VARCHAR(4000)
@@ -21926,6 +24660,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ===========================================================================
 -- Author:      Terry Watts
 -- Create date: 22-OCT-2023
@@ -21940,7 +24675,7 @@ GO
 -- POST01: ChemicalAction table has rows
 -- POST02: mancozeb exists and is only contact
 -- ===========================================================================
-ALTER PROCEDURE [dbo].[sp_pop_chemicalAction]
+CREATE PROCEDURE [dbo].[sp_pop_chemicalAction]
 AS
 BEGIN
    SET NOCOUNT OFF;
@@ -22037,6 +24772,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:       Terry Watts
 -- Create date:  22-JAN-2024
@@ -22066,7 +24802,7 @@ GO
 --
 -- Tests:
 -- ======================================================================================================
-ALTER PROCEDURE [dbo].[sp_pop_ChemicalActionStaging]
+CREATE PROCEDURE [dbo].[sp_pop_ChemicalActionStaging]
 AS
 BEGIN
    DECLARE
@@ -22176,6 +24912,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 06-OCT-2023
@@ -22202,7 +24939,7 @@ GO
 --
 -- Tests:
 -- ======================================================================================================
-ALTER   PROCEDURE [dbo].[sp_pop_ChemicalUseStaging]
+CREATE   PROCEDURE [dbo].[sp_pop_ChemicalUseStaging]
 AS
 BEGIN
    DECLARE
@@ -22272,6 +25009,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-OCT-2024
@@ -22301,7 +25039,7 @@ GO
 --
 -- CHANGES:
 -- ==================================================================================================================================================
-ALTER   PROCEDURE [dbo].[sp_pop_dyn_dta_post_chks]
+CREATE   PROCEDURE [dbo].[sp_pop_dyn_dta_post_chks]
 AS
 BEGIN
    SET NOCOUNT OFF;
@@ -22442,6 +25180,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==================================================================================================================================================================
 -- Routine:     dbo.sp_pop_staging_tables
 -- Author:      Terry Watts
@@ -22504,7 +25243,7 @@ GO
 -- 240124: removed import id parameter - this is common accross all import staging tables
 -- 240209: tidy up and refactor to valid postconditions at end.
 -- ==================================================================================================================================================================
-ALTER PROCEDURE [dbo].[sp_pop_dynamic_data]
+CREATE PROCEDURE [dbo].[sp_pop_dynamic_data]
 AS
 BEGIN
    SET NOCOUNT OFF;
@@ -22724,13 +25463,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ========================================================================================================
 -- Author:      Terry watts
 -- Create date: 02-NOV-2024
 -- Description: Once the secondary data is established during an LRAP importFor 
 -- For each secondary data type identify the list of unmatched items not found in the primary static data
 -- ========================================================================================================
-ALTER   PROCEDURE [dbo].[sp_pop_identify_unmatched_items]
+CREATE   PROCEDURE [dbo].[sp_pop_identify_unmatched_items]
 AS
 BEGIN
    SET NOCOUNT ON;
@@ -22746,6 +25486,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 01-AUG-2023
@@ -22776,7 +25517,7 @@ GO
 --
 -- Tests:
 -- ======================================================================================================
-ALTER PROCEDURE [dbo].[sp_pop_product_use_staging]
+CREATE PROCEDURE [dbo].[sp_pop_product_use_staging]
 AS
 BEGIN
    DECLARE
@@ -22831,6 +25572,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-JUN-2023
@@ -22849,7 +25591,7 @@ GO
 -- 06-JUL-2023 pathogens: standardise each pathogen in pathogens to capitalise first character of the first word
 -- 22-OCT-2023 added ingredient fixup
 -- ================================================================================================================
-ALTER PROCEDURE [dbo].[sp_pre_fixup_s2]
+CREATE PROCEDURE [dbo].[sp_pre_fixup_s2]
        @fixup_cnt            INT OUTPUT
 AS
 BEGIN
@@ -22952,6 +25694,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 22-OCT-2022
@@ -22965,7 +25708,7 @@ GO
 --    POST 03: IF unrecognised routine                                     50699, 'Error in sp_fixup_s2_action_general: unrecognised routine <rtn>', 1;
 --    POST 04: EntryModeFixup table has rows
 -- =============================================
-ALTER PROCEDURE [dbo].[sp_pre_fixup_s2_action_general]
+CREATE PROCEDURE [dbo].[sp_pre_fixup_s2_action_general]
    @fixup_cnt       INT OUT
 AS
 BEGIN
@@ -23084,12 +25827,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===============================================
 -- Author:      Terry Watts
 -- Create date: 22-OCT-2022
 -- Description: fixup the entry mode in staging2
 -- ===============================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_action_general_hlpr]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_action_general_hlpr]
        @index           VARCHAR(10)
       ,@search_clause   VARCHAR(80)
       ,@replace_clause  VARCHAR(80)
@@ -23165,12 +25909,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ========================================================
 -- Author:      Terry Watts
 -- Create date: 04-FEB-2024
 -- Description: fixup the entry mode or (mode of) actions
 -- ========================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_action_general_hlpr2]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_action_general_hlpr2]
        @index                    VARCHAR(10)
       ,@replace_clause           VARCHAR(MAX)
       ,@ingredient_search_clause VARCHAR(MAX)
@@ -23227,6 +25972,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 24-OCT-2023
@@ -23238,7 +25984,7 @@ GO
 -- 231130: added an exception handler
 -- 231103: moved Bacillus Thuringiensis Vipaa20 and Vip3aa20 from sp_fixup_s2_action_specific to sp_fixup_s2_chems
 -- ================================================================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_action_specific_deprecated]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_action_specific_deprecated]
    @fixup_cnt INT = NULL OUT
 AS
 BEGIN
@@ -23517,6 +26263,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==========================================================================
 -- Author:      Terry Watts
 -- Create date: 25-OCT-2023
@@ -23528,7 +26275,7 @@ GO
 --         is the only ingredient for the row 
 -- 23113: added an exception handler that reports the  parameters and error
 -- ==========================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_action_specific_hlpr]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_action_specific_hlpr]
     @ingredient      VARCHAR(60)
    ,@replace_clause  VARCHAR(100)
    ,@fixup_cnt       INT OUT
@@ -23581,6 +26328,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 27-JUL-2023
@@ -23592,7 +26340,7 @@ GO
 -- 231024: updated the Bacillus Thuringiensis Varieties to reflect the bacteria name
 -- 231103: moved Bacillus Thuringiensis Vipaa20 and Vip3aa20 from sp_fixup_s2_action_specific to here
 -- =======================================================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_chems_deprecated]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_chems_deprecated]
    @fixup_cnt       INT = NULL OUT
 AS
 BEGIN
@@ -23830,6 +26578,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===============================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-JUL-2023
@@ -23840,7 +26589,7 @@ GO
 --                IF len(replace) < (len search) do not include the the not like clause
 -- 231104: addede a must_update param
 -- ======================================================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_chems_hlpr]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_chems_hlpr]
     @search_clause   VARCHAR(150)
    ,@replace_clause  VARCHAR(150)
    ,@not_clause      VARCHAR(150) = NULL
@@ -23909,6 +26658,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================================================
 -- Author:      Terry Watts
 -- Create date: 21-AUG-2023
@@ -23917,7 +26667,7 @@ GO
 -- CHANGES:
 -- 05-MAR-2024: added 'Sinochem Crop Protection (phils.) Inc.' -> 'Sinochem'
 -- =============================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_company]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_company]
      @fixup_cnt       INT OUT
 AS
 BEGIN
@@ -23951,6 +26701,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 01-AUG-2023
@@ -23962,7 +26713,7 @@ GO
 -- CHANGES:
 --    231006: Additional fixes - does not seem to be doing all fixes??
 -- ======================================================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_crops_deprecated]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_crops_deprecated]
        @must_update  BIT = 0
       ,@fixup_cnt    INT OUT
 AS
@@ -24173,6 +26924,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 16-JUL-2023
@@ -24183,7 +26935,7 @@ GO
 --            added try catch and log error
 --            added @idx out parmeter to help with finding error 
 -- ==============================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_crops_hlpr]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_crops_hlpr]
     @search_clause   VARCHAR(250)
    ,@replace_clause  VARCHAR(250)
    ,@not_clause      VARCHAR(250)  = NULL
@@ -24273,12 +27025,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 04-AUG-2023
 -- Description: Fixup the Stage 1 mrl field
 -- ======================================================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_mrl_deprecated] 
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_mrl_deprecated] 
    @fixup_cnt INT = NULL OUT
 AS
 BEGIN
@@ -24477,6 +27230,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 02-AUG-2023
@@ -24496,7 +27250,7 @@ GO
 -- 241019: correct common pathogen sp errors and amend names that have 'and' in them
 --         some like Annual and perrenial broadleaf weeds and grasses  in volver several changes
 -- ======================================================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_pathogens_deprecated]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_pathogens_deprecated]
      @fixup_cnt       INT=NULL OUT
 AS
 BEGIN
@@ -24663,6 +27417,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 16-JUL-2023
@@ -24677,7 +27432,7 @@ GO
    -- translate certain [A and B] to [A B]
    -- Annual and perrenial broadleaf weeds and grasses ETC.
 -- ==============================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_pathogens_hlpr]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_pathogens_hlpr]
     @search_clause   VARCHAR(250)
    ,@replace_clause  VARCHAR(250)
    ,@fixup_cnt       INT             OUTPUT
@@ -24756,6 +27511,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================================================
 -- Author:      Terry Watts
 -- Create date: 04-AUG-2023
@@ -24793,7 +27549,7 @@ GO
 -- Numbers of days recommeded between last spray until harvest of the crops indicated in the table above
 -- 120 days 15 days
 -- ==============================================================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_phi]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_phi]
        @fixup_cnt    INT = NULL OUT
 AS
 BEGIN
@@ -24979,6 +27735,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================================================
 -- Author:       Terry Watts
 -- Create date:  06-AUG-2023
@@ -24986,7 +27743,7 @@ GO
 --    @replace_all means if any part of the field matches the @search_clause then replace all the field with 
 --    @exact       means whle field must match teh search clause
 -- ==============================================================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_phi_hlpr] 
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_phi_hlpr] 
     @search_clause   VARCHAR(150)
    ,@replace_clause  VARCHAR(150)
    ,@not_clause      VARCHAR(150)  = NULL
@@ -25084,12 +27841,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:       Terry Watts
 -- Create date:  02-AUG-2023
 -- Description:  Stage 2 products fixup
 -- ======================================================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_products_deprecated]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_products_deprecated]
      @fixup_cnt       INT = NULL OUT
 AS
 BEGIN
@@ -25126,6 +27884,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:       Terry Watts
 -- Create date:  31-JUL-2012
@@ -25135,7 +27894,7 @@ GO
 -- 231007: added Biophero'; other --> Biological Insecticide
 -- 241021: cleanup for quoted items in uses
 -- ======================================================================================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_uses_deprecated]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_uses_deprecated]
    @fixup_cnt INT OUTPUT
 AS
 BEGIN
@@ -25228,6 +27987,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 07-OCT-2023
@@ -25241,7 +28001,7 @@ GO
 -- CHANGES:
 -- 231024: @fixup_cnt param is now optional
 -- =============================================
-ALTER   PROCEDURE [dbo].[sp_pre_fixup_s2_uses_hlpr]
+CREATE   PROCEDURE [dbo].[sp_pre_fixup_s2_uses_hlpr]
     @where_field  VARCHAR(30) -- '=' or LIKE
    ,@where_op     VARCHAR(20) -- '=' or LIKE
    ,@where_clause VARCHAR(500)-- e.g. 'Pgr' (for =) or '%insecticide%/%nematicide%' for like
@@ -25285,6 +28045,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =========================================================
 -- Author:      Terry Watts
 -- Create date: 25-MAR-2020
@@ -25292,7 +28053,7 @@ GO
 --    Ensures @state is positive
 --    if @ex_num < 50000 message and raise to 50K+ @ex_num
 -- =========================================================
-ALTER   PROCEDURE [dbo].[sp_raise_exception]
+CREATE   PROCEDURE [dbo].[sp_raise_exception]
        @ex_num    INT            = 53000
       ,@msg0      VARCHAR(max)  = NULL
       ,@msg1      VARCHAR(max)  = NULL
@@ -25379,6 +28140,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =====================================================================================
 -- Author       Terry Watts
 -- Create date: 07-FEB-2024
@@ -25389,7 +28151,7 @@ GO
 -- Changes:
 -- 240414: faciltate multiple calls for example as in testing tSQLt.Runall
 -- =====================================================================================
-ALTER   PROCEDURE [dbo].[sp_register_call]
+CREATE   PROCEDURE [dbo].[sp_register_call]
    @rtn VARCHAR(128)
 AS
 BEGIN
@@ -25451,6 +28213,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================================================
 -- Author       Terry Watts
 -- Create date: 07-FEB-2024
@@ -25459,7 +28222,7 @@ GO
 --
 -- CHECKED PRECONDITIONS: PRE 01: @rtn must not be registered already
 -- ============================================================================
-ALTER   PROCEDURE [dbo].[sp_register_rtn]
+CREATE   PROCEDURE [dbo].[sp_register_rtn]
     @rtn    VARCHAR(128)
    ,@limit  INT               = 1
 AS
@@ -25491,6 +28254,8 @@ GO
 SET ANSI_NULLS ON
 
 SET QUOTED_IDENTIFIER ON
+
+GO
 
 
 -- Author:      Terry Watts>
@@ -25534,6 +28299,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================================================
 -- Author       Terry Watts
 -- Create date: 07-FEB-2024
@@ -25542,7 +28308,7 @@ GO
 --
 -- PRECONDITIONS: none
 -- ============================================================================
-ALTER   PROCEDURE [dbo].[sp_reset_CallRegister]
+CREATE   PROCEDURE [dbo].[sp_reset_CallRegister]
    @rtn_nm VARCHAR(50) = NULL
 AS
 BEGIN
@@ -25571,13 +28337,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================================
 -- Author:      Terry Watts
 -- Create date: 22-OCT-2023
 -- Description: Reports the chemicals and products 
 --    for a given crop and pathogen
 -- ================================================================
-ALTER   PROCEDURE [dbo].[sp_rpt_get_spray_for_pathogen_crop] 
+CREATE   PROCEDURE [dbo].[sp_rpt_get_spray_for_pathogen_crop] 
     @pathogen  VARCHAR(50)
    ,@crop      VARCHAR(50) = NULL
 AS
@@ -25599,6 +28366,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 
 -- ======================================================================================================================================================================
 -- Author:      Terry Watts
@@ -25625,7 +28393,7 @@ GO
 -- db default is DB_NAME()
 -- schema default is dbo
 -- ======================================================================================================================================================================
-ALTER   PROCEDURE [dbo].[sp_s2_import_correction]
+CREATE   PROCEDURE [dbo].[sp_s2_import_correction]
     @txn_id          VARCHAR(60)   = ''
    ,@search_clause   VARCHAR(1000) = NULL
    ,@replace_clause  VARCHAR(1000) = NULL
@@ -25838,12 +28606,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==========================================================
 -- Author:       Terry Watts
 -- Create date:  19-AUG-2023
 -- Description:  SETS the import_id session context
 -- ==========================================================
-ALTER   PROCEDURE [dbo].[sp_set_ctx_cor_id]
+CREATE   PROCEDURE [dbo].[sp_set_ctx_cor_id]
    @val  INT
 AS
 BEGIN
@@ -25863,12 +28632,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ====================================================
 -- Author:       Terry Watts
 -- Create date:  19-AUG-2023
 -- Description:  SETS the import correction id
 -- ====================================================
-ALTER   PROCEDURE [dbo].[sp_set_ctx_imp_id]
+CREATE   PROCEDURE [dbo].[sp_set_ctx_imp_id]
    @val     INT
 AS
 BEGIN
@@ -25889,6 +28659,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =================================================================
 -- Author:      Terry Watts
 -- Create date: 25-NOV-2023
@@ -25897,7 +28668,7 @@ GO
 -- CHANGES:
 -- 241118: return old loglevel in the sp rtn status or 1 if not set
 -- =================================================================
-ALTER   PROCEDURE [dbo].[sp_set_log_level]
+CREATE   PROCEDURE [dbo].[sp_set_log_level]
    @level INT
 AS
 BEGIN
@@ -25926,6 +28697,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =====================================================================================
 -- Author:      Terry Watts
 -- Create date: 18-NOV-2024
@@ -25936,7 +28708,7 @@ GO
 -- POST01: RETURNS old log level or null if not exist in ctx
 -- CHANGES:
 -- =====================================================================================
-ALTER   PROCEDURE [dbo].[sp_set_rtn_loglevel]
+CREATE   PROCEDURE [dbo].[sp_set_rtn_loglevel]
     @rtn_nm    VARCHAR(64)
    ,@log_level INT
 AS
@@ -25998,6 +28770,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:       Terry Watts
 -- Create date:  02-AUG-2023
@@ -26005,7 +28778,7 @@ GO
 --
 -- See Also: fnGetSessionContextAsString, fnGetSessionContextAsInt
 -- ======================================================================================================
-ALTER   PROCEDURE [dbo].[sp_set_session_context]
+CREATE   PROCEDURE [dbo].[sp_set_session_context]
     @key     VARCHAR(100)
    ,@val     SQL_VARIANT
 AS
@@ -26025,12 +28798,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:       Terry Watts
 -- Create date:  02-AUG-2023
 -- Description:  SETS the session context  [Import Root]
 -- ======================================================================================================
-ALTER   PROCEDURE [dbo].[sp_set_session_context_import_root]
+CREATE   PROCEDURE [dbo].[sp_set_session_context_import_root]
    @val VARCHAR(450)
 AS
 BEGIN
@@ -26049,6 +28823,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 --==========================================================================================================================================================
 -- Author:           Terry Watts
 -- Create date:      04-Dec-2024
@@ -26057,7 +28832,7 @@ GO
 --
 -- Algorithm
 --==========================================================================================================================================================
-ALTER   PROCEDURE [dbo].[sp_sp_import_eppo_merge_hlpr]
+CREATE   PROCEDURE [dbo].[sp_sp_import_eppo_merge_hlpr]
     @table           VARCHAR(60)
    ,@fields          VARCHAR(3000) -- comma sepreted list
    ,@display_tables  BIT         = 1
@@ -26130,6 +28905,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 08-FEB-2020
@@ -26141,7 +28917,7 @@ GO
 -- db default is DB_NAME()
 -- schema default is dbo
 -- =============================================
-ALTER   PROCEDURE [dbo].[sp_table_exists]
+CREATE   PROCEDURE [dbo].[sp_table_exists]
        @table_spec   VARCHAR(60)
 AS
 BEGIN
@@ -26195,6 +28971,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =================================================================================
 -- Author:      Terry Watts
 -- Create date: 07-NOV-2024
@@ -26219,7 +28996,7 @@ GO
 -- CHANGES:
 -- 241205: updated @filter_op prm to one of {'LIKE', 'EQUALS', 'IN'}
 -- =================================================================================
-ALTER PROCEDURE [dbo].[sp_update]
+CREATE PROCEDURE [dbo].[sp_update]
     @table_nm        NVARCHAR(60)
    ,@field_nm        NVARCHAR(60)
    ,@search_clause   NVARCHAR(500)
@@ -26340,6 +29117,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =========================================================
 -- Author:      Terry Watts
 -- Create date: 29-JUL-2023
@@ -26348,7 +29126,7 @@ GO
 -- Do after jap chemlist and chemical alignment
 --  sp_fixup_japChemList and sp_fixup_s2_chems
 -- =========================================================
-ALTER   PROCEDURE [dbo].[sp_update_chemical_typ_frm_jap]
+CREATE   PROCEDURE [dbo].[sp_update_chemical_typ_frm_jap]
 AS
 BEGIN
    DECLARE
@@ -26381,6 +29159,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-FEB-2025
@@ -26403,7 +29182,7 @@ GO
 -- CHANGES:
 -- 241205: updated @filter_op prm to one of {'LIKE', 'EQUALS', 'IN'}
 -- =================================================================================
-ALTER PROCEDURE [dbo].[sp_update_reg_ex]
+CREATE PROCEDURE [dbo].[sp_update_reg_ex]
     @table_nm        NVARCHAR(60)
    ,@field_nm        NVARCHAR(60)
    ,@search_clause   NVARCHAR(500)
@@ -26533,6 +29312,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 --========================================================================
 -- Author:      Terry Watts
 -- Create date: 06-NOV-2024
@@ -26556,7 +29336,7 @@ GO
 -- CHANGES:
 -- 241205: updated @filter_op prm to one of {'LIKE', 'EQUALS', 'IN'}
 --========================================================================
-ALTER PROCEDURE [dbo].[sp_update_s2]
+CREATE PROCEDURE [dbo].[sp_update_s2]
     @field           NVARCHAR(80)
    ,@search_clause   NVARCHAR(500)
    ,@filter_field_nm NVARCHAR(60)
@@ -26631,6 +29411,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =======================================================
 -- Author:      Terry Watts
 -- Create date: 06-NOV-2024
@@ -26641,7 +29422,7 @@ GO
 -- Called by:
 --    sp_S2_fixup_row <- sp_S2_fixup <-- sp__main_import
 -- =======================================================
-ALTER   PROCEDURE [dbo].[sp_update_S2_path]
+CREATE   PROCEDURE [dbo].[sp_update_S2_path]
     @search_clause   NVARCHAR(500)
    ,@filter_field_nm NVARCHAR(40)
    ,@filter_op       NVARCHAR(8)
@@ -26696,6 +29477,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =========================================================================
 -- Description: handles the loggong and cjecks during the S2 fixup process
 -- EXEC tSQLt.Run 'test.test_<nnn>_<proc_nm>';
@@ -26704,7 +29486,7 @@ GO
 -- Author:      Terry Watts
 -- Create date: 08-FEB-2025
 -- =========================================================================
-ALTER PROCEDURE [dbo].[sp_update_trigger_s2_crops]
+CREATE PROCEDURE [dbo].[sp_update_trigger_s2_crops]
     @inserted staging2_tbl READONLY
    ,@deleted  staging2_tbl READONLY
 AS
@@ -26806,6 +29588,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2024
@@ -26828,7 +29611,7 @@ GO
 -- 240329: changed input parameter @cor_file_path to @cor_file i.e. just the file name - the folder is now the import rot
 --          if just the file name is specified in @cor_file then the default folder is the import root
 -- ============================================================================================================================
-ALTER   PROCEDURE [dbo].[sp_write_results_to_cor_file]
+CREATE   PROCEDURE [dbo].[sp_write_results_to_cor_file]
     @cor_file        VARCHAR(1000)
    ,@cor_range       VARCHAR(1000) = 'ImportCorrections$A:S'
 AS
@@ -26928,6 +29711,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2024
@@ -26943,7 +29727,7 @@ GO
 -- POST 03: cor_file_pathfile must exist or exception 90002, 'The cor file [',@cor_file_path,'] does not exist'
 -- POST 04: results written back to @cor_file_path or error message logged
 -- =========================================================================================================
-ALTER   PROCEDURE [dbo].[sp_write_results_to_cor_file_param_val]
+CREATE   PROCEDURE [dbo].[sp_write_results_to_cor_file_param_val]
     @cor_file        VARCHAR(132)
    ,@cor_file_path   VARCHAR(1000)
    ,@cor_range       VARCHAR(1000) = 'Corrections$A:S'
@@ -26988,7 +29772,8 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
-ALTER PROCEDURE [dbo].[sp_write_txt_to_file]
+
+CREATE PROCEDURE [dbo].[sp_write_txt_to_file]
 (
     @string  VARCHAR(8000)
    ,@file    VARCHAR(500)
@@ -27074,6 +29859,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =========================================================================
 -- Procedure:   dbo.spExecuteCmds
 -- Description: 
@@ -27088,7 +29874,7 @@ GO
 -- parameters:
 -- @cmd the command to be run, it must include [value]
 -- =========================================================================
-ALTER PROCEDURE [dbo].[spExecuteCmds]
+CREATE PROCEDURE [dbo].[spExecuteCmds]
     @cmd   NVARCHAR(MAX) -- like 'EXEC sp_assert_tbl_pop ''', [value], ''''
    ,@items NVARCHAR(MAX) -- comma separated list of items to run teh sql against
    ,@end   INT OUT
@@ -27159,6 +29945,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===============================================================================
 -- Author:      Terry Watts
 -- Create date: 29-APR-2024
@@ -27168,7 +29955,7 @@ GO
 -- POSTCONDITIONS: RETURNS
 -- POST 01: 
 -- ===============================================================================
-ALTER   PROCEDURE [dbo].[testCleanUp]
+CREATE   PROCEDURE [dbo].[testCleanUp]
 AS
 BEGIN
    DECLARE 
@@ -27182,15 +29969,84 @@ END
 
 GO
 GO
+
+CREATE TYPE [dbo].[ChkFldsNotNullDataType] AS TABLE(
+	[ordinal] [int] NOT NULL,
+	[col] [varchar](60) NOT NULL,
+	[sql] [varchar](4000) NOT NULL
+)
+
 GO
 GO
+
+CREATE TYPE [dbo].[CmdsTbl] AS TABLE(
+	[ordinal] [int] IDENTITY(1,1) NOT NULL,
+	[sql] [nvarchar](max) NULL
+)
+
 GO
+GO
+
+CREATE TYPE [dbo].[EPPO] AS TABLE(
+	[ordinal] [int] NULL,
+	[table] [varchar](250) NOT NULL,
+	[exp_row_cnt] [int] NULL,
+	PRIMARY KEY CLUSTERED 
+(
+	[table] ASC
+)WITH (IGNORE_DUP_KEY = OFF)
+)
+
+GO
+GO
+
+CREATE TYPE [dbo].[IdNmTbl] AS TABLE(
+	[id] [int] IDENTITY(1,1) NOT NULL,
+	[val] [varchar](4000) NULL,
+	PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (IGNORE_DUP_KEY = OFF)
+)
+
+GO
+GO
+
+CREATE TYPE [dbo].[staging2_tbl] AS TABLE(
+	[id] [int] NOT NULL,
+	[company] [varchar](70) NULL,
+	[ingredient] [varchar](250) NULL,
+	[product] [varchar](100) NULL,
+	[concentration] [varchar](100) NULL,
+	[formulation_type] [varchar](7) NULL,
+	[uses] [varchar](100) NULL,
+	[toxicity_category] [int] NULL,
+	[registration] [varchar](65) NULL,
+	[expiry] [varchar](30) NULL,
+	[entry_mode] [varchar](60) NULL,
+	[crops] [varchar](250) NULL,
+	[pathogens] [varchar](360) NULL,
+	[rate] [varchar](200) NULL,
+	[mrl] [varchar](200) NULL,
+	[phi] [varchar](200) NULL,
+	[phi_resolved] [varchar](120) NULL,
+	[reentry_period] [varchar](250) NULL,
+	[notes] [varchar](250) NULL,
+	[comments] [varchar](500) NULL,
+	[created] [datetime] NULL,
+	PRIMARY KEY CLUSTERED 
+(
+	[id] ASC
+)WITH (IGNORE_DUP_KEY = OFF)
+)
+
 GO
 SET ANSI_NULLS ON
 
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 29-JUL-2023
@@ -27205,7 +30061,7 @@ GO
 -- 20-JAN-2024 now uses only the staging2 table
 -- 22-JAN-2024 added actions
 -- ======================================================================================================
-ALTER VIEW [dbo].[all_vw]
+CREATE VIEW [dbo].[all_vw]
 AS
 SELECT
        s.id
@@ -27239,6 +30095,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 29-JUL-2023
@@ -27248,7 +30105,7 @@ GO
 -- PRECONDITIONS: 
 --    Dependencies: staging 2 up to date
 -- ======================================================================================================
-ALTER   VIEW [dbo].[all_vw_with_nulls]
+CREATE   VIEW [dbo].[all_vw_with_nulls]
 AS
 SELECT * FROM ALL_vw 
 WHERE product_nm is NULL--product_id is NULL 
@@ -27268,6 +30125,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 09-MAR-2024
@@ -27275,7 +30133,7 @@ GO
 --
 -- CHANGES:
 -- ======================================================================================================
-ALTER   VIEW [dbo].[applog_vw_asc]
+CREATE   VIEW [dbo].[applog_vw_asc]
 AS
 SELECT TOP 1000000
     id
@@ -27298,6 +30156,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 07-MAR-2024
@@ -27305,7 +30164,7 @@ GO
 --
 -- CHANGES:
 -- ======================================================================================================
-ALTER   VIEW [dbo].[applog_vw_desc]
+CREATE   VIEW [dbo].[applog_vw_desc]
 AS
 SELECT TOP 1000000
     id
@@ -27329,6 +30188,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 16-AUG-2023
@@ -27337,7 +30197,7 @@ GO
 -- CHANGES:
 --
 -- ==============================================================================
-ALTER   VIEW [dbo].[audit_vw] AS
+CREATE   VIEW [dbo].[audit_vw] AS
 SELECT TOP 10000 *
 FROM
 (
@@ -27369,6 +30229,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 05-OCT-2023
@@ -27377,7 +30238,7 @@ GO
 -- CHANGES:
 --    
 -- ==============================================================================
-ALTER   VIEW [dbo].[Chemical_Chemical_staging_vw]
+CREATE   VIEW [dbo].[Chemical_Chemical_staging_vw]
 AS
 SELECT cs.chemical_nm as new_chemical_nm, c.chemical_nm AS existing_chemical_nm, c.chemical_id as existing_chemical_id
 FROM ChemicalStaging cs  LEFT JOIN Chemical c  ON c.chemical_nm = cs.chemical_nm
@@ -27391,6 +30252,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 05-OCT-2023
@@ -27400,7 +30262,7 @@ GO
 -- CHANGES:
 --    
 -- ==============================================================================
-ALTER   VIEW [dbo].[Chemical_Product_full_vw] AS
+CREATE   VIEW [dbo].[Chemical_Product_full_vw] AS
 SELECT ccsv.existing_chemical_nm, cps.chemical_nm as new_chemical_nm, cps.product_nm as new_product_nm
 , ppsv.existing_product_nm as ppsv_existing_product_nm, ppsv.new_product_nm as ppsv_new_product_nm
 FROM Chemical_Chemical_staging_vw ccsv 
@@ -27419,6 +30281,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 20-SEP-2023
@@ -27429,7 +30292,7 @@ GO
 --    231007: uses the main tables now
 --    240121: removed import_id
 -- ==============================================================================
-ALTER   VIEW [dbo].[chemical_product_staging_vw]
+CREATE   VIEW [dbo].[chemical_product_staging_vw]
 AS
 SELECT TOP 200000 chemical_nm, product_nm
 FROM
@@ -27451,12 +30314,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ====================================================
 -- Author:      Terry Watts
 -- Create date: 28-OCT-2023
 -- Description: lists the chemicals and their actions
 -- ====================================================
-ALTER   VIEW [dbo].[ChemicalAction_vw]
+CREATE   VIEW [dbo].[ChemicalAction_vw]
 AS
 SELECT c.chemical_nm, a.action_nm, c.chemical_id, a.action_id
 FROM ChemicalAction ca
@@ -27478,12 +30342,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ====================================================================================
 -- Author:      Terry Watts
 -- Create date: 26-MAR-2024
 -- Description: lists the chemicals and their aggregated actions on 1 row per chemical
 -- ====================================================================================
-ALTER   VIEW [dbo].[ChemicalActionAgg_vw]
+CREATE   VIEW [dbo].[ChemicalActionAgg_vw]
 AS
 SELECT chemical_nm, string_agg(action_nm,',') as actions
 FROM ChemicalAction_vw
@@ -27502,13 +30367,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================================
 -- Author:      Terry Watts
 -- Create date: 07-OCT-2023
 -- Description: lists the products and their associated chemicals from the main tables
 --
 -- ==================================================================================
-ALTER   VIEW [dbo].[ChemicalProduct_vw]
+CREATE   VIEW [dbo].[ChemicalProduct_vw]
 AS
 SELECT TOP 100000 c.chemical_nm, p.product_nm, c.chemical_id, p.product_id
 FROM ChemicalProduct cp
@@ -27530,6 +30396,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================================================================
 -- Author:       Terry Watts
 -- Create date:  06-OCT-2023
@@ -27540,7 +30407,7 @@ GO
 -- CHANGES:
 --    240121: removed import_id
 -- ============================================================================================
-ALTER   VIEW [dbo].[ChemicalUse_ChemicalStaging_vw]
+CREATE   VIEW [dbo].[ChemicalUse_ChemicalStaging_vw]
 AS
 SELECT TOP 20000 chemical_nm, use_nm
 FROM ChemicalUseStaging cs 
@@ -27559,12 +30426,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================================
 -- Author:      Terry Watts
 -- Create date: 04-NOV-2023
 -- Description: lists the chemicals and their associated uses from the main tables
 -- ==================================================================================
-ALTER   VIEW [dbo].[ChemicalUse_vw]
+CREATE   VIEW [dbo].[ChemicalUse_vw]
 AS
 SELECT TOP 100000 c.chemical_nm, u.use_nm, c.chemical_id, u.use_id
 FROM ChemicalUse cu
@@ -27584,12 +30452,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===========================================================
 -- Author:      Terry Watts
 -- Create date: 04-NOV-2023
 -- Description: lists the chemicals and their associated uses.
 -- ===========================================================
-ALTER   VIEW [dbo].[ChemicalUses_vw]
+CREATE   VIEW [dbo].[ChemicalUses_vw]
 AS
 SELECT chemical_nm, string_agg(use_nm, ',') as uses
 FROM
@@ -27611,6 +30480,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 20-SEP-2023
@@ -27620,7 +30490,7 @@ GO
 -- CHANGES:
 --    231007: uses the name fields now
 -- ==============================================================================
-ALTER   VIEW [dbo].[crop_pathogen_chemical_staging_vw]
+CREATE   VIEW [dbo].[crop_pathogen_chemical_staging_vw]
 AS
 SELECT TOP 200000 ch.chemical_nm, crp.crop_nm, p.pathogen_nm
 FROM 
@@ -27647,6 +30517,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 30-NOV-2024
@@ -27656,7 +30527,7 @@ GO
 -- CHANGES:
 --    231007: uses the name fields now
 -- ==============================================================================
-ALTER   VIEW [dbo].[crop_pathogen_chemical_vw]
+CREATE   VIEW [dbo].[crop_pathogen_chemical_vw]
 AS
 SELECT TOP 10000 ch.chemical_nm, crp.crop_nm, p.pathogen_nm
 FROM 
@@ -27693,6 +30564,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-SEP-2023
@@ -27705,7 +30577,7 @@ GO
 --  Crop_staging_vw     -> Staging2 table
 --  CropStaging         -> 
 -- ==================================================================================
-ALTER   VIEW [dbo].[crop_pathogen_vw]
+CREATE   VIEW [dbo].[crop_pathogen_vw]
 AS
 SELECT TOP 10000 c.crop_nm, p.pathogen_nm, c.crop_id, p.pathogen_id
 FROM Crop c
@@ -27727,6 +30599,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 27-JUL-2023
@@ -27737,7 +30610,7 @@ GO
 --   Dependencies: staging2
 --
 -- ======================================================================================================
-ALTER   VIEW [dbo].[crop_staging_vw]
+CREATE   VIEW [dbo].[crop_staging_vw]
 AS
 SELECT id, cs.value as crop FROM staging2 
 CROSS Apply string_split(crops, ',') cs WHERE cs.value not in ('', '-','--');
@@ -27755,12 +30628,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===============================================================================
 -- Author:      Terry Watts
 -- Create date: 06-NOV-2023
 -- Description: Creates the SQL to cache the test state to the 221018 cache
 -- ===============================================================================
-ALTER   VIEW [dbo].[crt_cache_221018_tables_sql_vw]
+CREATE   VIEW [dbo].[crt_cache_221018_tables_sql_vw]
 AS
 SELECT CONCAT('INSERT INTO [',S.TABLE_NAME, '] (',cols,') SELECT ',cols,' FROM ', REPLACE(S.TABLE_NAME, '_221018', '')) AS [sql]
 FROM 
@@ -27788,12 +30662,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===============================================================================
 -- Author:      Terry Watts
 -- Create date: 06-NOV-2023
 -- Description: Creates the SQL to uncache the test state from the 221018 cache
 -- ===============================================================================
-ALTER   VIEW [dbo].[crt_uncache_221018_tables_sql_vw]
+CREATE   VIEW [dbo].[crt_uncache_221018_tables_sql_vw]
 AS
 SELECT CONCAT('INSERT INTO [',REPLACE(S.TABLE_NAME, '_221018', ''), '] (',cols,') SELECT ',cols,' FROM ', S.TABLE_NAME, ' ORDER BY [', T.COLUMN_NAME,'];') as [sql]
 FROM
@@ -27822,13 +30697,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===================================================
 -- Author:      Terry Watts
 -- Create date: 21-JUN-20223
 -- Description: List the Pathogens in order - use to
 --    look for duplicates and misspellings and errors
 -- ===================================================
-ALTER   VIEW [dbo].[distinct_pathogens_vw] 
+CREATE   VIEW [dbo].[distinct_pathogens_vw] 
 AS
    SELECT DISTINCT TOP 100000 cs.value AS pathogen 
    FROM Staging2 
@@ -27848,13 +30724,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===================================================
 -- Author:      Terry Watts
 -- Create date: 17-JUL-20223
 -- Description: List the Pathogens in order - use to
 --    look for duplicates and misspellings and errors
 -- ===================================================
-ALTER   VIEW [dbo].[distinct_s1_crop_vw] 
+CREATE   VIEW [dbo].[distinct_s1_crop_vw] 
 AS
    SELECT DISTINCT TOP 100000 cs.value AS crop 
    FROM Staging1 
@@ -27874,6 +30751,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 05-MAR-2024
@@ -27882,7 +30760,7 @@ GO
 -- CHANGES:
 --
 -- ==============================================================================
-ALTER   VIEW [dbo].[DistributorStaging_vw]
+CREATE   VIEW [dbo].[DistributorStaging_vw]
 AS
 SELECT distributor_nm, value as manufacturer_nm
 FROM DistributorStaging CROSS APPLY string_split(manufacturers, ',');
@@ -27898,12 +30776,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================
 -- Author:      Terry Watts
 -- Create date: 14-NOV-2024
 -- Description: lists Eppo names, and related group info
 -- ======================================================
-ALTER   VIEW [dbo].[eppo_gaf_nm_grp_vw]
+CREATE   VIEW [dbo].[eppo_gaf_nm_grp_vw]
 AS
 SELECT N.code, N.lang as nm_lang, N.langno, N.preferred as preferred_nm, N.fullname, N.shortname, n.authority as nm_auth, n.status as nm_status,L.grp_dtype, L.grp_code, G.lang as grp_lang, G.preferred as preferred_grp,g.status,g.fullname as grp_full_nm, g.shortname as grp_short_nm, g.authority as grp_auth
 FROM Eppo_GAFNAME n JOIN Eppo_GAFLINK L ON n.code= L.datatype
@@ -27949,12 +30828,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================
 -- Author:      Terry Watts
 -- Create date: 14-NOV-2024
 -- Description: lists problem names in eppo.Ntxname
 -- ======================================================
-ALTER   VIEW [dbo].[eppo_ntx_problem_vw]
+CREATE   VIEW [dbo].[eppo_ntx_problem_vw]
 AS
 SELECT TOP (1000) [identifier]
       ,[datatype]
@@ -27985,6 +30865,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================================================
 -- Author:       Terry Watts
 -- Create date:  12-OCT-2023
@@ -27993,7 +30874,7 @@ GO
 --  if more than 1 field in the key then it will return a row for each field
 --  in which case use select distinct or string_agg
 -- ============================================================================
-ALTER   VIEW [dbo].[fKeys_vw] AS
+CREATE   VIEW [dbo].[fKeys_vw] AS
 SELECT TOP 10000 
     fk.name                   AS fk_nm
    ,ft.name                   AS foreign_table_nm
@@ -28030,6 +30911,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 22-OCT-2023
@@ -28038,7 +30920,7 @@ GO
 -- PRECONDITIONS:
 -- none
 -- ======================================================================================================
-ALTER   VIEW [dbo].[Import_Actions_vw]
+CREATE   VIEW [dbo].[Import_Actions_vw]
 AS
 SELECT action_nm
 FROM [ActionStaging];
@@ -28055,6 +30937,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 07-NOV-2023
@@ -28062,7 +30945,7 @@ GO
 --
 -- PRECONDITIONS: none
 -- ======================================================================================================
-ALTER   VIEW [dbo].[Import_ActionStaging_vw]
+CREATE   VIEW [dbo].[Import_ActionStaging_vw]
 AS
 SELECT action_id, action_nm
 FROM Actionstaging;
@@ -28079,6 +30962,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 20-SEP-2024
@@ -28086,7 +30970,7 @@ GO
 --
 -- PRECONDITIONS: none
 -- ===============================================================
-ALTER   VIEW [dbo].[Import_CallRegister_vw]
+CREATE   VIEW [dbo].[Import_CallRegister_vw]
 AS
 SELECT
        id
@@ -28107,6 +30991,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================================
 -- Author:      Terry Watts
 -- Create date: 03-DEC-2024
@@ -28114,7 +30999,7 @@ GO
 --
 -- PRECONDITIONS: none
 -- ================================================================
-ALTER   VIEW [dbo].[Import_CropStaging_vw]
+CREATE   VIEW [dbo].[Import_CropStaging_vw]
 AS
 SELECT crop_id, crop_nm, latin_nm, alt_latin_nms, alt_common_nms, taxonomy, notes
 FROM CropStaging;
@@ -28132,6 +31017,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-OCT-2024
@@ -28139,7 +31025,7 @@ GO
 --
 -- PRECONDITIONS: none
 -- ======================================================================================================
-ALTER   VIEW [dbo].[Import_Import_vw]
+CREATE   VIEW [dbo].[Import_Import_vw]
 AS
 SELECT import_id, import_nm, [description], new_fields, dropped_fields, error_count
 FROM Import;
@@ -28156,6 +31042,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-OCT-2024
@@ -28163,7 +31050,7 @@ GO
 --
 -- PRECONDITIONS: none
 -- ======================================================================================================
-ALTER   VIEW [dbo].[Import_PathogenStaging_vw]
+CREATE   VIEW [dbo].[Import_PathogenStaging_vw]
 AS
 SELECT
  pathogen_nm
@@ -28191,6 +31078,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-OCT-2024
@@ -28198,7 +31086,7 @@ GO
 --
 -- PRECONDITIONS: none
 -- ======================================================================================================
-ALTER   VIEW [dbo].[Import_PathogenTypeStaging_vw]
+CREATE   VIEW [dbo].[Import_PathogenTypeStaging_vw]
 AS
 SELECT pathogenType_id,pathogenType_nm
 FROM PathogenTypeStaging;
@@ -28215,12 +31103,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================================
 -- Author:      Terry Watts
 -- Create date: 07-OCT-2023
 -- Description: lists the products and their associated uses from the main tables
 -- ==================================================================================
-ALTER   VIEW [dbo].[import_ProductUseStaging_vw]
+CREATE   VIEW [dbo].[import_ProductUseStaging_vw]
 AS
 SELECT product_nm, use_nm
 FROM ProductUseStaging;
@@ -28236,6 +31125,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-OCT-2024
@@ -28243,7 +31133,7 @@ GO
 --
 -- PRECONDITIONS: none
 -- ======================================================================================================
-ALTER   VIEW [dbo].[Import_TableType_vw]
+CREATE   VIEW [dbo].[Import_TableType_vw]
 AS
 SELECT id, name
 FROM TableType;
@@ -28261,6 +31151,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-OCT-2024
@@ -28268,7 +31159,7 @@ GO
 --
 -- PRECONDITIONS: none
 -- ======================================================================================================
-ALTER   VIEW [dbo].[Import_Type_vw]
+CREATE   VIEW [dbo].[Import_Type_vw]
 AS
 SELECT [type_id], type_nm
 FROM [Type];
@@ -28285,6 +31176,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 08-MARL-2024
@@ -28294,7 +31186,7 @@ GO
 --                Tables: Staging2, [Use]
 --
 -- ======================================================================================================
-ALTER   VIEW [dbo].[Import_TypeStaging_vw]
+CREATE   VIEW [dbo].[Import_TypeStaging_vw]
 AS
 SELECT [type_id], type_nm
 FROM TypeStaging;
@@ -28310,6 +31202,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 29-JUL-2023
@@ -28319,7 +31212,7 @@ GO
 --                Tables: Staging2, [Use]
 --
 -- ======================================================================================================
-ALTER   VIEW [dbo].[Import_Use_vw]
+CREATE   VIEW [dbo].[Import_Use_vw]
 AS
 SELECT u.use_id, u.use_nm
 FROM [Use] u;
@@ -28336,6 +31229,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 07-NOV-2023
@@ -28345,7 +31239,7 @@ GO
 --                Tables: Staging2, [Use]
 --             
 -- ======================================================================================================
-ALTER   VIEW [dbo].[Import_UseStaging_vw]
+CREATE   VIEW [dbo].[Import_UseStaging_vw]
 AS
 SELECT TOP 1000 use_id, use_nm
 FROM UseStaging
@@ -28361,6 +31255,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 29-JUL-2023
@@ -28369,7 +31264,7 @@ GO
 -- PRECONDITIONS: Dependencies: Staging2 upto date
 --   Dependencies: staging2
 -- ======================================================================================================
-ALTER VIEW [dbo].[ImportCorrectionsStaging_vw]
+CREATE VIEW [dbo].[ImportCorrectionsStaging_vw]
 AS
 SELECT
        id
@@ -28402,12 +31297,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =====================================================================
 -- Author:      Terry Watts
 -- Create date: 27-JUN-20223
 -- Description: List the individual chemical (ingredient) from Staging2
 -- =====================================================================
-ALTER   VIEW [dbo].[Ingredient_staging_vw]
+CREATE   VIEW [dbo].[Ingredient_staging_vw]
 AS
    SELECT id, cs.value as chemical_nm 
    FROM Staging2 
@@ -28425,13 +31321,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 29-JUL-2023
 -- Description: this view lists company, product, ingrediant, cops and pathogens
 --    from staging2             
 -- ======================================================================================================
-ALTER   VIEW [dbo].[IngredientCropPathogen_raw_vw]
+CREATE   VIEW [dbo].[IngredientCropPathogen_raw_vw]
 AS
 SELECT id,company, product,ingredient, crops, pathogens
 FROM staging2
@@ -28448,12 +31345,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================================================
 -- Author       Terry Watts
 -- Create date: 07-FEB-2024
 -- Description: List all Registered fn call counts by fn
 -- ============================================================================
-ALTER   VIEW [dbo].[list_call_register_vw]
+CREATE   VIEW [dbo].[list_call_register_vw]
 AS
    SELECT id, rtn, [count], updated FROM dbo.CallRegister;
 
@@ -28468,6 +31366,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 10-JAN-2025
@@ -28475,7 +31374,7 @@ GO
 --
 -- CHANGES:
 -- ======================================================================================================
-ALTER VIEW [dbo].[list_ineffective_corrections_vw]
+CREATE VIEW [dbo].[list_ineffective_corrections_vw]
 AS
 SELECT row_id,command,search_clause,replace_clause,stg_file,[action],update_cnt
 FROM ImportCorrections 
@@ -28492,6 +31391,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 04-NOV-2023
@@ -28499,7 +31399,7 @@ GO
 --
 -- CHANGES:
 -- ==============================================================================
-ALTER   VIEW [dbo].[list_objects_vw]
+CREATE   VIEW [dbo].[list_objects_vw]
 AS
 SELECT TOP (1000) 
        [name]
@@ -28527,6 +31427,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================================
 -- Author:      Terry Watts
 -- Create date: 28-FEb-2024
@@ -28534,7 +31435,7 @@ GO
 --
 -- PRECONDITIONS: none
 -- =============================================================
-ALTER VIEW [dbo].[list_staging_tables_vw]
+CREATE VIEW [dbo].[list_staging_tables_vw]
 AS
 SELECT TOP (1000) table_nm
 FROM list_tables_vw where table_nm like '%staging%';
@@ -28546,12 +31447,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===========================================
 -- Author:      Terry Watts
 -- Create date: 27-JUN-20223
 -- Description: List the importand S2 fields
 -- ===========================================
-ALTER   VIEW [dbo].[list_staging1_vw]
+CREATE   VIEW [dbo].[list_staging1_vw]
 AS
    SELECT id, [uses], product, ingredient, entry_mode, crops, pathogens, company, notes
    FROM Staging1;
@@ -28567,12 +31469,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ============================================
 -- Author:      Terry Watts
 -- Create date: 27-JUN-20223
 -- Description: Lists the important S1 fields
 -- ============================================
-ALTER   VIEW [dbo].[list_staging2_vw]
+CREATE   VIEW [dbo].[list_staging2_vw]
 AS
    SELECT id, [uses], product, ingredient, entry_mode, crops, pathogens, company, notes
    FROM Staging2
@@ -28588,13 +31491,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =======================================================
 -- Author:      Terry Watts
 -- Create date: 21-JAN-2024
 -- Description: Lists the staging table counts
 -- use to check the import and staging pop processes
 -- =======================================================
-ALTER   VIEW [dbo].[list_stging_tbl_counts_vw]
+CREATE   VIEW [dbo].[list_stging_tbl_counts_vw]
 AS
 SELECT 'ActionStaging'       AS [table], COUNT(*) AS row_count  FROM ActionStaging                UNION
 SELECT 'ChemicalStaging'               , COUNT(*)               FROM ChemicalStaging              UNION
@@ -28624,12 +31528,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================================
 -- Author:      Terry Watts
 -- Create date: 06-NOV-2023
 -- Description: lists the columns for the tables
 -- =============================================================
-ALTER   VIEW [dbo].[list_table_columns_vw]
+CREATE   VIEW [dbo].[list_table_columns_vw]
 AS
 SELECT TOP 10000 
     TABLE_SCHEMA
@@ -28660,6 +31565,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================
 -- Author:      Terry Watts
 -- Create date: 03-DEc-2024
@@ -28669,7 +31575,7 @@ GO
 --
 -- SEE ALSO: dbo.fnListTables(@schema_nm)
 -- ==============================================
-ALTER   VIEW [dbo].[list_tables_vw]
+CREATE   VIEW [dbo].[list_tables_vw]
 AS
 SELECT top 2000 
     TABLE_SCHEMA AS schema_nm
@@ -28693,12 +31599,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =============================================================
 -- Author:      Terry Watts
 -- Create date: 17-APR-2024
 -- Description: lists the output columns for table functions
 -- =============================================================
-ALTER   VIEW [dbo].[list_tf_output_columns_vw]
+CREATE   VIEW [dbo].[list_tf_output_columns_vw]
 AS
 SELECT TOP 10000 
    table_schema
@@ -28721,6 +31628,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 14-MAR-2024
@@ -28729,7 +31637,7 @@ GO
 -- Uses
 --   in sp_merge_normalised_tables when the PathogenChemical merge fails due to mismatched pathogen names
 -- ======================================================================================================
-ALTER VIEW [dbo].[list_unmatched_PathogenChemicalStaging_pathogens_vw]
+CREATE VIEW [dbo].[list_unmatched_PathogenChemicalStaging_pathogens_vw]
 AS
 SELECT DISTINCT TOP 1000 pcs.pathogen_nm
 FROM
@@ -28749,13 +31657,14 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ====================================================================
 -- Author       Terry Watts
 -- Create date: 21-MAR-2024
 -- Description: List the pathogen erros in the LRAP Import S2 table
 --              NB: use this in preference to fnListPathogens() 
 -- ====================================================================
-ALTER VIEW [dbo].[list_unregistered_pathogens_vw]
+CREATE VIEW [dbo].[list_unregistered_pathogens_vw]
 AS
    SELECT TOP 10000 Pathogen as [Unregisterd Pathogen], concat('[',Pathogen,']') as x
    FROM dbo.fnListDistinctPathogensInS2()
@@ -28772,6 +31681,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 25-MAR-2024
@@ -28780,7 +31690,7 @@ GO
 -- PRECONDITIONS: none
 --
 -- ======================================================================================================
-ALTER VIEW [dbo].[ListUpdateChanges_vw]
+CREATE VIEW [dbo].[ListUpdateChanges_vw]
 AS
 SELECT
     s.id as sum_id
@@ -28808,12 +31718,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =================================================================
 -- Author:       Terry Watts
 -- Create Date: 25-AUG-2023
 -- Description: gets the pathogens related to the chemicals for each 
 -- =================================================================
-ALTER   VIEW [dbo].[pathogen_chemical_staging_vw]
+CREATE   VIEW [dbo].[pathogen_chemical_staging_vw]
 AS
 SELECT DISTINCT TOP 100000
     p.pathogen_nm
@@ -28838,6 +31749,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 29-JUL-2023
@@ -28846,7 +31758,7 @@ GO
 -- PRECONDITIONS: 
 -- Dependencies: Staging2 table
 -- ======================================================================================================
-ALTER   VIEW [dbo].[pathogen_staging_vw]
+CREATE   VIEW [dbo].[pathogen_staging_vw]
 AS
 SELECT TOP 100000 id, cs.value AS pathogen_nm
 FROM staging2 
@@ -28866,6 +31778,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 29-JUL-2023
@@ -28874,7 +31787,7 @@ GO
 -- PRECONDITIONS: 
 -- Dependencies: Staging2 table
 -- ======================================================================================================
-ALTER VIEW [dbo].[pathogen_vw]
+CREATE VIEW [dbo].[pathogen_vw]
 AS
 SELECT TOP 100000 
 pathogen_nm, pathogenType_nm, alt_common_nms, latin_nm, alt_latin_nms
@@ -28892,13 +31805,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- =========================================================================
 -- Author:      Terry Watts
 -- Create date: 28-OCT-2023
 -- Description: returns pathogens that effect crops
 -- Lists the pathogen_is, pathogen_nm, pathogen type name, crop name and id
 -- =========================================================================
-ALTER   VIEW [dbo].[pathogens_by_type_crop_vw]
+CREATE   VIEW [dbo].[pathogens_by_type_crop_vw]
 AS
 SELECT  c.crop_nm, p.pathogen_nm, t.pathogenType_nm, cp.crop_id, p.pathogen_id, t.pathogenType_id
 FROM        Pathogen p 
@@ -28920,6 +31834,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 29-JUL-2023
@@ -28928,7 +31843,7 @@ GO
 -- PRECONDITIONS:
 --    Dependencies: staging2 Table
 -- ======================================================================================================
-ALTER   VIEW [dbo].[pathogens_initial_cap_vw]
+CREATE   VIEW [dbo].[pathogens_initial_cap_vw]
 AS
 SELECT id, STRING_AGG( dbo.fnInitialCap(cs.value), ',') as agPathogens
 FROM staging2
@@ -28946,6 +31861,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 05-OCT-2023
@@ -28954,7 +31870,7 @@ GO
 -- CHANGES:
 --    
 -- ==============================================================================
-ALTER   VIEW [dbo].[Product_Product_staging_vw]
+CREATE   VIEW [dbo].[Product_Product_staging_vw]
 AS
 SELECT ps.product_nm as new_product_nm, p.product_nm AS existing_product_nm, p.product_id as existing_product_id
 FROM Product p LEFT JOIN ProductStaging ps ON p.product_nm = ps.product_nm;
@@ -28967,13 +31883,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================================
 -- Author:      Terry Watts
 -- Create date: 07-OCT-2023
 -- Description: lists the products and their associated chemicals from the main tables
 --
 -- ==================================================================================
-ALTER   VIEW [dbo].[ProductChemical_vw]
+CREATE   VIEW [dbo].[ProductChemical_vw]
 AS
 SELECT TOP 100000 c.chemical_nm, p.product_nm, c.chemical_id, p.product_id
 FROM ChemicalProduct cp
@@ -28994,6 +31911,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================================
 -- Author:      Terry Watts
 -- Create date: 09-OCT-2023
@@ -29002,7 +31920,7 @@ GO
 -- CHANGES:
 --
 -- ==================================================================================
-ALTER   VIEW [dbo].[ProductCompany_vw]
+CREATE   VIEW [dbo].[ProductCompany_vw]
 AS
 SELECT TOP 100000 p.product_nm, c.company_nm, p.product_id, c.company_id
 FROM ProductCompany pc
@@ -29028,6 +31946,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ================================================================================================
 -- Author:      Terry Watts
 -- Create date: 09-OCT-2023
@@ -29036,7 +31955,7 @@ GO
 -- CHANGES:
 --
 -- ================================================================================================
-ALTER   VIEW [dbo].[ProductsCompanyAndCompanyCount_vw]
+CREATE   VIEW [dbo].[ProductsCompanyAndCompanyCount_vw]
 AS
 SELECT TOP 100000 pc.product_nm, pc.product_id, pcc.cnt_companies, pc.company_nm
 FROM ProductsCompanyCount_vw pcc
@@ -29054,6 +31973,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================================
 -- Author:      Terry Watts
 -- Create date: 09-OCT-2023
@@ -29062,7 +31982,7 @@ GO
 -- CHANGES:
 --
 -- ==================================================================================
-ALTER   VIEW [dbo].[ProductsCompanyCount_vw]
+CREATE   VIEW [dbo].[ProductsCompanyCount_vw]
 AS
 SELECT TOP 100000 product_nm, product_id, count(company_id) as cnt_companies
 FROM ProductCompany_vw
@@ -29094,12 +32014,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================================
 -- Author:      Terry Watts
 -- Create date: 07-OCT-2023
 -- Description: lists the products and their associated uses from the main tables
 -- ==================================================================================
-ALTER   VIEW [dbo].[ProductUse_vw]
+CREATE   VIEW [dbo].[ProductUse_vw]
 AS
 SELECT TOP 100000 p.product_nm, u.use_nm, p.product_id, u.use_id
 FROM ProductUse pu
@@ -29125,12 +32046,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================================
 -- Author:      Terry Watts
 -- Create date: 07-OCT-2023
 -- Description: lists the products and their associated uses from the staging tables
 -- ==================================================================================
-ALTER   VIEW [dbo].[ProductUseStaging_vw]
+CREATE   VIEW [dbo].[ProductUseStaging_vw]
 AS
 SELECT TOP 100000 product_nm, use_nm
 FROM ProductUseStaging pu
@@ -29147,12 +32069,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- =============================================================
 -- Author:      Terry Watts
 -- Create date: 27-JUN-2023
 -- Description: used for teh bulk import of 221008 fmt imports
 -- =============================================================
-ALTER VIEW [dbo].[RegisteredPesticideImport_221018_vw]
+CREATE VIEW [dbo].[RegisteredPesticideImport_221018_vw]
 AS
 SELECT 
        id
@@ -29181,13 +32104,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================
 -- Author     : Terry Watts
 -- Create date: 29-JUL-2023
 -- Description: this view is used in the bulk insert operation 
 --    of 230721 format imports
 -- ==============================================================
-ALTER   VIEW [dbo].[RegisteredPesticideImport_230721_vw]
+CREATE   VIEW [dbo].[RegisteredPesticideImport_230721_vw]
 AS
 SELECT 
        id
@@ -29221,13 +32145,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================
 -- Author     : Terry Watts
 -- Create date: 05-OCT-2024
 -- Description: this view is used in the bulk insert operation 
 --    of 230721 format imports
 -- ==============================================================
-ALTER   VIEW [dbo].[RegisteredPesticideImport_240502_vw]
+CREATE   VIEW [dbo].[RegisteredPesticideImport_240502_vw]
 AS
 SELECT 
        id
@@ -29261,6 +32186,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 20-SEP-2023
@@ -29270,7 +32196,7 @@ GO
 -- 231007: uses the main tables now
 -- 240129: use names not ids
 -- ==============================================================================
-ALTER   VIEW [dbo].[rpt_chemical_pathogen_crop_vw]
+CREATE   VIEW [dbo].[rpt_chemical_pathogen_crop_vw]
 AS
 SELECT
     ch.chemical_nm
@@ -29299,6 +32225,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ==================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-OCT-2023
@@ -29306,7 +32233,7 @@ GO
 --
 -- PRECONDITIONS:
 -- ==================================================================================
-ALTER   VIEW [dbo].[rpt_product_chemical_pathogen_crop_vw]
+CREATE   VIEW [dbo].[rpt_product_chemical_pathogen_crop_vw]
 AS
 SELECT 
     p.product_nm
@@ -29337,13 +32264,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 29-JUL-2023
 -- Description: this view compares staging1 and 2
 --
 -- ======================================================================================================
-ALTER   VIEW [dbo].[S12_Crop_diff_vw]
+CREATE   VIEW [dbo].[S12_Crop_diff_vw]
 AS
 SELECT sb.id, sb.crops as sb_crops, s1.crops as s1_crops 
 FROM staging1_bak sb FULL JOIN staging1 s1 ON sb.id=s1.id;
@@ -29360,13 +32288,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===================================================
 -- Author:      Terry Watts
 -- Create date: 27-JUN-20223
 -- Description: List the 2 staging tables side by side
 -- to help check update issues
 -- ===================================================
-ALTER   VIEW [dbo].[s12_vw]
+CREATE   VIEW [dbo].[s12_vw]
 AS 
    SELECT 
     a.id          AS id
@@ -29395,6 +32324,7 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Description: this view displays the pathogens changes in S2 from s2_updateLog
@@ -29407,7 +32337,7 @@ GO
 --
 -- CHANGES:
 -- ======================================================================================================
-ALTER VIEW [dbo].[s2_updateLog_pathogens_vw]
+CREATE VIEW [dbo].[s2_updateLog_pathogens_vw]
 AS
 SELECT
  fixup_id
@@ -29427,12 +32357,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ===================================================
 -- Author:      Terry Watts
 -- Create date: 07-JUL-20223
 -- Description: List the id,  Pathogens in id order 
 -- ===================================================
-ALTER   VIEW [dbo].[s2vw] 
+CREATE   VIEW [dbo].[s2vw] 
 AS
    SELECT id, pathogens
    FROM Staging2 
@@ -29449,13 +32380,14 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================
 -- Author:      Terry Watts
 -- Create date: 12-NOV-2023
 -- Description: returns the parameters
 -- e.g. sysobjects xtype code 
 -- ======================================================
-ALTER   VIEW [dbo].[SysRtnPrms_vw]
+CREATE   VIEW [dbo].[SysRtnPrms_vw]
 AS 
 SELECT
     SCHEMA_NAME( schema_id)            AS schema_nm
@@ -29505,12 +32437,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 --===========================================================
 -- Author:      Terry watts
 -- Create date: 18-MAY-2020
 -- Description: lists routine details
 -- ===========================================================
-ALTER VIEW [dbo].[SysRtns_vw]
+CREATE VIEW [dbo].[SysRtns_vw]
 AS
 SELECT TOP 2000
     SCHEMA_NAME([schema_id])              AS schema_nm
@@ -29539,12 +32472,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 --===========================================================
 -- Author:      Terry watts
 -- Create date: 13-NOV-2024
 -- Description: lists table column details
 -- ===========================================================
-ALTER   VIEW [dbo].[SysTblCols_vw]
+CREATE   VIEW [dbo].[SysTblCols_vw]
 AS
 SELECT
     TABLE_SCHEMA     AS schema_nm
@@ -29573,12 +32507,13 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 --===========================================================
 -- Author:      Terry watts
 -- Create date: 13-NOV-2024
 -- Description: lists table or view and its details
 -- ===========================================================
-ALTER   VIEW [dbo].[SysTblView_vw]
+CREATE   VIEW [dbo].[SysTblView_vw]
 AS
 SELECT
     TABLE_SCHEMA                                AS schema_nm
@@ -29600,12 +32535,13 @@ SET ANSI_NULLS ON
 SET QUOTED_IDENTIFIER ON
 
 GO
+
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 05-FEB-2025
 -- Description: displays the list of unused routines in dbo and test
 -- ==============================================================================
-ALTER VIEW [dbo].[unused_rtns_vw] AS
+CREATE VIEW [dbo].[unused_rtns_vw] AS
 SELECT TOP 2000 schema_nm, rtn_nm, ty_code, ordinal
 FROM
 (
@@ -29629,6 +32565,7 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
+
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 29-JUL-2023
@@ -29637,7 +32574,7 @@ GO
 -- PRECONDITIONS: Dependencies:
 --                Tables: Staging2, [Use]
 -- ======================================================================================================
-ALTER   VIEW [dbo].[Use_staging2_vw]
+CREATE   VIEW [dbo].[Use_staging2_vw]
 AS
 SELECT distinct TOP 20000 use_nm
 FROM all_vw s
@@ -29648,25 +32585,3 @@ SELECT TOP 50 * FROM Use_staging2_vw;
 
 
 GO
-/*
-----------------------------------------------------------------------------------------------------
-Summary:
-----------------------------------------------------------------------------------------------------
-Datbases              :   0 items items
-Schemas               :   0 items items
-Tables                :   0 items items
-Procedures            : 182 items items
-Functions             : 160 items items
-Views                 :   0 items items
-Table Types           :   0 items items
-UserDefinedDataTypes  :   0 items items
-Wanted Items          : 535 items items
-Consisidered Entities : 535 items items
-Different Databases   :   0 items items
-Duplicate Dependencies:   2 items items
-System Objects        :  10 items items
-Unresolved Entities   :   0 items items
-Unwanted Types        :   2 items items
-Unknown Entities      :   0 items items
-Bad bin               :   0 items items
-*/
