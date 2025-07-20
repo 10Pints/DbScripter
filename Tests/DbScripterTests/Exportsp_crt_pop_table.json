@@ -1,0 +1,38 @@
+﻿{
+   // This is config to export all test creation artifacts
+   "Logging": {
+      "LogLevel": {
+         "Default": "Debug",
+         "System": "Information",
+         "Microsoft": "Information"
+      }
+   },
+
+   "ThreadSettings": { "MaxThreads": 4 },
+   "appSettings": {
+      "Name": "Exportsp_crt_pop_table",
+      "Server": "DevI9",
+      "Instance": "",
+      "Database": "Dorsu_dev",
+      "Script Dir": "D:\\Dev\\DbScripter\\Tests\\DbScripterAppTests\\Exportsp_crt_pop_table",
+      "Script File": "Exportsp_crt_pop_table.sql",
+      "CreateMode": "Create",
+      "RequiredAssemblies": "",
+      "RequiredSchemas": "",
+      "RequiredTypes": "",
+      "RequiredFunctions": "",
+      "RequiredProcedures": "[dbo].[sp_crt_pop_table]",
+      "RequiredTables": "",
+      "RequiredViews": "dbo.ImportGenericStaging_vw,[dbo].[list_table_columns_vw]",
+      "RequiredUserDefinedDataTypes": "",
+      "RequiredUserDefinedTableTypes": "",
+      "RequiredUserDefinedTypes": "",
+      "AddTimestamp": "false",
+      "ScriptUseDb": "true",
+      "DisplayScript": "true",
+      "DisplayLog": "true",
+      "LogFile": "D:\\Dev\\DbScripter\\Tests\\DbScripterAppTests\\Exportsp_crt_pop_table\\Exportsp_crt_pop_table.log",
+      "LogLevel": "INFO",
+      "IsExportingData": "false"
+   }
+}

@@ -255,7 +255,11 @@ namespace DbScripterLibNS
          foreach (SqlTypeEnum e  in Enum.GetValues<SqlTypeEnum>())
             GetUrnsOfType(e, root_urns, urn_map);
 
-         LogL();
+         LogL($"found {root_urns.Count} root items:");
+
+         foreach(var item in root_urns)
+            LogI($"{item}");
+
          return root_urns;
       }
 
@@ -308,18 +312,27 @@ namespace DbScripterLibNS
       /// <summary>
       /// gets the list of filter urns but no databases or Schemas
       /// This list can be used to get dependencies
+      /// 
+      /// Postconditions: POST01: urn_map.count of items in all maps must be > 0
       /// </summary>
       /// <returns></returns>
       public Dictionary<SqlTypeEnum, List<Urn>> GetFilterUrns()
       {
-         Dictionary<SqlTypeEnum, List<Urn>> map = new Dictionary<SqlTypeEnum, List<Urn>>();
+         Dictionary<SqlTypeEnum, List<Urn>> urn_map = new Dictionary<SqlTypeEnum, List<Urn>>();
 
          foreach(KeyValuePair<SqlTypeEnum, List<string>> pr 
             in P.RequiredItemMap.Where(pr => (pr.Key != SqlTypeEnum.Database && pr.Key != SqlTypeEnum.Schema
          )))
-            map[pr.Key] = GetFilterUrns(pr.Key, DbCollmap[pr.Key]);
+            urn_map[pr.Key] = GetFilterUrns(pr.Key, DbCollmap[pr.Key]);
 
-         return map;
+         int cnt = 0;
+
+         // POST01: urn_map.count of items in all maps must be > 0
+         foreach(KeyValuePair<SqlTypeEnum, List<Urn>> pr in urn_map)
+            cnt += pr.Value.Count;
+
+         Postcondition(cnt> 0, "E4091: GetFilterUrns() did not find any items");
+         return urn_map;
       }
 
       /// <summary>
@@ -396,6 +409,8 @@ namespace DbScripterLibNS
       /// POST 1: writer open pointing to the export file AND
       ///       writer file same as ExportFilePath and both equal exportFilePath parameter
       /// POST 2: sets ScriptFile from P.ExportScript path or error if not specified
+      /// 
+      /// POST 3: creates the subfolders: StoredProcedures, Functions, Views, Tables, UserDefinedTypes
       /// </summary>
       /// <param name="exportFilePath"></param>
       /// <param msg="possible error/warning message"></param>
@@ -433,7 +448,14 @@ namespace DbScripterLibNS
                if (!Directory.Exists(directory))
                   Directory.CreateDirectory(directory);
 
-               // ASSERTION: directory exists
+               // ASSERTION: the root directory exists
+               // POST 3: create the subfolders: StoredProcedures, Functions, Views, Tables, UserDefinedTypes
+               Directory.CreateDirectory(Path.Combine(directory, "StoredProcedures"));
+               Directory.CreateDirectory(Path.Combine(directory, "Functions"));
+               Directory.CreateDirectory(Path.Combine(directory, "Views"));
+               Directory.CreateDirectory(Path.Combine(directory, "Tables"));
+               Directory.CreateDirectory(Path.Combine(directory, "UserDefinedTypes"));
+               Directory.CreateDirectory(Path.Combine(directory, "Misc"));
 
                if (File.Exists(scriptFile))
                   File.Delete(scriptFile);
@@ -1568,7 +1590,7 @@ namespace DbScripterLibNS
          do
          {
             // items are stored in 2 different places depending on type
-            // m ost are stored on the datab 
+            // most are stored on the database
             if (type == SqlTypeEnum.UserDefinedDataType)
             {
                if (Database.UserDefinedDataTypes.Contains(entityName, schemaName))
@@ -1618,10 +1640,10 @@ namespace DbScripterLibNS
 
             // if mode IS NOT alter then script normally
             // if mode IS     alter then modify statements
-            if (P.CreateMode != CreateModeEnum.Alter)
-               action = ScriptItemNormally(transactions, sb, urn);
-            else
+            if (P.CreateMode == CreateModeEnum.Alter)
                action = ScriptItemHandleAlter(transactions, sqlType, sb, urn);
+            else
+               action = ScriptItemNormally(transactions, sb, urn);
 
             string scriptFilePath = CreateIndividualFileName(urn);
             LogI($"{scriptFilePath}");
@@ -1925,7 +1947,8 @@ namespace DbScripterLibNS
       }
 
       /// <summary>
-      /// Creates the individual script filename - do not use timestamp
+      /// Creates the individual script filePath 
+      /// NOTE: do not use timestamp
       /// as the Dbscriptor can be used to take snapshots of the routines for version management
       /// which relies on file name not being changed
       /// </summary>
@@ -1933,10 +1956,49 @@ namespace DbScripterLibNS
       /// <returns></returns>
       protected string CreateIndividualFileName(Urn urn)
       {
+         string objectType = urn.Type;                          // e.g. "StoredProcedure"
+         string name = urn.GetAttribute("Name");                // e.g. "usp_DoSomething"
+         string schema = urn.GetAttribute("Schema") ?? "dbo";   // handle null schemas
+         string folderName;
+
+         switch (objectType)
+         {
+            case "StoredProcedure":
+               folderName = "StoredProcedures";
+               break;
+            case "UserDefinedFunction":
+               folderName = "Functions";
+               break;
+            case "View":
+               folderName = "Views";
+               break;
+            case "Table":
+               folderName = "Tables";
+               break;
+            case "UserDefinedDataType":
+               folderName = "UserDefinedTypes";
+               break;
+            default:
+               folderName = "Misc";
+               break;
+         }
+         // Optional: sanitize name to avoid invalid file names
+         //string safeName = name.Replace("[", "").Replace("]", "");
+         //string fileName = $"{schema}.{safeName}.sql";
+
+         // Combine folder
+         // string fullPath = Path.Combine(basePath, folderName);
+         //Directory.CreateDirectory(fullPath);  // ensure folder exists
+
+  
          //string timestamp = P.AddTimestamp == true ? $"_{P.Timestamp}_" : "";
          string key = GetUrnDetails(urn, out SqlTypeEnum type, out string dbName, out string schemaNm, out string entityNm);
-         string fileName = @$"{P.ScriptDir}\{schemaNm}.{entityNm}.sql";
-         return fileName;
+         string filePath = (schemaNm == "") ? @$"{P.ScriptDir}\{folderName}\{entityNm}.sql"
+                                            : @$"{P.ScriptDir}\{folderName}\{schemaNm}.{entityNm}.sql"
+            ;
+
+         //return Path.Combine(fullPath, fileName); ;
+         return filePath;
       }
 
       protected void RegisterAction(string key, SelectionRuleEnum rule)
@@ -2421,9 +2483,18 @@ namespace DbScripterLibNS
          return ret;
       }
 
+      /// <summary>
+      /// This rtn gets all the items to script.
+      /// This the list of all dependant items for each root
+      /// 
+      /// </summary>
+      /// <param name="rootUrns"></param>
+      /// <param name="mostDependentFirst"></param>
+      /// <returns></returns>
       protected List<Urn> GetDependencyWalk(HashSet<Urn> rootUrns, bool mostDependentFirst)
       {
-         LogS();
+         LogS($"Root list has {rootUrns.Count} items");
+         Assertion(rootUrns.Count > 0, "GetDependencyWalk: precondition violation: rootUrns.Count > 0");
          List<Urn> walk = new();
          var dw = new DependencyWalker(Server);
          DependencyTree depTree;
@@ -2464,7 +2535,8 @@ namespace DbScripterLibNS
                   continue;
                }
 
-               // Finally all OK: 
+               // Finally all OK: so add the item
+               LogI($"Adding {urn}");
                walk.Add(urn);
             }
          }
@@ -2488,7 +2560,12 @@ Script may need manual rearranging to get dependency order correct.
          }
 
          // ASSERTION walk populated
-         LogL($"walk contains: {walk.Count} items");
+         LogL($"found : {walk.Count} dependencies");
+
+         foreach(var item in walk)
+            LogI($"{item}");
+
+         LogL($"found : {walk.Count} dependencies");
          return walk;
       }
 

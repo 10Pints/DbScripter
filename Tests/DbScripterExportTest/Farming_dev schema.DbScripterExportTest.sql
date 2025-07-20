@@ -38,7 +38,7 @@ Parameters:
  ScriptUseDb                  : True
  Server                       : DevI9
  AddTimestamp                 : False
- Timestamp                    : 250709-0415
+ Timestamp                    : 250720-0902
 
  RequiredSchemas : 2
 	dbo
@@ -781,16 +781,17 @@ SET QUOTED_IDENTIFIER ON
 
 GO
 
-
--- =========================================================
+-- ================================================================
 -- Author:      Terry Watts
 -- Create date: 25-MAR-2020
--- Description: Raises an exception
---    Ensures @state is positive
---    if @ex_num < 50000 message and raise to 50K+ @ex_num
--- =========================================================
-CREATE   PROCEDURE [dbo].[sp_raise_exception]
-       @ex_num    INT            = 53000
+-- Description: Raises an exception coallescing the error messages
+-- with a space between the messages
+--
+-- Ensures @state is positive
+-- if @ex_num < 50000 message and raise to 50K+ @ex_num
+-- ================================================================
+CREATE PROCEDURE [dbo].[sp_raise_exception]
+       @ex_num    INT           = 53000
       ,@msg0      VARCHAR(max)  = NULL
       ,@msg1      VARCHAR(max)  = NULL
       ,@msg2      VARCHAR(max)  = NULL
@@ -818,9 +819,24 @@ BEGIN
    DECLARE
        @fnThis    VARCHAR(35) = 'sp_raise_exception'
       ,@msg       VARCHAR(max)
+   ;
 
-      IF @ex_num IS NULL SET @ex_num = 53000; -- default
-      EXEC sp_log 4, @fnThis, '000: starting, @fn:[', @fn, '] @ex_num:[', @ex_num,'] @msg1:[', @msg1,']';
+   DECLARE @msgs TABLE (txt VARCHAR(MAX));
+
+   INSERT INTO @msgs (txt)
+   SELECT TRIM(value)
+   FROM (VALUES
+       (@msg0), (@msg1), (@msg2), (@msg3), (@msg4),
+       (@msg5), (@msg6), (@msg7), (@msg8), (@msg9),
+       (@msg10), (@msg11), (@msg12), (@msg13), (@msg14),
+       (@msg15), (@msg16), (@msg17), (@msg18), (@msg19), (@msg20)
+   ) AS V(value)
+   WHERE value IS NOT NULL AND LTRIM(RTRIM(value)) <> '';
+
+   SELECT @msg = STRING_AGG(txt, ' ') FROM @msgs;
+
+   IF @ex_num IS NULL SET @ex_num = 53000; -- default
+      EXEC sp_log 4, @fnThis, '000: throwing exception ', @ex_num, ' ', @msg, ' st: 1';
 
    ------------------------------------------------------------------------------------------------
    -- Validate
@@ -832,41 +848,17 @@ BEGIN
       EXEC sp_log 3, @fnThis, '010: supplied exception number is too low changing to ', @ex_num;
    END
 
-   SET @msg =
-      CONCAT
-      (
-          @msg0
-         ,@msg1
-         ,@msg2
-         ,@msg3
-         ,@msg4
-         ,@msg5
-         ,@msg6
-         ,@msg7
-         ,@msg8
-         ,@msg9
-         ,@msg10
-         ,@msg11
-         ,@msg12
-         ,@msg13
-         ,@msg14
-         ,@msg15
-         ,@msg16
-         ,@msg17
-         ,@msg18
-         ,@msg19
-         ,@msg20
-      );
-
    ------------------------------------------------------------------------------------------------
    -- Throw the exception
    ------------------------------------------------------------------------------------------------
-    EXEC sp_log 4, @fn, '020: throwing exception ', @ex_num, ' ',@msg, ' st: 1';
    ;THROW @ex_num, @msg, 1;
 END
 /*
 EXEC sp_raise_exception 53000, 'test exception msg 1',' msg 2', @state=2, @fn='test_fn'
 */
+
+
+
 
 
 GO
@@ -12559,14 +12551,63 @@ GO
 -- Description: Asserts that the given table does not have any rows
 -- ===================================================================
 CREATE PROCEDURE [dbo].[sp_assert_tbl_not_pop]
-    @table     VARCHAR(60)
-   ,@log_level INT = 0
+    @table           VARCHAR(60)
+   ,@msg0            VARCHAR(MAX)   = NULL
+   ,@msg1            VARCHAR(MAX)   = NULL
+   ,@msg2            VARCHAR(MAX)   = NULL
+   ,@msg3            VARCHAR(MAX)   = NULL
+   ,@msg4            VARCHAR(MAX)   = NULL
+   ,@msg5            VARCHAR(MAX)   = NULL
+   ,@msg6            VARCHAR(MAX)   = NULL
+   ,@msg7            VARCHAR(MAX)   = NULL
+   ,@msg8            VARCHAR(MAX)   = NULL
+   ,@msg9            VARCHAR(MAX)   = NULL
+   ,@msg10           VARCHAR(MAX)   = NULL
+   ,@msg11           VARCHAR(MAX)   = NULL
+   ,@msg12           VARCHAR(MAX)   = NULL
+   ,@msg13           VARCHAR(MAX)   = NULL
+   ,@msg14           VARCHAR(MAX)   = NULL
+   ,@msg15           VARCHAR(MAX)   = NULL
+   ,@msg16           VARCHAR(MAX)   = NULL
+   ,@msg17           VARCHAR(MAX)   = NULL
+   ,@msg18           VARCHAR(MAX)   = NULL
+   ,@display_msgs    BIT            = 0
+   ,@exp_cnt         INT            = NULL
+   ,@ex_num          INT            = 56687
+   ,@ex_msg          VARCHAR(500)   = NULL
+   ,@fn_             VARCHAR(35)    = N'*'
+   ,@log_level       INT            = 0
+   ,@display_row_cnt BIT            = 1
 AS
 BEGIN
    DECLARE
     @fn        VARCHAR(35)    = N'sp_assert_tbl_not_pop'
 
-   EXEC sp_assert_tbl_pop @table, @exp_cnt =0, @log_level=@log_level;
+   EXEC sp_assert_tbl_pop
+       @table
+      ,@msg0  = 'sp_assert_tbl_not_po'
+      ,@msg1  = @msg0 
+      ,@msg2  = @msg1 
+      ,@msg3  = @msg2 
+      ,@msg4  = @msg3 
+      ,@msg5  = @msg4 
+      ,@msg6  = @msg5 
+      ,@msg7  = @msg6 
+      ,@msg8  = @msg7 
+      ,@msg9  = @msg8 
+      ,@msg10 = @msg9 
+      ,@msg11 = @msg10
+      ,@msg12 = @msg11
+      ,@msg13 = @msg12
+      ,@msg14 = @msg13
+      ,@msg15 = @msg14
+      ,@msg16 = @msg15
+      ,@msg17 = @msg16
+      ,@msg18 = @msg17
+--      ,@msg19 = @msg18
+      ,@exp_cnt =0
+      ,@log_level=@log_level
+      ,@display_row_cnt=@display_row_cnt;
 END
 /*
 EXEC tSQLt.Run 'test.test_004_sp_chk_tbl_not_pop';
@@ -12574,6 +12615,7 @@ TRUNCATE TABLE AppLog;
 EXEC test_sp_chk_tbl_not_pop 'AppLog'; -- ok no rows
 INSERT iNTO AppLog ()
 */
+
 
 GO
 SET ANSI_NULLS ON

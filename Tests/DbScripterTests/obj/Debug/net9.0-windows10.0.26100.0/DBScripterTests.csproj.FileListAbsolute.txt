@@ -648,3 +648,5 @@ D:\Dev\DbScripter\Tests\DbScripterTests\obj\Debug\net9.0-windows10.0.26100.0\DBS
 D:\Dev\DbScripter\Tests\DbScripterTests\obj\Debug\net9.0-windows10.0.26100.0\DBScripterTests.genruntimeconfig.cache
 D:\Dev\DbScripter\Tests\DbScripterTests\obj\Debug\net9.0-windows10.0.26100.0\ref\DBScripterTests.dll
 D:\Dev\DbScripter\Tests\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\DbScripterExportTest.json
+D:\Dev\DbScripter\Tests\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\ExportTestCrtRtns_When_Expect_45.json
+D:\Dev\DbScripter\Tests\DbScripterTests\bin\Debug\net9.0-windows10.0.26100.0\Exportsp_crt_pop_table.json

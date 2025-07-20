@@ -1,6 +1,6 @@
 GO
 
-CREATE TYPE [dbo].[EPPO] AS TABLE(
+CREATE TYPE [dbo].[Eppo] AS TABLE(
 	[ordinal] [int] NULL,
 	[table] [varchar](250) NOT NULL,
 	[exp_row_cnt] [int] NULL,

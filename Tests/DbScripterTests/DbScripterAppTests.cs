@@ -18,11 +18,6 @@ public class DbScripterAppTests : IDisposable
       _output.WriteLine("Setup!");
    }
 
-   public void Dispose()
-   {
-      // Do "global" teardown here; Called after every test method.
-   }
-
    [Fact]
    // [TestCategory("LongRunning")]
    // [Ignore("Skipping long-running test")]
@@ -32,5 +27,31 @@ public class DbScripterAppTests : IDisposable
       var ret = DbScripterApp.Program.Main(args);
 
       Assert.True(ret == 0, $"Program.Main ret: {ret}");
+   }
+
+   [Fact]
+   // [TestCategory("LongRunning")]
+   // [Ignore("Skipping long-running test")]
+   public void ExportTestCrtRtns_When_Expect_45()
+   {
+      string[] args = new[] { "ExportTestCrtRtns_When_Expect_45.json" };
+      var ret = DbScripterApp.Program.Main(args);
+
+      Assert.True(ret == 0, $"Program.Main ret: {ret}");
+   }
+
+   [Fact]
+   // [TestCategory("LongRunning")]
+   // [Ignore("Skipping long-running test")]
+   public void Exportsp_crt_pop_table()
+   {
+      string[] args = new[] { "Exportsp_crt_pop_table.json" };
+      var ret = DbScripterApp.Program.Main(args);
+      Assert.True(ret == 0, $"Program.Main ret: {ret}");
+   }
+
+   public void Dispose()
+   {
+      // Do "global" teardown here; Called after every test method.
    }
 }

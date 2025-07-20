@@ -31,8 +31,6 @@ namespace DbScripterApp
                   break;
                }
 
-               msg = "";
-
                LogN("Stage 1: initialising (main)");
 
                if(!Scripter.Export(out msg))
@@ -40,7 +38,6 @@ namespace DbScripterApp
 
                ret = 0; // success
             } while (false);
-
          }
          catch (Exception e)
          {

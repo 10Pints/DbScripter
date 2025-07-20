@@ -1,0 +1,17 @@
+SET ANSI_NULLS ON
+
+SET QUOTED_IDENTIFIER ON
+
+GO
+
+
+CREATE VIEW [dbo].[TableColumns_vw]
+AS
+SELECT *
+FROM INFORMATION_SCHEMA.COLUMNS
+;
+/*
+SELECT * FROM dbo.TableColumns;
+*/
+
+GO

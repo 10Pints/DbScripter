@@ -31,6 +31,9 @@
    </ItemGroup>
 
    <ItemGroup>
+     <None Update="AppSettings - Copy.DbScripterAppTests.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </None>
      <None Update="AppSettings.01.json">
        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
      </None>
@@ -53,6 +56,12 @@
        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
      </None>
      <None Update="DbScripterExportTest.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </None>
+     <None Update="Exportsp_crt_pop_table.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </None>
+     <None Update="ExportTestCrtRtns_When_Expect_45.json">
        <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
      </None>
    </ItemGroup>
