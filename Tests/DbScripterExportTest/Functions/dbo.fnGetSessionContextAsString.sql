@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ============================================================
 -- Author:      Terry Watts
 -- Create date: 27-DEC-2021
@@ -24,6 +21,5 @@ EXEC sp_set_session_context N'Debug', '1';
 PRINT dbo.fnGetSessionContextAsString(N'Debug');
 PRINT dbo.fnGetSessionContextAsInt(N'Debug');
 */
-
-
 GO
+

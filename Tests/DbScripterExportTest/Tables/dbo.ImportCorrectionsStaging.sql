@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE [dbo].[ImportCorrectionsStaging](
 	[id] [int] NOT NULL,
 	[action] [varchar](50) NULL,
@@ -25,7 +23,7 @@ CREATE TABLE [dbo].[ImportCorrectionsStaging](
 	[comments] [varchar](max) NULL,
 	[created]  AS (getdate())
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-
-ALTER TABLE [dbo].[ImportCorrectionsStaging] ADD  CONSTRAINT [DF_ImportCorrectionsStaging_must_update]  DEFAULT ((0)) FOR [must_update]
-
 GO
+ALTER TABLE [dbo].[ImportCorrectionsStaging] ADD  CONSTRAINT [DF_ImportCorrectionsStaging_must_update]  DEFAULT ((0)) FOR [must_update]
+GO
+

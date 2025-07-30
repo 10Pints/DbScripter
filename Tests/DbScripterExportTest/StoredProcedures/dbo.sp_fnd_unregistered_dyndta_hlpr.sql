@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ========================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 17-NOV-2024
@@ -19,7 +17,6 @@ GO
 --
 -- Design: Farming.eap/Model.SQLServer2012/Procedures/Fixup rtns/Find unmatched dynamic data/
 --    Create the select sql/Create the select sql ACT
-
 -- Paramaters:
 -- @stg_field_nm:    the staging2 field holding the items to check if they are registered MANDATORY
 -- @table_nm:        the primary table holding the list of registered items, default: RTrim2(@stg_field_nm, 's')
@@ -59,16 +56,13 @@ BEGIN
    ,@cnt             INT
    ,@is_multi_value  BIT
    ;
-
    SET @cnt = 0;
    SET @is_multi_value = iif(@sep IS NULL, 0, 1);
-
 -- 241210: handle multi value fields differently
 -- There are 2 types of field in staging2
 -- 1: single value fields like Company, Product, concentration, formulation_type,toxicity, reg,expiry
 -- 2: multi  value fields like ingredient, uses, entry_mode, crops, pathogens
 -- These need handling differently
-
    SET NOCOUNT ON;
    EXEC sp_log 2, @fn,'000: starting:
 stg_field_nm  :[', @stg_field_nm  ,']
@@ -80,12 +74,10 @@ cnt           :[', @cnt           ,']
 is_multi_value:[', @is_multi_value,']
 display_tables:[', @display_tables,']
 ';
-
    -- Get the sql to find the unregistered items
    EXEC sp_log 1, @fn,'010: calling fnCrtFndUnregisterdItemsSql',@nl, @sql;
    SET @sql_body = dbo.fnCrtFndUnregisterdItemsSql(@is_multi_value ,@stg_field_nm, @table_nm, @pk_table_nm, @pk_field_nm, @sep);
    EXEC sp_log 1, @fn,'020: @sql_body:',@nl, @sql_body;
-
    IF @display_tables = 1
    BEGIN
       SET @sql = CONCAT('SELECT item AS [',@pk_table_nm,'] FROM ', @sql_body);
@@ -104,14 +96,11 @@ display_tables:[', @display_tables,']
    -- R02: populate the dbo.UnregisteredItem table with the unregisterd item data
    SET @sql = CONCAT('INSERT INTO UnregisteredItem (unreg_item, [table]) 
 SELECT item, ''',@pk_table_nm,''' FROM ',@sql_body);
-
    EXEC sp_log 1, @fn,'050: insert unreg sql:',@nl, @sql;
    EXEC(@sql);
    SET @cnt = @@ROWCOUNT;
-
    IF @tot_cnt IS NULL
       SET @tot_cnt = 0;
-
    SET @tot_cnt = @tot_cnt + @cnt;
    EXEC sp_log 1, @fn,'100: found ',@cnt, ' unregistered ', @stg_field_nm;
    EXEC sp_log 2, @fn,'999: leaving, @tot_cnt:', @tot_cnt, ' found ',@cnt, ' unregistered ', @stg_field_nm, ' items';
@@ -129,5 +118,5 @@ EXEC sp_fnd_unmtchd_dyndta_hlpr 'Pathogen', 'pathogens', @tot_cnt=@tot_cnt OUT, 
 PRINT @tot_cnt;
 --==============================================================================
 */
-
 GO
+

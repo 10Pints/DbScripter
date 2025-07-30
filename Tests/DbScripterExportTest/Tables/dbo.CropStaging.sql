@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE [dbo].[CropStaging](
 	[crop_id] [int] NULL,
 	[crop_nm] [varchar](100) NULL,
@@ -13,5 +11,5 @@ CREATE TABLE [dbo].[CropStaging](
 	[taxonomy] [varchar](500) NULL,
 	[notes] [varchar](150) NULL
 ) ON [PRIMARY]
-
 GO
+

@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ==============================================================================================
 -- Author:      Terry Watts
 -- Create date: 16-Apr-2024
@@ -33,7 +29,6 @@ BEGIN
    ,@rtn_nm             VARCHAR(60)
    ,@ad_stp             BIT = 0
    ;
-
    SELECT
        @tst_proc_hlpr_nm = hlpr_rtn_nm
       ,@ad_stp           = ad_stp
@@ -41,12 +36,10 @@ BEGIN
       ,@rtn_nm           = rtn_nm
    FROM test.RtnDetails
    ;
-
    -----------------------------------------------------------------
    -- Add the EXEC test.<test helper proc> call
    -----------------------------------------------------------------
    INSERT INTO @t (line) VALUES (CONCAT(@tab1, 'EXEC test.',@tst_proc_hlpr_nm, iif(@ad_stp=1, '  -- fnCrtMnCodeCallHlpr','')));
-
    -----------------------------------------------------------------
    -- Add the helper parameters
    -----------------------------------------------------------------
@@ -60,7 +53,5 @@ EXEC tSQLt.Run 'test.test_067_sp_crt_tst_mn';
 SELECT * FROM test.RtnDetails
 SELECT * FROM test.ParamDetails
 */
-
-
-
 GO
+

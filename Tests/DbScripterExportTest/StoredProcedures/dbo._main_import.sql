@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==================================================================================================================================================
 -- Procedure:   dbo._main_import
 -- Description: Main entry point for Importing 1 Ph DepAg LRAP (List of Registered Agructural Pesticides) file
@@ -36,7 +34,6 @@ GO
 --
 -- Preconditions: none
 -- Postconditions:
-
 -- Process for LRAP Import and scrub:
 -------------------------------------------------------------------------------------------------------
 -- Stage                                               Preconditions
@@ -92,11 +89,9 @@ BEGIN
    ,@stage_id        INT            = 1   -- current stage
    ,@status          INT
    ;
-
    -----------------------------------------------------------------------------------
    -- 00: Clear the applog
    -----------------------------------------------------------------------------------
-
    EXEC sp_log 2, @fn,'000: starting:
 import_root:   [', @import_root,   ']
 import_file:   [', @import_file,   ']
@@ -109,14 +104,11 @@ restore_s3_s2: [', @restore_s3_s2, ']
 log_level:     [', @log_level,     ']
 log_level:     [', @log_level,     ']
 ';
-
    SET NOCOUNT OFF;
    SET XACT_ABORT ON;
-
    BEGIN TRY
       SET NOCOUNT OFF;
       SET XACT_ABORT ON;
-
       WHILE 1=1
       BEGIN
          -------------------------------------------------------------------------------------------
@@ -124,7 +116,6 @@ log_level:     [', @log_level,     ']
          -------------------------------------------------------------------------------------------
          -- Preconditions: none
          EXEC sp_log 1, @fn,'010: initialising, calling sp_main_import_init';
-
          -- 241230: Notes to get the modified parameters query the state tables Importstate and Corfiles
          EXEC sp_mn_imprt_ini
           @import_root    = @import_root      -- have import root suffix when output
@@ -139,7 +130,6 @@ log_level:     [', @log_level,     ']
          ,@log_level      = @log_level
          ,@import_eppo    = @import_eppo
          ;
-
          SELECT
              @import_root    = import_root     -- have import root suffix when output
             ,@import_file    = import_file      -- LRAP import file
@@ -155,18 +145,14 @@ log_level:     [', @log_level,     ']
             ,@import_id      = import_id
          FROM Importstate
          WHERE id = 1;
-
          -- Stage 1: Postconditions: (which become the prconditions for the next stage)
          -- all init done for the given stage
          -- Tables pop: CallRegister
          -- Tables clrd: AppLog,CallRegister,CorrectionLog,S2UpdateLog,S2UpdateSummary
          EXEC sp_log 1, @fn,'020: ret frm sp_main_import_init, @import_id: ', @import_id;
-
          -- *** Register this call only after sp_main_import_init has configured the call register
          --EXEC sp_register_call @fn;
-
          IF @stage_id >= @stop_stage BREAK;
-
          -------------------------------------------------------------------------------------------
          -- Stage 2: Import static data
          -------------------------------------------------------------------------------------------
@@ -177,17 +163,14 @@ log_level:     [', @log_level,     ']
             --EXEC LRAP_Imprt_S02_ImprtStaticData @import_eppo = @import_eppo;
             EXEC sp_import_static_data @import_root, @display_tables, @import_eppo;
          END
-
          -- Stage 2: Postconditions:
          IF @stage_id >= @stop_stage BREAK;
-
          ----------------------------------------------------------------------------------------------------------
          -- Stage 03: Import the LRAP data
          ----------------------------------------------------------------------------------------------------------
          IF @start_stage <= 3
          BEGIN
             SET @stage_id = 3; -- go directly to import corrections
-
             IF @restore_s3_s2 = 0
             BEGIN
                -- Import the LRAP data and do the S1 fixup
@@ -195,10 +178,8 @@ log_level:     [', @log_level,     ']
                EXEC sp_import_LRAP_file @import_file, @import_id;
             END
          END
-
          -- Stage 3: Postconditions: Staging1 pop'd
          IF @stage_id >= @stop_stage BREAK;
-
          -----------------------------------------------------------------------------------
          -- 04: Do the S1 fixup
          -----------------------------------------------------------------------------------
@@ -208,10 +189,8 @@ log_level:     [', @log_level,     ']
             SET @stage_id = 4;
             EXEC sp_fixup_s1 @fixup_cnt = @fixup_cnt OUT;
          END
-
          -- Stage 4: Postconditions:
          IF @stage_id >= @stop_stage BREAK;
-
          ---------------------------------------------------------------------------------------
          -- 05: Stage 5: Copy S1 to S2
          ---------------------------------------------------------------------------------------
@@ -221,10 +200,8 @@ log_level:     [', @log_level,     ']
             SET @stage_id = 5;
             EXEC sp_cpy_s1_s2;
          END
-
          -- Stage 5: Postconditions:
          IF @stage_id >= @stop_stage BREAK;
-
          ---------------------------------------------------------------------------------------
          -- 06: Import the LRAP corrections files
          ---------------------------------------------------------------------------------------
@@ -235,17 +212,14 @@ log_level:     [', @log_level,     ']
             EXEC sp_import_cor_files @tot_cnt = @row_cnt OUT, @file_cnt=@file_cnt OUT;
             EXEC sp_log 2, @fn,'060: Stage 06 Imported ',@row_cnt,' rows from ',@file_cnt,' cor files';
          END
-
          -- Stage 6: Postconditions:
          IF @stage_id >= @stop_stage BREAK;
-
          ---------------------------------------------------------------------------------------
          -- 07: optionally restore s2 from either S1 or S3 cache cache
          ---------------------------------------------------------------------------------------
          IF @start_stage <= 7
          BEGIN
             SET @stage_id = 7;
-
             IF @restore_s1_s2 = 1
             BEGIN
                EXEC sp_log 2, @fn,'070. stage 07.1: optionally restore s2 from either S1 or S3 cache cache';
@@ -257,10 +231,8 @@ log_level:     [', @log_level,     ']
                EXEC sp_cpy_s3_s2;
             END
          END
-
          -- Stage 7: Postconditions:
          IF @stage_id >= @stop_stage BREAK;
-
          -----------------------------------------------------------------------------------
          -- 08: Scrub the imported LRAP source table data i.e. fixup S2
          -----------------------------------------------------------------------------------
@@ -268,7 +240,6 @@ log_level:     [', @log_level,     ']
          BEGIN
             SET @stage_id = 8;
             EXEC sp_log 2, @fn,'090: Stage 08: S2 fixup';
-
             EXEC @rc = sp_fixup_S2
                 @start_row = @start_row
                ,@stop_row  = @stop_row
@@ -276,10 +247,8 @@ log_level:     [', @log_level,     ']
                ,@fixup_cnt = @fixup_cnt OUT
                ;
          END
-
          -- Stage 8: Postconditions:
          IF @stage_id >= @stop_stage BREAK;
-
          -----------------------------------------------------------------------------------
          -- 09: Populate the dynamic data staging tables (mandatory)
          -----------------------------------------------------------------------------------
@@ -289,10 +258,8 @@ log_level:     [', @log_level,     ']
             EXEC sp_log 2, @fn,'100: Stage 09: Populate dynamic data staging tables';
             EXEC sp_pop_dynamic_data;
          END
-
          -- Stage 9: Postconditions:
          IF @stage_id >= @stop_stage BREAK;
-
          -----------------------------------------------------------------------------------
          -- 10: Indentify the unmatched dynamic staging data
          --     items not found in the primary static data
@@ -303,7 +270,6 @@ log_level:     [', @log_level,     ']
             SET @stage_id = 10;
             EXEC sp_log 2, @fn,'110: Stage 10: indentify and display a list of the unmatched dynamic staging data items not found in the primary static data';
             EXEC @rc = sp_fnd_unregistered_dynamic_data;
-
             IF @rc<> 0
             BEGIN
                -------------------------------------------------------------------------------------------------------------------------------------
@@ -311,21 +277,17 @@ log_level:     [', @log_level,     ']
                -------------------------------------------------------------------------------------------------------------------------------------
                EXEC sp_log 3, @fn,'120 There are ',@rc,' unmatched unmatched dynamic staging data items not found in the primary static data';
                EXEC sp_log 3, @fn,'130: Fix and re-import from Stage 04: Import the LRAP corrections files';
-
                -- 241218: continue for now so we can test what we have
                -- make a copy of S3 now for test prurposes
                -- EXEC sp_cpy_s2_s3;
                -- BREAK;
             END
          END
-
          -- Stage 10: Postconditions: no unmatched dynamic reference staging data
          IF @stage_id >= @stop_stage BREAK;
-
          ---------------------------------------------------------
          -- ASSERTION no unmatched dynamic reference staging data
          ---------------------------------------------------------
-
          -----------------------------------------------------------------------------------
          -- 11: Copy S2 to the S3 cache
          -----------------------------------------------------------------------------------
@@ -341,10 +303,8 @@ log_level:     [', @log_level,     ']
             EXEC sp_log 2, @fn,'140: Stage 11: copy s2->s3';
             EXEC sp_cpy_s2_s3;
          END
-
          -- Stage 11: Postconditions:
          IF @stage_id >= @stop_stage BREAK;
-
          --------------------------------------------------------------------------------------
          -- 12: Merge the dynamic data staging to their respective main tables 
          --------------------------------------------------------------------------------------
@@ -354,10 +314,8 @@ log_level:     [', @log_level,     ']
             EXEC sp_log 2, @fn,'150: Stage 12: merge the main tables';
             EXEC LRAP_Imprt_S09_merge_mn; -- @correction_file_path_inc_rng= @cor_file;
          END
-
          -- Stage 12: Postconditions:
          IF @stage_id >= @stop_stage BREAK;
-
          -----------------------------------------------------------------------------------
          -- 13: Perform postcondition checks
          -----------------------------------------------------------------------------------
@@ -367,12 +325,10 @@ log_level:     [', @log_level,     ']
             EXEC sp_log 2, @fn,'160: Stage 13: postcondition checks';
             EXEC sp_mn_imprt_stg_12_post_cks @import_eppo;
          END
-
          -----------------------------------------------------------------------------------
          -- Completed processing
          -----------------------------------------------------------------------------------
          EXEC sp_log 2, @fn,'800: completed processing OK';
-
          -- Stage 13: Postconditions:
          BREAK;
          END -- WHILE 1=1 main loop
@@ -383,7 +339,6 @@ log_level:     [', @log_level,     ']
       PRINT CONCAT(@line2, @nl);
       THROW;
    END CATCH
-
    SET @stage_id = 99;
    EXEC sp_log 2, @fn, '999: leaving, stage: ', @stage_id, ' ret: ', @RC, @row_count=@fixup_cnt;
    RETURN @RC;
@@ -395,82 +350,59 @@ EXEC _main_import
    ,@import_file='LRAP-221018.txt'
    ,@import_root='D:\Dev\Farming\Data'
    ,@cor_files = 'ImportCorrections_221018-Crops.txt';
-
 --   ,@cor_files = 'ImportCorrections_221018-PreFixup.txt,ImportCorrections_221018-Company.txt,ImportCorrections_221018-Crops.txt,ImportCorrections_221018-Entry_mode.txt,ImportCorrections_221018-Product.txt,ImportCorrections_221018-Uses.txt,ImportCorrections_221018-Pathogens_A-C.txt';
 ;
-
 --****************************************************************************************************************************
    -- uncache s1-> s2, and import the cor files up to and inc crops
    -- 06: Import the LRAP corrections files from crops fixup and on
-
 EXEC _main_import @start_stage=6, @restore_s1_s2 = 1, @import_root='D:\Dev\Farming\Data',@cor_files = 'ImportCorrections_221018-Entry_mode.txt,ImportCorrections_221018-Product.txt,ImportCorrections_221018-Uses.txt,ImportCorrections_221018-Crops.txt' --,ImportCorrections_221018-Entry_mode.txt,ImportCorrections_221018-Product.txt,ImportCorrections_221018-Uses.txt,ImportCorrections_221018-Pathogens_A-C.txt,ImportCorrections_221018-Pathogens_D-M.txt,ImportCorrections_221018-Pathogens-N-Z.txt';
 --****************************************************************************************************************************
-
-
 -- 06: Import the LRAP corrections files from up not including pathogens
 -- assumes previous fixup has been done
 EXEC _main_import @start_stage=8, @restore_s1_s2 = 1,@import_root='D:\Dev\Farming\Data'
 ,@cor_files = 'ImportCorrections_221018-Crops.txt';--,ImportCorrections_221018-Entry_mode.txt,ImportCorrections_221018-Product.txt,ImportCorrections_221018-Uses.txt';
-
 --******************************************************************************************************************************************************************
 -- 06: Import the LRAP corrections files ImportCorrections_221018-crops
 -- assumes previous fixup has been done
 EXEC _main_import @start_stage=6, @import_root='D:\Dev\Farming\Data',@cor_files = 'ImportCorrections_221018-Entry_mode.txt,ImportCorrections_221018-Uses.txt';
 --******************************************************************************************************************************************************************
-
 EXEC _main_import @start_stage=6, @import_file='LRAP-221018.txt',@import_root='D:\Dev\Farming\Data',@cor_files = 'ImportCorrections_221018-Company.txt,ImportCorrections_221018-Pathogens_A-C.txt';
-
 -- 06: Import the LRAP corrections files ImportCorrections_221018-Pathogens_A-C.txt only
 -- assumes previous fixup has been done
 EXEC _main_import @start_stage=6, @import_file='LRAP-221018.txt',@import_root='D:\Dev\Farming\Data',@cor_files = 'ImportCorrections_221018-Company.txt';
 EXEC _main_import @start_stage=6, @import_file='LRAP-221018.txt',@import_root='D:\Dev\Farming\Data',@cor_files = 'ImportCorrections_221018-Company.txt,ImportCorrections_221018-Pathogens_A-C.txt';
-
 -- 06: Import the LRAP corrections files ImportCorrections_221018-Pathogens_D-M.txt only
 -- assumes previous fixup has been done includin ImportCorrections_221018-Pathogens_A-C.txt
 EXEC _main_import @start_stage=6,@stop_row=20,@import_file='LRAP-221018-2.txt',@import_root='D:\Dev\Farming\Tests\test_066',@cor_files = 'ImportCorrections_221018-Pathogens_D-M.txt,ImportCorrections_221018-Pathogens-N-Z.txt';
-
 EXEC _main_import @start_stage=6,@import_file='LRAP-221018.txt',@import_root='D:\Dev\Farming\Data',@cor_files = 'ImportCorrections.PreFixup 221018.txt,ImportCorrections_221018-Pathogens_A-C.txt,ImportCorrections_221018-Pathogens_D-M.txt,ImportCorrections_221018-Pathogens-N-Z.txt';
 -- pre conditions: ImportCorrections.PreFixup 221018.tx,,ImportCorrections 221018.txt imported
 EXEC _main_import @start_stage=6,@stop_row=20,@import_file='LRAP-221018-2.txt',@import_root='D:\Dev\Farming\Tests\test_066',@cor_files = 'ImportCorrections_221018-Pathogens_A-C.txt,ImportCorrections_221018-Pathogens_D-M.txt,ImportCorrections_221018-Pathogens-N-Z.txt';
-
 -- 02: Import primary static data
 EXEC _main_import @start_stage=2, @import_eppo = true, @import_file='LRAP-221018.txt',@import_root='D:\Dev\Farming\Data',@cor_files = 'ImportCorrections.PreFixup 221018.txt,ImportCorrections_221018-Pathogens_A-C.txt,ImportCorrections_221018-Pathogens_D-M.txt,ImportCorrections_221018-Pathogens-N-Z.txt';
-
 -- 03: Import the LRAP data
 EXEC _main_import @start_stage=3, @import_eppo= 0,@import_file='LRAP-221018.txt',@import_root='D:\Dev\Farming\Data',@cor_files = 'ImportCorrections.PreFixup 221018.txt,ImportCorrections_221018-Pathogens_A-C.txt,ImportCorrections_221018-Pathogens_D-M.txt,ImportCorrections_221018-Pathogens-N-Z.txt';
-
 -- 04: Do the S1 fixup
 EXEC _main_import @start_stage=4, @import_root='D:\Dev\Farming\Data',@cor_files = 'ImportCorrections.PreFixup 221018.txt,ImportCorrections_221018-Pathogens_A-C.txt,ImportCorrections_221018-Pathogens_D-M.txt,ImportCorrections_221018-Pathogens-N-Z.txt';
-
 -- 05: Stage 5: Copy S1 to S2
 EXEC _main_import @start_stage=5, @import_root='D:\Dev\Farming\Data',@cor_files = 'ImportCorrections.PreFixup 221018.txt,ImportCorrections_221018-Pathogens_A-C.txt,ImportCorrections_221018-Pathogens_D-M.txt,ImportCorrections_221018-Pathogens-N-Z.txt';
-
 -- 06: Import the LRAP corrections files and restore S2 from S1
 EXEC _main_import @start_stage=6,@restore_s1_s2=1;, @import_root='D:\Dev\Farming\Data',@cor_files = 'ImportCorrections.PreFixup 221018.txt,ImportCorrections_221018-Pathogens_A-C.txt,ImportCorrections_221018-Pathogens_D-M.txt,ImportCorrections_221018-Pathogens-N-Z.txt';
-
 -- 07: optionally restore s2  from either S1 or S3 cache cache
 EXEC _main_import @start_stage=7;
-
 -- 08: fixup S2, using S1 and the exisitng import corrections
 EXEC _main_import @start_stage=8,@restore_s1_s2=1;
-
 -- 09: Populate the dynamic data staging tables
 EXEC _main_import @start_stage=9;
-
 -- 10: Indentify the unmatched dynamic staging data
 EXEC _main_import @start_stage=10
-
 -- 11: Copy S2 to the S3 cache
 EXEC _main_import @start_stage=11;
-
 -- 12: Merge Staging to Main
 EXEC _main_import @start_stage=12;
-
 -- 13: Perform postcondition checks
 EXEC _main_import @start_stage=13;
-
 EXEC tSQLt.RunAll;
 EXEC test.sp__crt_tst_rtns ' [dbo].[_main_import]', @trn=67, @ad_stp=1
 */
-
 GO
+

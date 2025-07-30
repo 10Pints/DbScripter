@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 27-MAR-2020
@@ -42,9 +38,7 @@ DECLARE
    ,@aTxt      VARCHAR(100)= CONVERT(VARCHAR(20), @a)
    ,@bTxt      VARCHAR(100)= CONVERT(VARCHAR(20), @b)
    ,@std_msg   VARCHAR(200)
-
     EXEC sp_log @log_level, @fnThis, '000: starting @a:[',@aTxt, '] @b:[', @bTxt, ']';
-
    -- a<>b MEANS a<b OR b<a -> !(!a<b AND !(b<a))
    IF ((dbo.fnIsLessThan(@a ,@b) = 1) OR (dbo.fnIsLessThan(@b ,@a) = 1))
    BEGIN
@@ -54,15 +48,12 @@ DECLARE
       EXEC sp_log @log_level, @fnThis, '010: OK, [',@aTxt, '] <> [', @bTxt, ']';
       RETURN 0;
    END
-
    ----------------------------------------------------
    -- ASSERTION ERROR
    ----------------------------------------------------
    --EXEC sp_log 3, @fnThis, '020: [', @aTxt , '] equals [',@bTxt,'], raising exception';
    IF @ex_num IS NULL SET @ex_num = 50003;
-
    SET @std_msg = CONCAT(@fnThis, ' [', @aTxt , '] equals [',@bTxt,'] ');
-
    EXEC sp_raise_exception
        @msg1   = @std_msg
       ,@msg2   = @msg
@@ -94,7 +85,5 @@ EXEC tSQLt.RunAll;
 EXEC tSQLt.Run 'test.test_047_sp_assert_not_equal';
 EXEC test.sp__crt_tst_rtns '[dbo].[sp_assert_not_equal]'
 */
-
-
-
 GO
+

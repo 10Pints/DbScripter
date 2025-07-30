@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =====================================================================
 -- Author:      Terry Watts
 -- Create date: 31-OCT-2024
@@ -23,5 +21,5 @@ END
 EXEC tSQLt.RunAll;
 EXEC tSQLt.Run 'test.test_097_fnIsTextType';
 */
-
 GO
+

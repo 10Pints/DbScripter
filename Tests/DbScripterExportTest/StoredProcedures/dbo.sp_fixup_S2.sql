@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =======================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 22-JUN-2023
@@ -120,60 +118,49 @@ BEGIN
    ,@stp_flg            BIT            = 0
    ,@table_nm           VARCHAR(60)
    ,@update_sql         VARCHAR(MAX)
-
    EXEC sp_log 2, @fn, '000: starting:
 start_row:[', @start_row,']
 stop_row: [', @stop_row ,']
 ';
 -- stg_file: [',@stg_file  ,']
-
    BEGIN TRY
          -------------------------------------------------------
          -- Parameter Defaults
          -------------------------------------------------------
       IF @start_row IS NULL SET @start_row = 1;
       IF @stop_row  IS NULL SET @stop_row = 100000;
-
       -------------------------------------------------------
       -- Parameter Validation
       -------------------------------------------------------
       EXEC sp_log 1, @fn, '010: Parameter Validation';
       EXEC sp_assert_not_null @row_count, '@row_count param IS NULL', 1;
       EXEC sp_assert_not_null @fixup_cnt, '@fixup_cnt param';
-
       -------------------------------------------------------
       -- Setup
       -------------------------------------------------------
       EXEC sp_log 1, @fn, '020: deleting CorrectionLog, ';
-
       TRUNCATE TABLE CorrectionLog;--DELETE FROM CorrectionLog;
       IF @start_row = 1
       BEGIN
          EXEC sp_log 1, @fn, '030: clearing the update counts from the previous run';
          UPDATE ImportCorrections SET update_cnt = 0;
       END
-
       -- Remove the old import comments
       EXEC sp_log 1, @fn, '040: Remove old import comments';
       UPDATE staging2 SET comments='';
-
       -- Enable the S2 trigger
       ENABLE TRIGGER staging2.sp_Staging2_update_trigger ON Staging2;
-
       -- Turn on S2 update logging
       EXEC dbo.sp_set_session_context @cor_log_flg_key, 1;
       EXEC sp_log 0, @fn, '050: B4 main do loop';
-
       SET @cursor = CURSOR FOR
       SELECT id, [action],[command], table_nm, field_nm, search_clause, filter_field_nm, filter_op
       , filter_clause, not_clause, exact_match, cs, replace_clause, field2_nm, field2_op, field2_clause, must_update, comments, @row_id, stg_file
       FROM ImportCorrections order by id
-
       OPEN @cursor;
       EXEC sp_log 1, @fn, '060: before Row fetch loop, @@FETCH_STATUS: [', @@FETCH_STATUS, ']';
       FETCH NEXT FROM @cursor INTO @id, @action, @command, @table_nm, @field_nm, @search_clause, @filter_field_nm, @filter_op
          ,@filter_clause, @not_clause, @exact_match, @cs, @replace_clause, @field2_nm, @field2_op, @field2_clause, @must_update, @comments, @row_id, @stg_file_new;
-
       -------------------------------------------------------
       -- Main process loop
       -------------------------------------------------------
@@ -182,7 +169,6 @@ stop_row: [', @stop_row ,']
          WHILE (1=1) -- Do loop
          BEGIN
             EXEC sp_log 1, @fn, '070: top of Row fetch loop, cor id: ',@id;
-
             IF @stg_file_prev <> @stg_file_new
             BEGIN
                IF @file_row_cnt > 0
@@ -195,28 +181,22 @@ stop_row: [', @stop_row ,']
                     ,fixup_cnt = @fixup_cnt
                   WHERE [file] = @stg_file_prev
                END
-
                -- Every time if @stg_file_prev <> @stg_file_new
                SET @stg_file_prev = @stg_file_new;
             END
-
             -- Ready for next time
             SET @file_fxp_cnt_prev = @file_fxp_cnt_new;
-
             IF @id < @start_row
             BEGIN
                EXEC sp_log 1, @fn, '090: skipping row: ', @id;
                BREAK; -- RC= 0  so CONTINUE i.e skip this row;
             END
-
             EXEC sp_log 1, @fn, @nl, @line, ' row ', @id, ' ', @line;
             SET @len = dbo.fnLen(@search_clause);
 --            EXEC sp_log 1, @fn, '100: @must_update: ',@must_update;
-
             -- Standardise action and command
             SET @command= LOWER(dbo.fnTrim(@command));
             SET @action = LOWER(dbo.fnTrim(@action));
-
       -------------------------------------------------------
             -- Handle Skip and comment  rows
       -------------------------------------------------------
@@ -225,7 +205,6 @@ stop_row: [', @stop_row ,']
                EXEC sp_log 1, @fn,'120: skipping comment row: ', @id;
                BREAK; -- RC= 0  so CONTINUE;
             END
-
             EXEC sp_log 1, @fn, '130: calling sp_S2_fixup_row
 id:               [', @id              ,']
 row_id            [', @row_id          ,']
@@ -248,7 +227,6 @@ field2_clause     [', @field2_clause   ,']
 must_update       [', @must_update     ,']
 comments          [', @comments        ,']
 ';
-
             -- R12: if search cls = replace then throw exception 53610, 'replace clause = search clause {row id}',1;
             -- 240110: Sql server ignores trailing spaces when comparing string values
             IF CONVERT(VARBINARY(500),@search_clause)=CONVERT(VARBINARY(500),@replace_clause)
@@ -259,7 +237,6 @@ replace clause:[', @replace_clause, ']
 ';
                EXEC sp_raise_exception 53610, '075: replace clause = search clause @id: ', @id, ', @stg_file_new: ',@stg_file_new, @fn=@fn;
             END
-
             -- Handle stop
             IF @action = 'stop'
             BEGIN
@@ -267,39 +244,32 @@ replace clause:[', @replace_clause, ']
                EXEC sp_log 4, @fn, @line2
                EXEC sp_log 4, @fn, '140: ',@result_msg;
                EXEC sp_log 4, @fn, @line2
-
                UPDATE ImportCorrections
                SET
                    result_msg = @result_msg
                   ,update_cnt = @fixup_cnt
                WHERE id = @id
                ;
-
                SET @rc = 1 -- Signal stop
                BREAK
             END
-
             IF @action = 'skip'
             BEGIN
                SET @result_msg =CONCAT( 'skip detected at row ', @id);
                EXEC sp_log 4, @fn, @line2
                EXEC sp_log 4, @fn, '150: ',@result_msg;
                EXEC sp_log 4, @fn, @line2
-
                UPDATE ImportCorrections 
                SET
                    result_msg = @result_msg
                   ,update_cnt = @fixup_cnt
                WHERE id = @id
                ;
-
                --SET @file_fixup_cnt = 0; -- ready for next file
                SET @rc = 0;
                BREAK; -- RC= 0  so CONTINUE;
             END
-
             EXEC sp_log 0, @fn, '160: calling sp_S2_fixup_row';
-
             -- Get the return status from fixup row - return it if error
             EXEC @rc = sp_fixup_S2_row
                   @id             = @id
@@ -325,30 +295,25 @@ replace clause:[', @replace_clause, ']
                   ,@result_msg     = @result_msg       OUTPUT
                   ,@select_sql     = @select_sql       OUTPUT
                   ,@update_sql     = @update_sql       OUTPUT
-
             IF  @row_count IS NULL THROW 56000, '@row_count is NULL', 1;
             SET @row_count = @row_count + 1;
             EXEC sp_log 0, @fn, '170: ret frm sp_S2_fixup_row, @rc: ',@rc, ', @row_count: ', @row_count, ', @fixup_cnt:', @fixup_cnt, @row_count = @row_count;
-
             IF @id >= @stop_row
             BEGIN
                EXEC sp_log 1, @fn, '180: reached stop row: ',@stop_row,' stopping'
                SET @rc = 1; -- signal stop
                BREAK; -- RC= 0  so CONTINUE;
             END
-
             IF @rc = 0 -- OK
             BEGIN
                SET @result_msg = 'OK';
                BREAK; -- RC= 0  so CONTINUE;
             END
-
             IF @rc = 1 -- STOP signal detected
             BEGIN
                EXEC sp_log 2, @fn, '190: STOP or last row encountered: ', @id, ' stopping after this row';
                BREAK; -- RC= 1 so STOP;
             END
-
             IF @rc = 2
             BEGIN
                SET @msg = CONCAT('ERROR: fixup LRAP import error ', @result_msg, ' row: ', @id, ' raising exception');
@@ -356,18 +321,14 @@ replace clause:[', @replace_clause, ']
                THROW 50003, @msg, 1;
                --BREAK;
             END
-
             BREAK; -- ALWAYS
          END -- while 1=1
-
          IF @rc<> 0 -- STOP;
             BREAK;
-
          -- Get the next row if poss
          FETCH NEXT FROM @cursor INTO @id, @action, @command, @table_nm, @field_nm, @search_clause, @filter_field_nm, @filter_op
          ,@filter_clause, @not_clause, @exact_match, @cs, @replace_clause, @field2_nm, @field2_op, @field2_clause, @must_update, @comments, @row_id, @stg_file_new;
       END -- end outer while loop
-
       -- Need to do this for the last file imported (including the 1 file scenario)
       EXEC sp_log 1, @fn, '210: finished processing file recording summary results: ',@stg_file_prev, ' row_cnt: ', @file_row_cnt, ' file_fxp_cnt:', @file_fxp_cnt_prev;
       UPDATE CorFiles
@@ -376,7 +337,6 @@ replace clause:[', @replace_clause, ']
          ,fixup_cnt = @fixup_cnt
       WHERE [file]  = @stg_file_prev
       ;
-
       -- 250106: at the end of the fixup run fixup commas (leading, trailing) and internal double commas
       EXEC sp_log 1, @fn, '220: cleaning up redundant commas in pathogens after fixup';
       DECLARE @fixup_cnt2 INT;
@@ -384,16 +344,12 @@ replace clause:[', @replace_clause, ']
       SET @fixup_cnt2 = @@ROWCOUNT;
       UPDATE Staging2 SET pathogens = REPLACE(pathogens, ',,',',') WHERE pathogens like '%,,%';
       SET @fixup_cnt2 = @fixup_cnt2 + @@ROWCOUNT;
-
       -- Chk it worked
       IF EXISTs (SELECT 1 FROM Staging2 WHERE pathogens LIKE ',%') -- this can happen if removing first item in a list
          EXEC sp_raise_exception 53152, 'INVARIANT VIOLATION S2 pathogens has leading '',''', @fn=@fn
-
       IF EXISTs (SELECT 1 FROM Staging2 WHERE pathogens LIKE '%,,%') -- this can happen if removing a mid item in a list
          EXEC sp_raise_exception 53152, 'INVARIANT VIOLATION S2 pathogens contains '',,''', @fn=@fn
-
       EXEC sp_log 1, @fn, '230: cleaned up ',@fixup_cnt2,' redundant commas in pathogens after fixup';
-
       -------------------------------------------------------
       -- Process complete
       -------------------------------------------------------
@@ -406,7 +362,6 @@ replace clause:[', @replace_clause, ']
          ,@ex_proc VARCHAR(80)
          ,@ex_line VARCHAR(20)
          ,@err_msg VARCHAR(500)
-
       SET @ex_msg  = ERROR_MESSAGE();
       SET @ex_num  = ERROR_NUMBER();
       SET @ex_proc = ERROR_PROCEDURE();
@@ -414,7 +369,6 @@ replace clause:[', @replace_clause, ']
       SET @err_msg = CONCAT(' error in ', @ex_proc, '(',@ex_line, '): row: ', @id, ' exception: ', @ex_num, ' ',@ex_msg);
       EXEC dbo.sp_set_session_context @cor_log_flg_key, 0;
       EXEC sp_log_exception @fn, '500: @result_msg: ', @result_msg, @ex_num = @ex_num OUT, @ex_msg = @ex_msg OUT;
-
       -------------------------------------------------------
       -- Close abnormally
       -------------------------------------------------------
@@ -427,20 +381,15 @@ replace clause:[', @replace_clause, ']
          DEALLOCATE @cursor;
          EXEC sp_log 1, @fn, '530: DEALLOCATed @cursor';
       END
-
       -- Update context
       EXEC sp_set_session_context N'fixup count', @fixup_cnt;
       EXEC dbo.sp_set_session_context @cor_log_flg_key, 0;
-
       -- Disable the trigger
       DISABLE TRIGGER staging2.sp_Staging2_update_trigger ON staging2;
-
       EXEC sp_log 1, @fn, '540: throw revised exception: ', @err_msg;
       IF @ex_num < 50000  SET @ex_num = @ex_num + 50000;
-
       THROW @ex_num, @err_msg, 1;
    END CATCH
-
    -------------------------------------------------------
    -- Close normally
    -------------------------------------------------------
@@ -448,30 +397,25 @@ replace clause:[', @replace_clause, ']
    DEALLOCATE @cursor;
    DISABLE TRIGGER staging2.sp_Staging2_update_trigger ON staging2;
    EXEC dbo.sp_set_session_context @cor_log_flg_key, 0;
-
    -------------------------------------------------------
    -- Report summary
    -------------------------------------------------------
    DECLARE 
        @file_cnt INT
    ;
-
    EXEC sp_log 2, @fn, '600: Report summary: ',@file_cnt,' files, #rows imported: ',@id,' #fixups: ',@fixup_cnt, ' @rc: ', @rc;
    SELECT @file_cnt = COUNT(*) FROM CorFiles;
-
    PRINT CONCAT(@NL, @NL, @Line2);
    EXEC sp_log 2, @fn, '610: Completed import of ',@file_cnt,' files, #rows imported: ',@id,' #fixups: ',@fixup_cnt, ' @rc: ', @rc;
    PRINT CONCAT(@Line2, @NL,@NL);
-
    EXEC sp_log 2, @fn, '999: leaving, @fixup_cnt: ',@fixup_cnt, ' @rc: ', @rc;
    RETURN @rc;
 END
 /*
 ------------------------------------------------
 EXEC tSQLt.Run 'test.test_038_sp_S2_fixup';
-
 EXEC tSQLt.RunAll;
 ------------------------------------------------
 */
-
 GO
+

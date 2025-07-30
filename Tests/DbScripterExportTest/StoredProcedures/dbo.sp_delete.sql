@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 01-JUL-2023
@@ -20,13 +18,10 @@ BEGIN
        @cnt INT
       ,@msg VARCHAR(200)
       ,@sql NVARCHAR(MAX)
-
    SET NOCOUNT OFF;
-
    PRINT CONCAT('Removing ',@delete_clause,' from col:[', @col, ' table: [', @table, ']');
    SET @sql = CONCAT('DELETE FROM [', @table, '] WHERE [', @col, '] LIKE ''', @delete_clause, '''');
    PRINT @sql;
-
    EXEC sp_executesql 
       @sql
       ,N'@cnt INT OUT'
@@ -39,5 +34,5 @@ END
 EXEC sp_delete '%NAME OF COMPANY%', 'company', 'staging2'
 DELETE FROM [pathogens] WHERE [company] LIKE '%NAME OF COMPANY%'
 */
-
 GO
+

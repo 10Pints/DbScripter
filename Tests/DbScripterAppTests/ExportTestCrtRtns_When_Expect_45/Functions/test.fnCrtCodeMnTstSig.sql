@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ====================================================================================
 -- Author:      Terry Watts
 -- Create date: 16-APR-2024
@@ -31,21 +27,17 @@ BEGIN
    DECLARE
     @tst_rtn_nm   VARCHAR(50)
    ,@cora         NCHAR(1)
-
    SELECT
       @tst_rtn_nm = tst_rtn_nm
      ,@cora       = cora
    FROM test.RtnDetails;
-
    INSERT INTO @t( line)
    VALUES
        (CONCAT(iif(@cora='C', 'CREATE', 'ALTER'), ' PROCEDURE test.', @tst_rtn_nm));
-
    RETURN;
 END
 /*
 SELECT * FROM test.fnCrtCodeMnTstSig()
 */
-
-
 GO
+

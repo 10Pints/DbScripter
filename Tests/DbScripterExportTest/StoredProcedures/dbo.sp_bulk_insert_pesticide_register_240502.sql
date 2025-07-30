@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==============================================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-OCT-2024
@@ -51,14 +48,11 @@ BEGIN
        @fn        VARCHAR(35)   = N'BLK_INSRT PEST REG 240502'
       ,@RC        INT            = -1
       ,@import_nm VARCHAR(20)
-
    --SET @import_nm = dbo.fnGetSessionValueImportId();
-
    EXEC sp_log 2, @fn, '000: starting
 imprt_csv_file:[',@imprt_csv_file, ']
 clr_first     :[',@clr_first,      ']
 ]';
-
    EXEC @RC = sp_bulk_insert_LRAP @imprt_csv_file, 'RegisteredPesticideImport_230721_vw',@clr_first=@clr_first;--, @import_nm;
    EXEC sp_log 2, @fn, 'Bulk_insert of [', @imprt_csv_file, ' leaving, @RC: ', @RC;
    RETURN @RC;
@@ -68,20 +62,15 @@ EXEC sp_reset_callRegister;
 TRUNCATE TABLE staging1;
 EXEC sp_bulk_insert_pesticide_register_240502 'D:\Dev\Farming\Data\LRAP-240910.txt';
 SELECT * FROM staging1;
-
    DECLARE
        @fn              VARCHAR(35)   = N'BLK INSRT LRAP'
       ,@cmd             VARCHAR(4000)
       ,@notepad_path    VARCHAR(500) = '"C:\program Files\notepad++\notepad++.exe" '
-
    SET @cmd = CONCAT('''', '"C:\bin\SQL_Notepad.bat" ', ' D:\Logs\LRAPImportErrors.log.Error.Txt''');
    PRINT @cmd;
    EXEC xp_cmdshell @cmd;
-
 EXEC xp_cmdshell '"C:\bin\SQL_Notepad.bat"  D:\Logs\LRAPImportErrors.log.Error.Txt'
-
 -------------------------------------------------------------------------------------------
 */
-
-
 GO
+

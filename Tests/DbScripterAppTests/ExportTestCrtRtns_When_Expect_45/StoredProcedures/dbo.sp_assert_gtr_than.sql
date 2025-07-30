@@ -1,11 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 27-MAR-2020
@@ -43,9 +38,7 @@ BEGIN
        @fnThis VARCHAR(35) = 'sp_assert_gtr_than'
       ,@aTxt   VARCHAR(100)= CONVERT(VARCHAR(100), @a)
       ,@bTxt   VARCHAR(100)= CONVERT(VARCHAR(100), @b)
-
    EXEC sp_log @log_level, @fnThis, '000: starting @a:[',@aTxt, '] @b:[', @bTxt, ']';
-
    -- a>b -> b<a 
    IF dbo.fnIsLessThan(@b ,@a) = 1
    BEGIN
@@ -55,12 +48,10 @@ BEGIN
       EXEC sp_log @log_level, @fnThis, '010: OK, @a:[',@aTxt, '] IS GTR THN @b:[', @bTxt, ']';
       RETURN 0;
    END
-
    ----------------------------------------------------
    -- ASSERTION ERROR
    ----------------------------------------------------
    EXEC sp_log 3, @fnThis, '020: [',@aTxt, '] IS GTR THN [', @bTxt, '] IS FALSE, raising exception';
-
    EXEC sp_raise_exception
           @msg1   = @msg
          ,@msg2   = @msg2
@@ -91,7 +82,5 @@ EXEC sp_assert_gtr_than 5, 4;
 EXEC tSQLt.RunAll;
 EXEC tSQLt.Run 'test.test_055_sp_assert_gtr_than';
 */
-
-
-
 GO
+

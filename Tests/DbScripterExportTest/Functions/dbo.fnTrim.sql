@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ================================================================
 -- Author:      Terry Watts
 -- Create date: 10-OCT-2019
@@ -22,6 +19,5 @@ END
 /*
 PRINT CONCAT('[', dbo.fnTrim(CONCAT(0x20, 0x09, 0x0a, 0x0d, 0xA0, '  a  #cd# ', 0x20, 0x09, 0x0a, 0x0d, 0x0d,0xA0)), ']');
 */
-
-
 GO
+

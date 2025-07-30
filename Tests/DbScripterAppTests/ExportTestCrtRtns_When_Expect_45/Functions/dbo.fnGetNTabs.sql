@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ================================================================================================
 -- Author:      Terry watts
 -- Create date: 24-APR-2024
@@ -21,14 +17,11 @@ BEGIN
 END
 /*
 EXEC tSQLt.Run 'test.test_086_sp_crt_tst_hlpr_script';
-
   PRINT CONCAT('[',dbo.fnGetNTabs(NULL),']');
   PRINT CONCAT('[',dbo.fnGetNTabs(-1),']');
   PRINT CONCAT('[',dbo.fnGetNTabs(0),']');
   PRINT CONCAT('[',dbo.fnGetNTabs(1),']');
   PRINT CONCAT('[',dbo.fnGetNTabs(3),']');
 */
-
-
-
 GO
+

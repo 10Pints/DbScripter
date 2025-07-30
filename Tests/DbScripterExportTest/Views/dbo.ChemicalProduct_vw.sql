@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==================================================================================
 -- Author:      Terry Watts
 -- Create date: 07-OCT-2023
@@ -24,6 +21,5 @@ SELECT chemical_nm, product_nm FROM ChemicalProduct_vw WHERE product_nm liKE '%H
 SELECT chemical_nm, product_nm FROM ChemicalProduct_vw WHERE chemical_nm IN ('Chlorpyrifos','Dimethoate','Thiamethoxam','Lambda Cyhalothrin')
 SELECT * FROM Staging1 where product LIKE '%Brodan%'
 */
-
-
 GO
+

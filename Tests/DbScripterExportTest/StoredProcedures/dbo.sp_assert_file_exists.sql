@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:      Terry watts
 -- Create date: 30-MAR-2020
@@ -40,9 +38,7 @@ BEGIN
    DECLARE
        @fn_       VARCHAR(35)   = N'ASSERT_FILE_EXISTS'
       ,@msg       VARCHAR(MAX)
-
    EXEC sp_log @log_level, @fn_, '000: checking file [', @file, '] exists';
-
    IF dbo.fnFileExists( @file) = 1
    BEGIN
       ----------------------------------------------------
@@ -51,13 +47,11 @@ BEGIN
       EXEC sp_log @log_level, @fn, '010: OK,File [',@file,'] exists';
       RETURN 0;
    END
-
    ----------------------------------------------------
    -- ASSERTION ERROR
    ----------------------------------------------------
    SET @msg = CONCAT('File [',@file,'] does not exist');
    EXEC sp_log 3, @fn, '020:', @msg, ' raising exception';
-
    EXEC sp_raise_exception
        @ex_num = @ex_num
       ,@msg1   = @msg
@@ -87,6 +81,5 @@ END
 EXEC sp_assert_file_exists 'non existant file', ' second msg',@fn='test fn', @state=5  -- expect ex: 53200, 'the file [non existant file] does not exist', ' extra detail: none', @state=1, @fn='test fn';
 EXEC sp_assert_file_exists 'C:\bin\grep.exe'   -- expect OK
 */
-
-
 GO
+

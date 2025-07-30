@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ======================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 20-APR-2024
@@ -15,7 +11,6 @@ GO
 --
 -- Responsibilities:
 -- Sole populator of the 2 rtn metadata tables: {Test.RtnDetails, Test.RtnParamDetails}
-
 -- Parameters:
 -- @q_tstd_rtn the qualified tested routine name <schema>.<routine> optionally wrapped in []
 --
@@ -74,7 +69,6 @@ BEGIN
    ,@is_clr       BIT
    ,@max_prm_len  INT
    ,@msg          VARCHAR(500)
-
    EXEC sp_log 2, @fn, '000: starting
 @qrn           :[', @qrn           ,']
 @trn           :[', @trn           ,']
@@ -85,12 +79,9 @@ BEGIN
 ';
 --@tst_mode      :[', @tst_mode      ,']
 --@stop_stage    :[', @stop_stage    ,']
-
-
    BEGIN TRY
       DELETE FROM Test.RtnDetails;
       DELETE FROM Test.ParamDetails;
-
       --------------------------------------------------------------------------------------
       -- Validate parameters
          --------------------------------------------------------------------------------------
@@ -100,18 +91,15 @@ BEGIN
       EXEC sp_assert_not_null_or_empty @qrn, ' @qrn not specified', @fn=@fn;
       IF @qrn LIKE '.%' OR @qrn LIKE '%.'
          EXEC sp_raise_exception @msg1='@qrn must be specified - not null, empty or just dot or whitespace';
-
       --------------------------------------------------------------------------------------
       -- ASSERTION: Validated parameters
          --------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '010: ASSERTION: Validated parameters';
-
       --------------------------------------------------------------------------------------
       -- Process
          --------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '020: Process';
       EXEC sp_log 1, @fn, '030: Calling fnGetRtnDetails(', @qrn, ')';
-
       -- 241227: When qrn is not qualified with a schemqa - we can get it if the routine name is unique accross schemas
       SELECT
           @qrn       = qrn
@@ -121,7 +109,6 @@ BEGIN
          ,@ty_code   = ty_code
          ,@is_clr    = is_clr
       FROM dbo.fnGetRtnDetails(@qrn);
-
       EXEC sp_log 1, @fn, '040: fnGetRtnDetails(',@qrn,') returned
              @qrn       = [@schema_nm = [', @schema_nm, ']
              @rtn_nm    = [', @rtn_nm   , ']
@@ -129,12 +116,10 @@ BEGIN
              @ty_code   = [', @ty_code  , ']
              @is_clr    = [', @is_clr   , ']'
       ;
-
       IF @schema_nm IS NULL
       BEGIN
          -- POST 01: if routine not found and @throw_if_err is true then throw exception 70003, 'Routine [[<@schema_nm>].[<@rtn_nm>]] not found'
          EXEC sp_log 4, @fn, '050: routine ',@qrn, ' does not exist';
-
          IF @throw_if_err = 1
          BEGIN
             SET @msg = CONCAT('routine [',@schema_nm,'.',@rtn_nm,'] was not found');
@@ -146,16 +131,12 @@ BEGIN
             INSERT INTO test.RtnDetails(qrn, schema_nm, rtn_nm)
             VALUES (@qrn, @schema_nm, @rtn_nm);
       END
-
       EXEC sp_log 1, @fn, '070:';
-
       IF @cora IS NULL
          SET @cora = 'C';
-
       IF @cora NOT IN ('A','C')
       BEGIN
          EXEC sp_log 4, @fn, '080: @cora  NOT IN (''A'',''C''):[',cora, ']';
-
          IF @throw_if_err = 1
          BEGIN
             EXEC sp_log 4, @fn, '090 : unknown create mode [',@cora, ']';
@@ -167,13 +148,11 @@ BEGIN
             SET @cora = 'unknown create mode';
          END
       END
-
       -- Return this to client code
       IF @ad_stp     IS NULL SET @ad_stp     = 1;
       IF @trn        IS NULL SET @trn        = test.fnGetNxtTstRtnNum(); -- this is very slow
 --      IF @tst_mode   IS NULL SET @tst_mode   = 1;
 --      IF @stop_stage IS NULL SET @stop_stage = 12;
-
       EXEC sp_log 1, @fn, '110: modified params:
 @qrn         :[', @qrn         ,']
 @trn         :[', @trn         ,']
@@ -182,22 +161,17 @@ BEGIN
 ';
 -- @tst_mode    :[', @tst_mode    ,']
 -- @stop_stage  :[', @stop_stage  ,']
-
-
       --------------------------------------------------------------------------------------
       -- Validate parameters Complete
       --------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '120: ASSERTION Validated set any defaults as needed';
-
       --------------------------------------------------------------------------------------
       -- Process
       --------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '130: Process'
-
       EXEC sp_log 1, @fn, '140: populating the RtnDetails table   '
       SET @tst_rtn_nm   = test.fnCreateTestRtnName(@rtn_nm, @trn, 'M');
       SET @hlpr_rtn_nm  = test.fnCreateTestRtnName(@rtn_nm, @trn, 'H');
-
       -- 2. Pop Test.RtnDetails with the rtn level details
       INSERT INTO Test.RtnDetails
            ( schema_nm, rtn_nm, rtn_ty, rtn_ty_code, trn, qrn, cora, ad_stp, /*tst_mode,stop_stage, */ tst_rtn_nm, hlpr_rtn_nm, is_clr, display_tables)
@@ -205,16 +179,13 @@ BEGIN
       FROM SysRtns_vw
       WHERE schema_nm = @schema_nm
       AND   rtn_nm    = @rtn_nm;
-
       SET @cnt = @@ROWCOUNT;
       EXEC sp_log 1, @fn, '145: imported ', @cnt, ' rows';
-
       IF @display_tables = 1
       BEGIN
          EXEC sp_log 1, @fn, '147: displaying Test.RtnDetails rows';
          SELECT * FROM Test.RtnDetails;
       END
-
       --------------------------------------------------------------------------------------
       -- Check postconditions
       --------------------------------------------------------------------------------------
@@ -224,12 +195,10 @@ BEGIN
       -- POST 03: Test.RtnParamDetails pop OR 70102,  Could not find the parameter details for <@q_tstd_rtn> chd already
       -- POST 04: qrn returned fully qualified with schema
       EXEC sp_log 1, @fn, '160: checking results in the RtnDetails table, @cnt:',@cnt, ''
-
       -- POST 02: Test.RtnDetails      pop OR 70101,  Could not find the routine   details for <@q_tstd_rtn>
       IF @cnt = 0
       BEGIN
          EXEC sp_log 4, @fn, '170: Could not find the routine details for [',@qrn,']';
-
          IF @throw_if_err = 1
          BEGIN
             EXEC sp_raise_exception 70100, '180: Could not find the routine details for ',@qrn;
@@ -239,10 +208,8 @@ BEGIN
             EXEC sp_log 4, @fn, '190 : continuing process since @throw_if_err = 0';
          END
       END
-
       EXEC sp_log 1, @fn, '200: checking  RtnDetails table row count = 1'
       EXEC sp_assert_equal 1, @cnt, '[',@cnt,']) rows were returned in the RtnDetails table, should be 1 row', @ex_num=70110;
-
       SET @cnt = CHARINDEX('.', @qrn);
       EXEC sp_log 1, @fn, '210 dot pos: ', @cnt, ' @qrn: [',@qrn,']';
       EXEC sp_assert_not_equal 0, @cnt ,'Failed: tested routine not qualified';
@@ -250,7 +217,6 @@ BEGIN
       -- POST 06: test.rtnDetails has 1 row or exception 70004, 'failed to populate Test.RtnDetails properly'
       EXEC sp_assert_tbl_pop 'test.rtnDetails', @exp_cnt =1, @ex_num=70004, @ex_msg='failed to populate Test.RtnDetails properly';
       EXEC sp_log 1, @fn, '230';
-
       --------------------------------------------------------------------------------------
       -- Process complete
       --------------------------------------------------------------------------------------
@@ -260,7 +226,6 @@ BEGIN
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn, '999: leaving';
 END
 /*
@@ -273,6 +238,5 @@ EXEC tSQLt.Run 'test.test_034_sp_pop_param_details';
 EXEC tSQLt.RunAll;
 SELECT * FROM dbo.fnGetRtnDetails('test.sp_tst_hlpr_st');
 */
-
-
 GO
+

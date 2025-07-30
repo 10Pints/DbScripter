@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE [dbo].[ImportCorrections](
 	[id] [int] IDENTITY(1,1) NOT NULL,
 	[action] [varchar](12) NULL,
@@ -35,7 +33,7 @@ CREATE TABLE [dbo].[ImportCorrections](
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-
-ALTER TABLE [dbo].[ImportCorrections] ADD  CONSTRAINT [DF_ImportCorrections_must_update]  DEFAULT ((0)) FOR [must_update]
-
 GO
+ALTER TABLE [dbo].[ImportCorrections] ADD  CONSTRAINT [DF_ImportCorrections_must_update]  DEFAULT ((0)) FOR [must_update]
+GO
+

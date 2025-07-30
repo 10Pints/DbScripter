@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 09-JUL-2023
@@ -15,9 +13,7 @@ BEGIN
    DECLARE @fn VARCHAR(35)  = N'CPY_S3_S2'
    EXEC sp_log 1, @fn, 'starting'
    SET NOCOUNT OFF;
-
    TRUNCATE TABLE Staging2;
-
    INSERT INTO [dbo].[Staging2]
    (
        id
@@ -61,11 +57,10 @@ BEGIN
       ,reentry_period
       ,comments
    FROM Staging3;
-
    EXEC sp_log 1, @fn, 'leaving ok'
 END
 /*
 EXEC  sp_copy_s3_s2
 */
-
 GO
+

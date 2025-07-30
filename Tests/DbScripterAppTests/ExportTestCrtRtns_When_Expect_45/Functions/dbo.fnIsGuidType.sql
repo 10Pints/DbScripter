@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 01-FEB-2021
@@ -16,6 +12,5 @@ AS
 BEGIN
    RETURN iif(CONVERT(VARCHAR(500), SQL_VARIANT_PROPERTY(@v, 'BaseType')) = 'uniqueidentifier', 1, 0);
 END
-
-
 GO
+

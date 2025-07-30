@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =================================================================
 -- Author:      Terry Watts
 -- Create date: 09-FEB-2024
@@ -21,9 +18,7 @@ BEGIN
    DECLARE
        @fn     VARCHAR(35)   = 'DELETE_TABLE'
       ,@sql    VARCHAR(max)
-
    SET NOCOUNT ON;
-
    BEGIN TRY
       SET @sql = CONCAT('DELETE FROM ', @table, ';');
       EXEC (@sql);
@@ -40,6 +35,5 @@ END
 /*
    EXEC sp_delete_table 'ChemicalUseStaging';
 */
-
-
 GO
+

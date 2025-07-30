@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 27-MAR-2020
@@ -41,9 +39,7 @@ DECLARE
     @fnThis     VARCHAR(60) = N'sp_assert_not_null'
    ,@valTxt VARCHAR(100)= CONVERT(VARCHAR(20), @val)
    ,@msg0   VARCHAR(200)
-
    EXEC sp_log @log_level, @fnThis, '000 starting @val:[',@valTxt,']';
-
    IF (@val IS NOT NULL)
    BEGIN
       ----------------------------------------------------
@@ -52,14 +48,12 @@ DECLARE
       EXEC sp_log @log_level, @fnThis, '010: OK, ASSERTION: [',@prm_nm, '] IS NOT NULL';
       RETURN 0;
    END
-
    ----------------------------------------------------
    -- ASSERTION ERROR
    ----------------------------------------------------
    SET @msg0 = CONCAT('ERROR: [', @prm_nm, '] is NULL')
    EXEC sp_log 4, @fnThis, 'ASSERTION: val:[',@prm_nm, '] is NULL - raising exception ', @ex_num;
    IF @ex_num IS NULL SET @ex_num = 50004;
-
    EXEC sp_raise_exception
        @msg0   = @msg0
       ,@msg1   = @msg1
@@ -90,5 +84,5 @@ END
 EXEC tSQLt.Run 'test.test_049_sp_assert_not_null_or_empty';
 EXEC tSQLt.RunAll;
 */
-
 GO
+

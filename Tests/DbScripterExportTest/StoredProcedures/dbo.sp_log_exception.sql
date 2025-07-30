@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-MAR-2020
@@ -55,20 +52,15 @@ BEGIN
       ,@fnHdr     VARCHAR(100)
       ,@isTrans   BIT = 0
       ,@line      VARCHAR(4000)
-
    SET @ex_num = -1; -- unknown
    SET @msg    = 'UNKNOWN MESSAGE';
-
    --EXEC sp_log 4, @fnThis, '510: starting';
-
    SELECT
        @ex_num = ERROR_NUMBER()
       ,@ex_proc= ERROR_PROCEDURE()
       ,@ex_line= CAST(ERROR_LINE() AS VARCHAR(20))
       ,@ex_msg = ERROR_MESSAGE();
-
    SET @fnHdr = CONCAT(@ex_proc, '(',@ex_line,'): ')
-
    BEGIN TRY
       SET @msg =
       CONCAT
@@ -94,9 +86,7 @@ BEGIN
          ,iif(@msg18 IS NOT NULL, CONCAT(' ', @msg18 ), '')
          ,iif(@msg19 IS NOT NULL, CONCAT(' ', @msg19 ), '')
       );
-
       SET @line = REPLICATE('*', dbo.fnMin(300, dbo.fnLen(@msg)+46));
-
       PRINT CONCAT(@nl, @line);
       EXEC sp_log 4, @fnHdr, @msg;
       PRINT CONCAT(@line, @nl);
@@ -109,6 +99,5 @@ BEGIN
       SET @ex_msg ='*** system error: failed to get error msg ***';
    END CATCH
 END
-
-
 GO
+

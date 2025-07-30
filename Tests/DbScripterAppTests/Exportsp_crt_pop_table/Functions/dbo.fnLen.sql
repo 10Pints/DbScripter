@@ -1,12 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
-
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 08-JAN-2020
@@ -24,7 +18,5 @@ END
 /*
 EXEC test.sp__crt_tst_rtns 'dbo].[fnLen]', 43;
 */
-
-
-
 GO
+

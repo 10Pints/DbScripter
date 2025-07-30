@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 19-AUG-2023
@@ -63,23 +61,19 @@ CREATE PROCEDURE [dbo].[sp_merge_mn_tbls]
 AS
 BEGIN
    SET NOCOUNT OFF;
-
    DECLARE 
        @fn        VARCHAR(30)  = N'sp_merge_mn_tbls'
       ,@error_msg VARCHAR(MAX)  = NULL
       ,@file_path VARCHAR(MAX)
       ,@id        INT = 1
-
    BEGIN TRY
       -----------------------------------------------------------------------------------
       EXEC sp_log 2, @fn,'000: starting, running precondition validation checks';
       -----------------------------------------------------------------------------------
       EXEC sp_register_call @fn;
-
       -----------------------------------------------------------------------------------
       -- Precondition checks
       -----------------------------------------------------------------------------------
-
       -----------------------------------------------------------------------------------
       -- 02: check preconditions: PRE00: staging tables populated and fixed up
       -----------------------------------------------------------------------------------
@@ -93,12 +87,10 @@ BEGIN
       EXEC sp_mrg_mn_tbls_precndtn_hlpr @id OUTPUT, 'ProductStaging';
       EXEC sp_mrg_mn_tbls_precndtn_hlpr @id OUTPUT, 'ProductCompanyStaging';
       EXEC sp_mrg_mn_tbls_precndtn_hlpr @id OUTPUT, 'ProductUseStaging';
-
       -----------------------------------------------------------------------------------
       --  03: merging main primary tables
       -----------------------------------------------------------------------------------
       EXEC sp_log 2, @fn,'020: merging main primary tables   ';
-
       -- ??
       DELETE FROM DistributorManufacturer;
       DELETE FROM ProductCompany;
@@ -107,7 +99,6 @@ BEGIN
       DELETE FROM ChemicalUse;
       DELETE FROM ChemicalProduct;
       DELETE FROM CropPathogen;
-
       -----------------------------------------------------------------------------------
       -- 12: Merge Product table
       -----------------------------------------------------------------------------------
@@ -123,14 +114,11 @@ BEGIN
          VALUES (s.product_nm)
       WHEN NOT MATCHED BY SOURCE THEN DELETE
          ;
-
       EXEC sp_assert_tbl_pop 'Product';
-
       -----------------------------------------------------------------------------------
       -- ASSERTION: all the main primary tables merged
       -----------------------------------------------------------------------------------
       EXEC sp_log 2, @fn,'120: ASSERTION: all the main primary tables merged.';
-
       -----------------------------------------------------------------------------------
       -- 13: merging main link tables using the standard strategy:
       -----------------------------------------------------------------------------------
@@ -140,7 +128,6 @@ BEGIN
       --    Use the primary main table ids to populate the main link table
       ---------------------------------------------------
       EXEC sp_log 2, @fn,'130: merging main link tables   ';
-
       -----------------------------------------------------------------------------------
       -- Merge CropPathogen table
       -----------------------------------------------------------------------------------
@@ -149,7 +136,6 @@ BEGIN
       --         Make the main table id field auto incremental.
       EXEC sp_log 2, @fn, '140 merging CropPathogen link table';
       SELECT * From CropPathogen
-
       MERGE CropPathogen          AS target
       USING
       (
@@ -170,9 +156,7 @@ BEGIN
          INSERT (  crop_id,   pathogen_id,  crop_nm,   pathogen_nm)
          VALUES (s.crop_id, s.pathogen_id,s.crop_nm, s.pathogen_nm)
          ;
-
       EXEC sp_assert_tbl_pop 'CropPathogen';
-
       -----------------------------------------------------------------------------------
       -- 15: Merge ChemicalProduct table
       -----------------------------------------------------------------------------------
@@ -196,15 +180,12 @@ BEGIN
          INSERT (  chemical_id,   product_id,   chemical_nm,   product_nm)
          VALUES (s.chemical_id, s.product_id, s.chemical_nm, s.product_nm)
      ;
-
       EXEC sp_assert_tbl_pop 'ChemicalProduct';
-
       -----------------------------------------------------------------------------------
       -- 16: Merge ChemicalAction table
       -----------------------------------------------------------------------------------
       -- POST 03: ChemicalAction table populated
       EXEC sp_log 2, @fn, '160: merging ChemicalAction link table';
-
       MERGE ChemicalAction          AS target
       USING
       (
@@ -220,9 +201,7 @@ BEGIN
          INSERT ( chemical_id, action_id, chemical_nm, action_nm)
          VALUES ( chemical_id, action_id, chemical_nm, action_nm)
       ;
-
       EXEC sp_assert_tbl_pop 'ChemicalUse';
-
       -----------------------------------------------------------------------------------
       -- 16: Merge ChemicalUse table
       -----------------------------------------------------------------------------------
@@ -245,9 +224,7 @@ BEGIN
          INSERT ( chemical_id, use_id, chemical_nm, use_nm)
          VALUES ( chemical_id, use_id, chemical_nm, use_nm)
       ;
-
       EXEC sp_assert_tbl_pop 'ChemicalUse';
-
       -----------------------------------------------------------------------------------
       --17: Merge PathogenChemical table - needs the pathogen type info 2059 rows
       -----------------------------------------------------------------------------------
@@ -263,12 +240,10 @@ BEGIN
          --EXEC sp_assert_tbl_pop 'PathogenPathogenTypeStaging';
          EXEC sp_assert_tbl_pop 'PathogenTypeStaging';
          EXEC sp_assert_tbl_pop 'PathogenType';
-
          -- Update Pathogen.PathogenType_id and import
          UPDATE Pathogen 
          SET pathogenType_id = pt.pathogenType_id
          FROM Pathogen p JOIN PathogenType pt ON p.pathogenType_nm=pt.pathogenType_nm;
-
          EXEC sp_log 2, @fn, '190: merging PathogenChemical table';
          /*----------------------------------------------------------------------------------------------------------------
           * If this yields null pathogenType_id which PathogenChemical wont accept then use this view to trace the issues
@@ -289,12 +264,10 @@ BEGIN
             INSERT ( pathogen_id, chemical_id, pathogen_nm, chemical_nm, pathogenType_id)
             VALUES ( pathogen_id, chemical_id, pathogen_nm, chemical_nm, pathogenType_id)
             ;
-
          EXEC sp_assert_tbl_pop 'PathogenChemical';
       END TRY
       BEGIN CATCH
          EXEC dbo.sp_log_exception @fn;
-
          ------------------------------------------------------------------------------------------------------------------
          -- If the  error is trying to insert null pathogen_id into PathogenChemical: then this will help trace the issues
          ------------------------------------------------------------------------------------------------------------------
@@ -302,9 +275,7 @@ BEGIN
          FROM list_unmatched_PathogenChemicalStaging_pathogens_vw;
          THROW;
       END CATCH
-
       EXEC sp_assert_tbl_pop 'PathogenChemical';
-
       -----------------------------------------------------------------------------------
       -- 18: ProductUse table 
       -----------------------------------------------------------------------------------
@@ -326,9 +297,7 @@ BEGIN
          INSERT ( product_id, use_id, product_nm, use_nm)
          VALUES ( product_id, use_id, product_nm, use_nm)
          ;
-
       EXEC sp_assert_tbl_pop 'ProductUse';
-
       -----------------------------------------------------------------------------------
       -- 19: Update the ProductCompany link table with product nm & id and company nm & id 
       -----------------------------------------------------------------------------------
@@ -336,7 +305,6 @@ BEGIN
       --         In which case we need to assign a new id and use that in the associated link tables.
       --         Make the main table id field auto incremental.
       EXEC sp_log 2, @fn, '210: merging ProductCompany link table';
-
       MERGE ProductCompany as target
       USING
       (
@@ -352,14 +320,11 @@ BEGIN
          INSERT (  product_id,   company_id,   product_nm,   company_nm)
          VALUES (s.product_id, s.company_id, s.product_nm, s.company_nm)
       ;
-
       EXEC sp_assert_tbl_pop 'ProductCompany';
-
       -----------------------------------------------------------------------------------
       EXEC sp_log 2, @fn, '220: merging ChemicalAction link table';
       -----------------------------------------------------------------------------------
       EXEC sp_pop_chemicalAction;
-
       -----------------------------------------------------------------------------------
       -- 20: DistributorManufacturer
       -----------------------------------------------------------------------------------
@@ -380,14 +345,11 @@ BEGIN
          INSERT (  distributor_id,   manufacturer_id)
          VALUES (s.distributor_id, s.company_id)
       ;
-
       EXEC sp_assert_tbl_pop 'DistributorManufacturer';
-
       -----------------------------------------------------------------------------------
       -- 21: do any main table fixup: 
       -----------------------------------------------------------------------------------
       EXEC sp_log 2, @fn, '240: do any main table fixup: currently none';
-
       -----------------------------------------------------------------------------------
       -- 22  POSTCONDITION checks
       -----------------------------------------------------------------------------------
@@ -403,7 +365,6 @@ BEGIN
    -- POST 15: ProductUse table populated
    -- POST 18: DistributorManufacturer populated
       EXEC sp_mrg_mn_tbls_post_cks;
-
       -----------------------------------------------------------------------------------
       -- 23: Completed processing OK
       -----------------------------------------------------------------------------------
@@ -414,7 +375,6 @@ BEGIN
       EXEC sp_log 4, @fn, '500: Caught exception: ', @error_msg;
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn, '999: leaving: OK';
 END
 /*
@@ -422,5 +382,5 @@ EXEC sp_import_callRegister 'D:\Dev\Farming\Data\CallRegister.txt';
 EXEC sp_reset_CallRegister;
 EXEC sp_mrg_mn_tbls;
 */
-
 GO
+

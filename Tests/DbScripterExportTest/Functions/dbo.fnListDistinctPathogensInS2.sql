@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ========================================================================================
 -- Author:      Terry Watts
 -- Create date: 21-JUN-20223
@@ -25,11 +23,10 @@ BEGIN
    CROSS APPLY string_split(pathogens, ',') cs
    WHERE cs.value <> ''
    ORDER BY pathogen;
-
    RETURN;
 END
 /*
 SELECT pathogen from dbo.fnListPathogensInS2();
 */
-
 GO
+

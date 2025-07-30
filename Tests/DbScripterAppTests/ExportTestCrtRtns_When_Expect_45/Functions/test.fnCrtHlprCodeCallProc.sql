@@ -1,15 +1,10 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ==============================================================================================
 -- Author:      Terry Watts
 -- Create date: 16-APR-2024
 -- Description: creates the test helper code to call a stored procedure
-
 -- Preconditions:
 --    test.rtnDetails and test.ParamDetails populated
 --
@@ -43,14 +38,12 @@ BEGIN
    ,@line         VARCHAR(60) = REPLICATE('-', 60)
    ,@first_exp_prm_ndx  INT
    ,@rtn_ty       VARCHAR(2)
-
    SELECT
        @qrn          = qrn
       ,@ad_stp       = ad_stp
       ,@max_prm_len  = max_prm_len
       ,@rtn_ty       = rtn_ty
    FROM test.RtnDetails;
-
    SET @first_exp_prm_ndx =
    (
       SELECT TOP 1 ordinal
@@ -58,9 +51,7 @@ BEGIN
       WHERE is_output=1
       ORDER BY ordinal
    )
-
    INSERT INTO @t (line) VALUES  (CONCAT(@tab4, 'EXEC @act_RC = ', @qrn, iif( @ad_stp = 1, '-- fnCrtHlprCodeCallProc', '')));
-
    INSERT INTO @t (line)
       SELECT
          CONCAT
@@ -83,7 +74,6 @@ BEGIN
           )
       FROM test.ParamDetails
       WHERE tst_ty='INP';
-
    INSERT INTO @t (line) VALUES
      (CONCAT(@tab5,';'))
    ;
@@ -92,12 +82,8 @@ END
 /*
 SELECT * FROM test.fnCrtHlprCodeCallProc()
 EXEC tSQLt.Run 'test.test_086_sp_crt_tst_hlpr_script';
-
 EXEC tSQLt.RunAll;
-
 EXEC test.sp_set_rtn_details 'test.sp_pop_param_details', 41, @display_tables = 1
 */
-
-
-
 GO
+

@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 12-NOV-2024
@@ -27,14 +23,12 @@ BEGIN
    ,@ad_stp       BIT        = 0
    ,@rtn_ty_code  NCHAR(2)
    ,@tst_rtn_nm   VARCHAR(60)
-
    SELECT
        @tst_rtn_nm   = tst_rtn_nm
       ,@ad_stp       = ad_stp
       ,@rtn_ty_code  = rtn_ty_code
       ,@max_prm_len  = max_prm_len
    FROM test.RtnDetails;
-
    -----------------------------------------------------------------
    -- Add the hdr parameters @tst_num, @tst_key
    -----------------------------------------------------------------
@@ -54,7 +48,6 @@ BEGIN
       )
    FROM test.ParamDetails
    WHERE tst_ty = 'TST';
-
    -----------------------------------------------------------------
    -- Add the tested rtn parameters
    -----------------------------------------------------------------
@@ -66,7 +59,6 @@ BEGIN
       , dbo.fnPadRight(test.fnGetParamWithSuffix(param_nm), @max_prm_len+5), ' = ', iif(is_chr_ty=1, '''''', '0'))
    FROM test.ParamDetails
    WHERE tst_ty = 'INP';
-
    -----------------------------------------------------------------
    -- Add the expected parameters
    -----------------------------------------------------------------
@@ -79,7 +71,6 @@ BEGIN
       )
    FROM test.ParamDetails
    WHERE tst_ty = 'EXP' AND is_exception = 0;
-
    INSERT INTO @t (line) 
    SELECT
       CONCAT
@@ -89,12 +80,11 @@ BEGIN
       )
    FROM test.ParamDetails
    WHERE tst_ty = 'EXP' AND is_exception = 1;
-
    -----------------------------------------------------------------
    -- Close the Decl statement
    -----------------------------------------------------------------
    INSERT INTO @t (line) VALUES(CONCAT(@tab1, ';'));
    RETURN;
 END
-
 GO
+

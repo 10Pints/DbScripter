@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2024
@@ -14,12 +12,9 @@ RETURNS VARCHAR(100)
 AS
 BEGIN
    SET @range = dbo.fnTrim2(dbo.fnTrim2(@range, '['), ']');
-
    IF @range IS NULL OR @range='' SET @range = 'Sheet1$';
-
    IF CHARINDEX('$', @range) = 0
       SET @range = CONCAT( @range, '$');
-
    SET @range = CONCAT('[', @range, ']');
    RETURN @range;
 END
@@ -36,5 +31,5 @@ PRINT dbo.fnFixupXlRange('Call Register$A:B]');
 PRINT dbo.fnFixupXlRange('[Call Register$A:B');
 PRINT dbo.fnFixupXlRange('Call Register$A:B');
 */
-
 GO
+

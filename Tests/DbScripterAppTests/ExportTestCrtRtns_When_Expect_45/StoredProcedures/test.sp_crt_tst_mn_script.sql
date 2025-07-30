@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ============================================================
 -- Author:      Terry Watts
 -- Create date: 16-APR-2024
@@ -21,7 +17,6 @@ GO
 --
 -- Preconditions:
 --    test.rtnDetails and test.ParamDetails populated
-
 -- Algorithm:
 --
 -- Changes:
@@ -71,16 +66,13 @@ BEGIN
    ,@ty_code            VARCHAR(2)
    ,@txt                VARCHAR(500)
    ;
-
    BEGIN TRY
       EXEC sp_log 2, @fn, '';
       EXEC sp_log 2, @fn, @line2;
-
       ----------------------------------------------------------------------------------------------------------------------------
       -- Log paramaters
       ----------------------------------------------------------------------------------------------------------------------------
       EXEC sp_log 2, @fn, '000: starting, getting cached rtn details';
-
       SELECT
           @qrn             = qrn
          ,@schema_nm       = schema_nm
@@ -95,7 +87,6 @@ BEGIN
          ,@rtn_ty_code     = rtn_ty
          ,@tst_proc_mn_nm  = tst_rtn_nm
       FROM test.RtnDetails;
-
       EXEC sp_log 2, @fn, '005: rtn details:
 qrn        :[',@qrn  ,']
 trn        :[',@trn ,']
@@ -107,12 +98,9 @@ hlpr_rtn_nm:[', @hlpr_rtn_nm, ']
 ty_code    :[', @ty_code, ']
 rtn_ty     :[', @rtn_ty, ']'
 ;
-
       SET @stage = 1;
       EXEC sp_log 1, @fn, '010: clearing HlprDeftable;';
-
       TRUNCATE TABLE Test.TstDef;
-
       if @ad_stp = 1 INSERT INTO test.TstDef (line) VALUES ('-- sp_crt_tst_mn_script');
       -------------------------------------------------------------------------------
       -- Create the text header
@@ -121,7 +109,6 @@ rtn_ty     :[', @rtn_ty, ']'
       INSERT INTO test.TstDef (line)
       SELECT line
       FROM test.fnCrtCodeTstHdr(0); -- 0 = main tst rtn, 1 = hlpr rtn
-
       -------------------------------------------------------------------------------
       -- Create the mn tst sig
       -------------------------------------------------------------------------------
@@ -129,7 +116,6 @@ rtn_ty     :[', @rtn_ty, ']'
       INSERT INTO test.TstDef (line)
       SELECT line
       FROM fnCrtCodeMnTstSig();
-
       -------------------------------------------------------------------------------
       -- Create the AS BEGIN DECLARE bloc
       -------------------------------------------------------------------------------
@@ -145,21 +131,18 @@ rtn_ty     :[', @rtn_ty, ']'
         ,('')
         ,(CONCAT (@tab1, '-- 1 off setup  ??'))
       ;
-
       -------------------------------------------------------------------------------
       -- Create 1 helper call with dummy parameters
       -------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '030: creating 1 helper with dummy parameters';
       INSERT INTO test.TstDef (line)
       SELECT line FROM test.fnCrtMnCodeCallHlpr();
-
       -------------------------------------------------------------------------------
       -- Create the close bloc
       -------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '035: creating the close bloc';
       INSERT INTO test.TstDef (line)
       SELECT line FROM test.fnCrtMnCodeClose();
-
       -------------------------------------------------------------------------------
       -- Script completed
       -------------------------------------------------------------------------------
@@ -171,7 +154,6 @@ rtn_ty     :[', @rtn_ty, ']'
       EXEC sp_log_exception @fn, '500 Stage: ', @stage;
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn, '999 leaving, OK';
 END
 /*
@@ -179,7 +161,5 @@ SELECT * FROM test.Rtndetails;
 EXEC tSQLt.Run 'test].[test_012_sp_crt_tst_mn_compile';
 EXEC tSQLt.RunAll;
 */
-
-
-
 GO
+

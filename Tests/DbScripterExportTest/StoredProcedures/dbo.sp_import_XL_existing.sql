@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ===========================================================
 -- Author:      Terry Watts
 -- Create date: 31-JAN-2024
@@ -35,7 +32,6 @@ BEGIN
    DECLARE 
     @fn           VARCHAR(35)   = N'sp_import_XL_existing'
    ,@cmd          VARCHAR(4000)
-
    EXEC sp_log 1, @fn,'005: starting
 import_file:[', @import_file,']
 range      :[', @range      ,']
@@ -46,7 +42,6 @@ expect_rows:[', @expect_rows,']
 start_row  :[', @start_row  ,']
 end_row    :[', @end_row    ,']'
 ;
-
    ----------------------------------------------------------------------------------
    -- Process
    ----------------------------------------------------------------------------------
@@ -58,29 +53,24 @@ end_row    :[', @end_row    ,']'
          EXEC( @cmd)
       END
       EXEC sp_log 1, @fn,'007';
-
       IF @fields IS NULL
       BEGIN
          EXEC sp_log 1, @fn,'010: getting fields from XL hdr';
          IF @fields IS NULL 
             EXEC sp_get_flds_frm_hdr_xl @import_file, @fields OUT, @range; -- , @range
       END
-
       EXEC sp_log 1, @fn,'015: importing data';
       SET @cmd = dbo.fnCrtOpenRowsetSqlForXlsx(@table, @fields, @import_file, @range, 0);
       EXEC sp_log 1, @fn, '020 open rowset sql:
 ', @cmd;
-
       EXEC( @cmd);
       SET @row_cnt = @@rowcount;
       EXEC sp_log 1, @fn, '22: imported ', @row_cnt,' rows';
-
       ----------------------------------------------------------------------------------
       -- Check post conditions
       ----------------------------------------------------------------------------------
       EXEC sp_log 1, @fn,'025: Checking post conditions';
       IF @expect_rows = 1 EXEC sp_assert_gtr_than @row_cnt, 0, 'expected some rows to be imported';--, @fn=@fn;
-
       ----------------------------------------------------------------------------------
       -- Processing complete
       ----------------------------------------------------------------------------------
@@ -92,12 +82,10 @@ end_row    :[', @end_row    ,']'
       EXEC sp_log 4, @fn, '510:';
       THROW;
    END CATCH
-
    EXEC sp_log 1, @fn, '999: leaving OK, imported ', @row_cnt,' rows';
 END
 /*
 EXEC tSQLt.Run 'test.test_010_sp_import_TypeStaging';
 */
-
-
 GO
+

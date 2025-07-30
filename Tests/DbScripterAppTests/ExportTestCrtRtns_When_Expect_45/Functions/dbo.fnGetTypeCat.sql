@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ===================================================================
 -- Author:      Terry Watts
 -- Create date: 08-DEC-2024
@@ -20,7 +16,6 @@ AS
 BEGIN
    DECLARE @type SQL_VARIANT
    ;
-
    RETURN
       CASE
          WHEN dbo.fnIsIntType (@ty)     = 1 THEN 'Int'
@@ -33,7 +28,5 @@ END
 /*
 EXEC test.sp__crt_tst_rtns '[dbo].[fnGetTypeCat]';
 */
-
-
-
 GO
+

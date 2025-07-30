@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ============================================================
 -- Author:      Terry Watts
 -- Create date: 06-APR-2024
@@ -29,7 +25,6 @@ GO
 --
 -- Preconditions:
 --    test.rtnDetails and test.ParamDetails populated
-
 -- Algorithm:
 --
 -- Changes:
@@ -75,16 +70,13 @@ BEGIN
    ,@txt                VARCHAR(500)
    ,@tab                VARCHAR(4)    = '   '
    ;
-
    BEGIN TRY
 --      EXEC sp_log 2, @fn, '';
 --      EXEC sp_log 2, @fn, @line2;
-
       ----------------------------------------------------------------------------------------------------------------------------
       -- Log paramaters
       ----------------------------------------------------------------------------------------------------------------------------
       EXEC sp_log 2, @fn, '000: starting';
-
       SELECT
           @qrn          = qrn
          ,@schema_nm    = schema_nm
@@ -98,7 +90,6 @@ BEGIN
          ,@rtn_ty_nm    = rtn_ty
          ,@rtn_ty_code  = rtn_ty_code
       FROM test.RtnDetails;
-
       EXEC sp_log 1, @fn, '005: params
 qrn        :[',@qrn         ,']
 trn        :[',@trn         ,']
@@ -110,27 +101,22 @@ hlpr_rtn_nm:[', @hlpr_rtn_nm,']
 ty_code    :[', @rtn_ty_code,']
 rtn_ty_nm  :[', @rtn_ty_nm     ,']'
 ;
-
       SET @stage = 1;
       EXEC sp_log 1, @fn, '010: truncate HlprDef';
       TRUNCATE TABLE test.HlprDef;
-
       if(@ad_stp=1) INSERT INTO HlprDef(line) VALUES(CONCAT('-- ', @fn));
-
       --------------------------------------------------------------------
       -- Create the text header
       --------------------------------------------------------------------
       EXEC sp_log 1, @fn, '015: creating the text header';
       INSERT INTO test.HlprDef (line)
       SELECT line FROM test.fnCrtCodeTstHdr(1);
-
       --------------------------------------------------------------------
       -- Create the test helper signature
       --------------------------------------------------------------------
       EXEC sp_log 1, @fn, '020: creating the helper signature';
       INSERT INTO test.HlprDef (line)
       SELECT line from test.fnCrtHlprCodeHlprSig();
-
       --------------------------------------------------------------------
       -- Create As-begin-decl-log-st bloc-test setup for the helper
       --------------------------------------------------------------------
@@ -138,28 +124,24 @@ rtn_ty_nm  :[', @rtn_ty_nm     ,']'
       -- AS-BGN-ST, TF-DECL-ACTRTNDEF-TV,  BGN-TRY
       INSERT INTO test.HlprDef (line)
       SELECT line FROM test.fnCrtHlprCodeBegin();
-
       -------------------------------------------------------------------------------------------------
       --  Create the tested rtn call
       -------------------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '030: creating the call tested routine bloc';
       INSERT INTO test.HlprDef (line)
       SELECT line FROM test.fnCrtHlprCodeCallBloc();--@rtn_ty_code, @ad_stp);
-
       -------------------------------------------------------------------------------
       -- Create the test bloc dependant on rtn type
       ------------------------------------------------- ------------------------------
       --EXEC sp_log 1, @fn, '035: creating the test bloc dependant on rtn ty';
       --INSERT INTO test.HlprDef (line)
       --SELECT line FROM test.fnCrtHlprCodeTestBloc(@rtn_ty_code, @ad_stp);
-
       -------------------------------------------------------------------------------
       -- Create the close bloc
       -------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '045 creating the close bloc';
       INSERT INTO test.HlprDef (line)
       SELECT line FROM test.fnCrtHlprCodeCloseBloc()
-
       -------------------------------------------------------------------------------
       -- Script completed
       -------------------------------------------------------------------------------
@@ -171,14 +153,11 @@ rtn_ty_nm  :[', @rtn_ty_nm     ,']'
       EXEC sp_log_exception @fn, '950: Stage: ', @stage;
       THROW;
    END CATCH
-
   
    EXEC sp_log 2, @fn, '999 leaving, OK';
 END
 /*
 EXEC tSQLt.Run 'test.test_086_sp_crt_tst_hlpr_script';
 */
-
-
-
 GO
+

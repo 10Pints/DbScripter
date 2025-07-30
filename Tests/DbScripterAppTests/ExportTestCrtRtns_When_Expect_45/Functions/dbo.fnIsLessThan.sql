@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- =========================================================
 -- Author:      Terry Watts
 -- Create date: 06-DEc-2024
@@ -36,50 +32,40 @@ BEGIN
       ,@typeB  VARCHAR(50)
       ,@ret    BIT
       ,@res    INT
-
    ------------------------------------------------------
    -- Handle Null NULL
    ------------------------------------------------------
    IF @a IS NULL AND @b IS NULL RETURN 0;
-
    ------------------------------------------------------
    -- Handle Null not NULL scenarios
    ------------------------------------------------------
    IF @a IS NULL AND @b IS NOT NULL RETURN 1;
    IF @a IS NOT NULL AND @a IS NULL RETURN 0;
-
    ------------------------------------------------------
    -- ASSERTION: Both a and b are not NULL
    ------------------------------------------------------
-
    ------------------------------------------------------
    -- Handle different types
    ------------------------------------------------------
    SELECT @typeA = CONVERT(VARCHAR(500),SQL_VARIANT_PROPERTY(@a, 'BaseType'))
          ,@typeB = CONVERT(VARCHAR(500),SQL_VARIANT_PROPERTY(@b, 'BaseType'))
     ;
-
    IF @typeA <> @typeB
    BEGIN
       SELECT @aTxt = CONVERT(VARCHAR(500),@a)
             ,@bTxt = CONVERT(VARCHAR(500),@b);
-
       RETURN iif(@aTxt < @bTxt, 1, 0);
    END
-
    ------------------------------------------------------
    -- ASSERTION: Both a and b are the same type
    ------------------------------------------------------
-
    ------------------------------------------------------
    -- Handle types where the variant < operator
    -- does not return correct value
    ------------------------------------------------------
-
    ------------------------------------------------------
    -- Handle general case where variant < operator works
    ------------------------------------------------------
-
    RETURN iif(@a<@b, 1, 0);
 END
 /*
@@ -87,7 +73,6 @@ EXEC test.test_054_fnIsLT
 EXEC tSQLt.Run 'test.test_054_fnIsLT';
 EXEC tSQLt.RunAll;
 PRINT DB_Name()
-
    DECLARE 
        @a      SQL_VARIANT = 2
       ,@b      SQL_VARIANT = '2'
@@ -95,17 +80,14 @@ PRINT DB_Name()
       ,@bTxt   VARCHAR(4000) = CONVERT(VARCHAR(500),@b)
       ;
    PRINT iif(@a<@b, 1, 0);
-
    DECLARE 
        @a      SQL_VARIANT =  2
       ,@b      SQL_VARIANT = 'abc'
       ,@aTxt   VARCHAR(4000)
       ,@bTxt   VARCHAR(4000)
       ;
-
    SELECT @aTxt = CONVERT(VARCHAR(500),@a)
          ,@bTxt = CONVERT(VARCHAR(500),@b)
-
    PRINT iif(@a<@b, 1, 0);
    PRINT iif(@b<@a, 1, 0);
    PRINT iif(@aTxt<@bTxt, 1, 0);
@@ -113,6 +95,5 @@ PRINT DB_Name()
    PRINT CONCAT('[',@aTxt, ']');
    PRINT CONCAT('[',@bTxt, ']');
 */
-
-
 GO
+

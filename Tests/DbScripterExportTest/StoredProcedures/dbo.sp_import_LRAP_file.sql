@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ======================================================================================
 -- Procedure:   <proc_nm>
 -- EXEC tSQLt.Run 'test.test_021_sp_import_LRAP_file';
@@ -38,18 +36,15 @@ BEGIN
    DECLARE
        @fn        VARCHAR(35)   = 'sp_import_LRAP_file'
       ,@is_xl     BIT
-
       --------------------------------------------------------------------
       -- Determine the file type
       --------------------------------------------------------------------
    SET @is_xl = dbo.fnIsExcel(@import_file);
-
    EXEC sp_log 2, @fn, '000: starting
 import_file: [', @import_file, ']
 import_id: [', @import_id, ']
 is_xl:     [', @is_xl,']'
 ;
-
    BEGIN TRY
       --------------------------------------------------------------------
       -- R01: Clear the S1 and S2 tables
@@ -61,7 +56,6 @@ is_xl:     [', @is_xl,']'
       TRUNCATE TABLE Staging2;
       ALTER TABLE [dbo].[staging2] WITH CHECK ADD  CONSTRAINT [FK_staging2_staging1] FOREIGN KEY([id]) REFERENCES [dbo].[staging1] ([id])
       ALTER TABLE [dbo].[staging2] CHECK CONSTRAINT [FK_staging2_staging1]
-
       ------------------------------------------------------------------------------
       -- 3. R02: Incrementally import the File to S1
       ------------------------------------------------------------------------------
@@ -77,7 +71,6 @@ is_xl:     [', @is_xl,']'
          EXEC sp_log 1, @fn, '030:importing tsv: calling sp_import_LRAP_file_tsv';
          EXEC sp_import_LRAP_file_tsv @import_file, @import_id, @clr_first=0;
       END
-
       ------------------------------------------------------------------------------
       -- Validate postconditions
       ------------------------------------------------------------------------------
@@ -85,7 +78,6 @@ is_xl:     [', @is_xl,']'
       --POST 01: s1 contains rows
       EXEC sp_assert_tbl_pop 'staging1';
       EXEC sp_log 1, @fn, '060: ASSERTION: validated postconditions';
-
       --------------------------------------------------------------------
       -- Processing complete';
       --------------------------------------------------------------------
@@ -99,8 +91,7 @@ is_xl:     [', @is_xl,']'
    END
 /*
 EXEC tSQLt.Run 'test.test_021_sp_import_LRAP_file';
-
 EXEC tSQLt.RunAll;
 */
-
 GO
+

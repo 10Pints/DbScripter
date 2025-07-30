@@ -2,7 +2,7 @@
   "profiles": {
     "DbScripterApp": {
       "commandName": "Project",
-      "commandLineArgs": "D:\\Dorsu\\Exports\\Dorsu_devtest_sp_crt_pop_table.cfg.json"
+      "commandLineArgs": "D:\\Dev\\SqlDb\\Scripts\\SaveCovidSpreadsheetsAsTxt_config.json"
     }
   }
 }

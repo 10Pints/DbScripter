@@ -1,5 +1,4 @@
 GO
-
 CREATE TYPE [dbo].[staging2_tbl] AS TABLE(
 	[id] [int] NOT NULL,
 	[company] [varchar](70) NULL,
@@ -27,5 +26,5 @@ CREATE TYPE [dbo].[staging2_tbl] AS TABLE(
 	[id] ASC
 )WITH (IGNORE_DUP_KEY = OFF)
 )
-
 GO
+

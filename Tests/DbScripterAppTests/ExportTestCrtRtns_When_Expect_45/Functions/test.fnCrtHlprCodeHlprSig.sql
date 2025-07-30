@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ====================================================================================
 -- Author:      Terry Watts
 -- Create date: 16-APR-2024
@@ -39,7 +35,6 @@ BEGIN
    ,@ad_stp       BIT
    ,@cora         NCHAR(1)
    ,@tab          VARCHAR(3) = '   '
-
    SELECT
        @qrn       = qrn
       ,@schema_nm = schema_nm
@@ -50,34 +45,26 @@ BEGIN
       ,@ad_stp     = ad_stp
       ,@cora       = cora
    FROM test.RtnDetails;
-
    SELECT @rtn_ty = rtn_ty
    FROM test.RtnDetails;
-
    INSERT INTO @t( line)
    VALUES
        (CONCAT(iif(@cora='C','CREATE','ALTER'),' PROCEDURE test.', @hlpr_rtn_nm, IIF(@ad_stp=1,' -- fnCrtHlprCodeHlprSig','')))
-
    -- Add the rtn params
    INSERT INTO @t( line)
    SELECT line
    FROM test.fnCrtHlprSigParams();
-
    RETURN;
 END
 /*
 EXEC tSQLt.Run 'test.test_086_sp_crt_tst_hlpr_script';
 EXEC tSQLt.Run 'test.test_057_sp_crt_tst_hlpr';
-
 EXEC tSQLt.RunAll;
-
 EXEC test.sp_get_rtn_details 'dbo.fnEatWhitespace';
 SELECT * FROM test.fnCrtHlprCodeHlprSig();
-
 EXEC test.sp_get_rtn_details 'dbo.sp_get_excel_data';
 SELECT * FROM test.fnCrtHlprCodeHlprSig();
 SELECT * FROM test.fnEatWhitespace();
 */
-
-
 GO
+

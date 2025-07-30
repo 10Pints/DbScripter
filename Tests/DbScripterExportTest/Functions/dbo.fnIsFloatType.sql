@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ================================================
 -- Author:      Terry Watts
 -- Create date: 04-JAN-2021
@@ -18,6 +15,5 @@ AS
 BEGIN
    RETURN iif(@ty IN ('float','real','numeric'), 1, 0);
 END
-
-
 GO
+

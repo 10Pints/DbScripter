@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =================================================================
 -- Author:      Terry Watts
 -- Create date: 08-NOV-2023
@@ -18,11 +16,10 @@ BEGIN
    DECLARE 
        @fn        VARCHAR(30)  = N'MRG_NORM_TBLS'
       ,@msg       VARCHAR(100)
-
    SET @msg = CONCAT('PRE', FORMAT(@id, '00'),': checking ',@table_nm);
    EXEC sp_log 2, @fn, @msg; 
    EXEC sp_assert_tbl_pop @table_nm;
    SET @id = @id+1;
 END
-
 GO
+

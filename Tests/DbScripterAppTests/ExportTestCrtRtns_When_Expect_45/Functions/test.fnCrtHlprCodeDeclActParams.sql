@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ==================================================================================
 -- Author:      Terry Watts
 -- Create date: 03-MAY-2024
@@ -36,19 +32,16 @@ BEGIN
       ,@ad_stp         BIT
       ,@max_prm_len    INT
       ;
-
     SELECT
        @rtn_ty_code  = rtn_ty_code
       ,@ad_stp       = ad_stp
       ,@sc_fn_ret_ty = sc_fn_ret_ty
       ,@max_prm_len  = max_prm_len + 5
    FROM test.RtnDetails;
-
    IF @ad_stp = 1
       INSERT INTO @t (line) VALUES
       (CONCAT(@tab1, '-- fnCrtHlprCodeDeclActParams'))
       ;
-
    -- IF a Procedure declare any act out params and set to exp params initially
    INSERT INTO @t (line)
    SELECT
@@ -61,7 +54,6 @@ BEGIN
    FROM test.ParamDetails
    WHERE tst_ty='EXP' AND is_output = 0;
    ;
-
    -- 241217: this duplicates @act_row_cnt ?? removed - need to test against FN, TF
    -- Add the output cols as act
    IF @rtn_ty_code = 'P'
@@ -73,7 +65,6 @@ BEGIN
       WHERE is_output = 1
       ;
    END
-
    IF @rtn_ty_code = 'FN'
    BEGIN
       INSERT INTO @t (line)
@@ -83,7 +74,6 @@ BEGIN
       WHERE is_output = 1
       ;
    END
-
    RETURN;
 END
 /*
@@ -91,7 +81,5 @@ SELECT * FROM test.fnCrtHlprCodeDeclActParams();
 SELECT * FROM test.ParamDetails;
 EXEC tSQLt.RunAll;
 */
-
-
-
 GO
+

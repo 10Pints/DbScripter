@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==================================================================================================
 -- Author:      Terry Watts
 -- Create date: 10-DEC-2024
@@ -36,7 +34,6 @@ BEGIN
       ,@nl           NCHAR(2) = NCHAR(13)+NCHAR(10)
       ,@tab          NCHAR(3) = '   '
    ;
-
 -- 241210: handle multi value fields differently
 -- There are 2 types of field in staging2
 -- 1: single value fields like Company, Product, concentration, formulation_type,toxicity, reg,expiry
@@ -46,7 +43,6 @@ BEGIN
    IF @pk_table_nm    IS NULL SET @pk_table_nm    = dbo.fnRTrim2(@stg_field_nm, 's');
    IF @pk_field_nm    IS NULL SET @pk_field_nm    = CONCAT(dbo.fnRTrim2(@stg_field_nm, 's'), '_nm');
    IF @is_multi_value IS NULL SET @is_multi_value = iif(@stg_field_nm IN ('ingredient','uses','entry_mode','crops','pathogens'),1, 0);
-
    SET @sql = iif
    (
        @is_multi_value = 0
@@ -61,7 +57,6 @@ BEGIN
 ,@tab,@tab,'FROM [', @pk_table_nm,']', @nl
 ,@tab, ')', @nl
 ,') AS X;')
-
       ,CONCAT
       (@nl
 ,'(',@nl
@@ -74,16 +69,14 @@ BEGIN
 ,@tab,')',@nl
 ,') X;')
    ); -- end iif
-
    --SET @sql = CONCAT(@sql,@NL, N'ORDER BY [', @stg_field_nm,'];');
    RETURN @sql;
 END
 /*
 EXEC sp_fnd_unregistered_dynamic_data;
 EXEC tSQLt.Run 'test.test_007_fnCrtFndUnregisterdItemsSql';
-
 PRINT dbo.fnCrtFndUnregisterdItemsSql(1,'pathogens','staging2','Pathogen', 'pathogen_nm', ',');
 GO
 */
-
 GO
+

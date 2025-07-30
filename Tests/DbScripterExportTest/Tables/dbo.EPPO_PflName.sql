@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE [dbo].[EPPO_PflName](
 	[identifier] [varchar](7) NULL,
 	[datatype] [varchar](3) NULL,
@@ -19,5 +17,5 @@ CREATE TABLE [dbo].[EPPO_PflName](
 	[authority] [varchar](120) NULL,
 	[shortname] [varchar](250) NULL
 ) ON [PRIMARY]
-
 GO
+

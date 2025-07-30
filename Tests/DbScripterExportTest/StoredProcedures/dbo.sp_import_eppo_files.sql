@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ===================================================================================
 -- Author:      Terry Watts
 -- Create date: 11-Nov-2024
@@ -34,7 +32,6 @@ CREATE PROCEDURE [dbo].[sp_import_eppo_files]
    ,@field_terminator NCHAR(1)     = ','
    ,@exp_cnts         VARCHAR(2000)= NULL
    ,@display_tables   BIT          = 0
-
 AS
 BEGIN
    SET NOCOUNT ON;
@@ -45,7 +42,6 @@ BEGIN
    ,@table        VARCHAR(60)
    ,@eppo         Eppo
    ;
-
    EXEC sp_log 2, @fn,'000: starting:
 @folder:   [', @folder,   ']'
 ;
@@ -54,20 +50,16 @@ BEGIN
          -- 01: Validate parameters
          -------------------------------------------------------------------------------------------
          EXEC sp_log 1, @fn,'010: validating parameters';
-
          -------------------------------------------------------------------------------------------
          -- 02: Initialise
          -------------------------------------------------------------------------------------------
-
            -------------------------------------------------------------------------------------------
          -- 03: Process
          -------------------------------------------------------------------------------------------
          EXEC sp_log 1, @fn,'020: starting process';
-
          IF @exp_cnts IS NOT NULL
          BEGIN
             EXEC sp_log 1, @fn, '030: checking the expected row cnts   ';
-
             INSERT INTO @eppo(ordinal, [table], exp_row_cnt)
             SELECT ordinal, [table], exp_row_cnt
             FROM
@@ -76,7 +68,6 @@ BEGIN
                FROM string_split(@exp_cnts, ',',1) as A
             ) X;
          END
-
          EXEC sp_log 1, @fn,'040: importing Eppo_GafGroup';
          SELECT @exp_row_cnt = exp_row_cnt FROM @eppo WHERE [table] = 'GafGroup'
          EXEC sp_import_eppo_file_helper
@@ -89,7 +80,6 @@ BEGIN
                ,@exp_row_cnt     = @exp_row_cnt
                ,@row_cnt         = @row_cnt OUT
                ;
-
          EXEC sp_log 1, @fn,'050: importing Eppo_GafName';
          SELECT @exp_row_cnt = exp_row_cnt FROM @eppo WHERE [table] = 'GafName'
          EXEC sp_import_eppo_file_helper
@@ -102,7 +92,6 @@ BEGIN
                ,@exp_row_cnt     = @exp_row_cnt
                ,@row_cnt         = @row_cnt OUT
                ;
-
          EXEC sp_log 1, @fn,'060: importing Eppo_GaiGroup';
          SELECT @exp_row_cnt = exp_row_cnt FROM @eppo WHERE [table] = 'GaiGroup'
          EXEC sp_import_eppo_file_helper
@@ -115,7 +104,6 @@ BEGIN
                ,@exp_row_cnt     = @exp_row_cnt
                ,@row_cnt         = @row_cnt OUT
                ;
-
          EXEC sp_log 1, @fn,'070: importing Eppo_GafLink';
          SELECT @exp_row_cnt = exp_row_cnt FROM @eppo WHERE [table] = 'EPPO_GafLink'
          EXEC sp_import_eppo_file_helper
@@ -128,7 +116,6 @@ BEGIN
                ,@exp_row_cnt     = @exp_row_cnt
                ,@row_cnt         = @row_cnt OUT
                ;
-
          EXEC sp_log 1, @fn,'080: importing Eppo_GaiLink';
          SELECT @exp_row_cnt = exp_row_cnt FROM @eppo WHERE [table] = 'GaiLink'
          EXEC sp_import_eppo_file_helper
@@ -141,7 +128,6 @@ BEGIN
                ,@exp_row_cnt     = @exp_row_cnt
                ,@row_cnt         = @row_cnt OUT
                ;
-
          EXEC sp_log 1, @fn,'090: importing Eppo_GaiName';
          SELECT @exp_row_cnt = exp_row_cnt FROM @eppo WHERE [table] = 'GaiName'
          EXEC sp_import_eppo_file_helper
@@ -154,7 +140,6 @@ BEGIN
                ,@exp_row_cnt     = @exp_row_cnt
                ,@row_cnt         = @row_cnt OUT
                ;
-
          EXEC sp_log 1, @fn,'100: importing Eppo_NtxLink';
          SELECT @exp_row_cnt = exp_row_cnt FROM @eppo WHERE [table] = 'NtxLink'
          EXEC sp_import_eppo_file_helper
@@ -167,7 +152,6 @@ BEGIN
                ,@exp_row_cnt     = @exp_row_cnt
                ,@row_cnt         = @row_cnt OUT
                ;
-
          EXEC sp_log 1, @fn,'110: importing Eppo_NtxName';
          SELECT @exp_row_cnt = exp_row_cnt FROM @eppo WHERE [table] = 'NtxName'
          EXEC sp_import_eppo_file_helper
@@ -180,7 +164,6 @@ BEGIN
                ,@exp_row_cnt     = @exp_row_cnt
                ,@row_cnt         = @row_cnt OUT
                ;
-
          EXEC sp_log 1, @fn,'120: importing Eppo_PflGroup';
          SELECT @exp_row_cnt = exp_row_cnt FROM @eppo WHERE [table] = 'PflGroup'
          EXEC sp_import_eppo_file_helper
@@ -193,7 +176,6 @@ BEGIN
                ,@exp_row_cnt     = @exp_row_cnt
                ,@row_cnt         = @row_cnt OUT
                ;
-
          EXEC sp_log 1, @fn,'130: importing Eppo_PflLink';
          SELECT @exp_row_cnt = exp_row_cnt FROM @eppo WHERE [table] = 'PflLink'
          EXEC sp_import_eppo_file_helper
@@ -206,7 +188,6 @@ BEGIN
                ,@exp_row_cnt     = @exp_row_cnt
                ,@row_cnt         = @row_cnt OUT
                ;
-
          EXEC sp_log 1, @fn,'140: importing Eppo_PflName';
          SELECT @exp_row_cnt = exp_row_cnt FROM @eppo WHERE [table] = 'PflName'
          EXEC sp_import_eppo_file_helper
@@ -219,7 +200,6 @@ BEGIN
                ,@exp_row_cnt     = @exp_row_cnt
                ,@row_cnt         = @row_cnt OUT
                ;
-
          EXEC sp_log 1, @fn,'150: importing Eppo_Repco';
          SELECT @exp_row_cnt = exp_row_cnt FROM @eppo WHERE [table] = 'Repco'
          EXEC sp_import_eppo_file_helper
@@ -232,7 +212,6 @@ BEGIN
                ,@exp_row_cnt     = @exp_row_cnt
                ,@row_cnt         = @row_cnt OUT
                ;
-
             -------------------------------------------------------------------------------------------
          -- 04: Check postconditions
          -------------------------------------------------------------------------------------------
@@ -250,7 +229,6 @@ BEGIN
          EXEC sp_assert_tbl_pop 'EPPO_pfllinkStaging';
          EXEC sp_assert_tbl_pop 'EPPO_pflnameStaging';
          EXEC sp_assert_tbl_pop 'EPPO_repcoStaging';
-
             -------------------------------------------------------------------------------------------
          -- 05: Process complete
          -------------------------------------------------------------------------------------------
@@ -260,14 +238,12 @@ BEGIN
       EXEC sp_log_exception @fn, ' 550: ';
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn,'999: leaving:';
 END
 /*
 exec sp_import_eppo_files 'D:\Dev\Farming\Data\EPPO.bayer';
-
 EXEC tSQLt.Run 'test.test_021_sp_import_eppo';
 SELECT * FROM gailinkStaging;
 */
-
 GO
+

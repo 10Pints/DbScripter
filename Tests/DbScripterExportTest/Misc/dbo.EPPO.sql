@@ -1,5 +1,4 @@
 GO
-
 CREATE TYPE [dbo].[EPPO] AS TABLE(
 	[ordinal] [int] NULL,
 	[table] [varchar](250) NOT NULL,
@@ -9,5 +8,5 @@ CREATE TYPE [dbo].[EPPO] AS TABLE(
 	[table] ASC
 )WITH (IGNORE_DUP_KEY = OFF)
 )
-
 GO
+

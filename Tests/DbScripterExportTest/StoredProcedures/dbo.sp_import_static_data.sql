@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-JAN-2024
@@ -46,7 +44,6 @@ GO
 -- ProductStaging
 -- ProductCompanyStaging
 -- ProductUseStaging: non LRAP data
-
 -- RESPONSIBILITIES:
 -- R01: clear dependent tables
 -- R02: import the following tables:
@@ -104,28 +101,23 @@ BEGIN
    ,@sql             VARCHAR(MAX)   
    ,@error_msg       VARCHAR(MAX)   = NULL
    ;
-
    BEGIN TRY
       IF dbo.fnLen(@import_root) = 0 SET @import_root = 'D:\Dev\Farming\Data';
-
       EXEC sp_log 1, @fn,'000: starting
 @import_root   :[',@import_root   ,']
 @display_tables:[',@display_tables,']
 @import_eppo   :[',@import_eppo   ,']
 ';
-
       --------------------------------------------------------------------------------------------
       -- R01: import system static data tables
       --------------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn,'010: calling sp_import_system_static_data';
       EXEC sp_import_system_static_data;
-
       --------------------------------------------------------------------------------------------
       -- R02: import primary static data staging tables
       --------------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn,'020: R02: importing the primary static data tables';
       EXEC sp_import_static_data_staging @import_root, @display_tables = @display_tables;
-
       --------------------------------------------------------------------------------------------
       -- R02.2 import Eppo Staging tables
       --------------------------------------------------------------------------------------------
@@ -134,18 +126,15 @@ BEGIN
          EXEC sp_log 1, @fn,'030: import Eppo Staging tables';
          EXEC sp_import_eppo @display_tables = @display_tables;
       END
-
       --------------------------------------------------------------------------------------------
       -- R03 Fixup and Merge to main static data tables
       --------------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn,'040: Merge to main tables';
       EXEC sp_merge_static_tbls;
-
       --------------------------------------------------------------------------------------------
       -- Postcondition checks
       --------------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn,'050: Postcondition checks: staging tables';
-
       --------------------------------------------------------------------------------------------
       -- Postcondition checks - staging tables
       --------------------------------------------------------------------------------------------
@@ -156,8 +145,6 @@ BEGIN
       EXEC sp_assert_tbl_pop 'PathogenTypeStaging';
       EXEC sp_assert_tbl_pop 'TypeStaging';
       EXEC sp_assert_tbl_pop 'UseStaging';
-
-
          --------------------------------------------------------------------------------------------
    -- R03:  Postcondition checks - main static tables
          --------------------------------------------------------------------------------------------
@@ -184,8 +171,6 @@ BEGIN
       EXEC sp_assert_tbl_pop 'Type';
       EXEC sp_assert_tbl_pop 'Use';
       EXEC sp_assert_tbl_pop 'WareHouse';
-
-
       --------------------------------------------------------------------------------------------
       -- Completed processing OK
       --------------------------------------------------------------------------------------------
@@ -195,12 +180,11 @@ BEGIN
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 1, @fn, '999: leaving OK';
 END
 /*
 EXEC sp_import_static_data 1,0; -- disp tbls, no eppo
 EXEC tSQLt.RunAll;
 */
-
 GO
+

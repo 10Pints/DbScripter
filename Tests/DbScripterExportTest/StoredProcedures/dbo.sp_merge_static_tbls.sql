@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 03-JAN-2025
@@ -48,16 +46,13 @@ CREATE PROCEDURE [dbo].[sp_merge_static_tbls]
 AS
 BEGIN
    SET NOCOUNT OFF;
-
    DECLARE
        @fn        VARCHAR(30)  = N'sp_merge_static_tbls'
       ,@error_msg VARCHAR(MAX)  = NULL
       ,@file_path VARCHAR(MAX)
       ,@id        INT = 1
-
    BEGIN TRY
       EXEC sp_log 2, @fn,'000: starting';
-
       -----------------------------------------------------------------------------------
       -- Precondition checks
       -----------------------------------------------------------------------------------
@@ -71,12 +66,10 @@ BEGIN
       EXEC sp_assert_tbl_pop 'PathogenTypeStaging';
       EXEC sp_assert_tbl_pop 'TypeStaging';
       EXEC sp_assert_tbl_pop 'UseStaging';
-
       -----------------------------------------------------------------------------------
       --  03: merging static data tables
       -----------------------------------------------------------------------------------
       EXEC sp_log 2, @fn,'020: merging static data tables   ';
-
       DELETE FROM [Action];
       DELETE FROM Chemical;
       DELETE FROM Company;
@@ -86,7 +79,6 @@ BEGIN
       DELETE FROM PathogenType;
       DELETE FROM [Type];
       DELETE FROM [Use];
-
       -----------------------------------------------------------------------------------
       --  04: Merge Action table
       -----------------------------------------------------------------------------------
@@ -99,9 +91,7 @@ BEGIN
          VALUES (s.action_nm)
       WHEN NOT MATCHED BY SOURCE THEN DELETE
       ;
-
       EXEC sp_assert_tbl_pop 'Action';
-
       -----------------------------------------------------------------------------------
       --  05: Merge Type table
       -----------------------------------------------------------------------------------
@@ -117,9 +107,7 @@ BEGIN
          VALUES (s.type_nm)
       WHEN NOT MATCHED BY SOURCE THEN DELETE
       ;
-
       EXEC sp_assert_tbl_pop 'Type';
-
       -----------------------------------------------------------------------------------
       --  Merge Use table
       -----------------------------------------------------------------------------------
@@ -132,9 +120,7 @@ BEGIN
          VALUES (s.use_id,s.use_nm)
       WHEN NOT MATCHED BY SOURCE THEN DELETE
       ;
-
       EXEC sp_assert_tbl_pop 'Use';
-
       -----------------------------------------------------------------------------------
       --  06: Merge PathogenType table
       -----------------------------------------------------------------------------------
@@ -150,9 +136,7 @@ BEGIN
          VALUES (s.pathogenType_nm)
       WHEN NOT MATCHED BY SOURCE THEN DELETE
       ;
-
       EXEC sp_assert_tbl_pop 'PathogenType';
-
       -----------------------------------------------------------------------------------
       --  07: Merge Pathogen table
       -----------------------------------------------------------------------------------
@@ -174,9 +158,7 @@ BEGIN
       -- WHEN MATCHED THEN UPDATE SET target.pathogenType_id = S.pathogenType_id  -- should be a 1 off
       WHEN NOT MATCHED BY SOURCE THEN DELETE
       ;
-
       EXEC sp_assert_tbl_pop 'Pathogen';
-
       -----------------------------------------------------------------------------------
       --  08: Merge Chemical table
       -----------------------------------------------------------------------------------
@@ -192,9 +174,7 @@ BEGIN
          VALUES (s.chemical_nm)
       WHEN NOT MATCHED BY SOURCE THEN DELETE
          ;
-
       EXEC sp_assert_tbl_pop 'Chemical';
-
       -----------------------------------------------------------------------------------
       -- 09: Merge Company table
       -----------------------------------------------------------------------------------
@@ -210,9 +190,7 @@ BEGIN
          VALUES (s.company_nm)
       WHEN NOT MATCHED BY SOURCE THEN DELETE
          ;
-
       EXEC sp_assert_tbl_pop 'Company';
-
       -----------------------------------------------------------------------------------
       -- 10: Merge Crop table
       -----------------------------------------------------------------------------------
@@ -221,7 +199,6 @@ BEGIN
       -- Make the main table id field auto incremental.
       EXEC sp_log 2, @fn, '090: merging Crop table';
       DELETE FROM Crop;
-
       MERGE Crop          AS target
       USING 
       (
@@ -233,9 +210,7 @@ BEGIN
          VALUES (s.crop_nm, latin_nm, alt_latin_nms, alt_common_nms,taxonomy,notes)
       WHEN NOT MATCHED BY SOURCE THEN DELETE
          ;
-
       EXEC sp_assert_tbl_pop 'Crop';
-
       -----------------------------------------------------------------------------------
       -- 11: Merge Distributor table
       -----------------------------------------------------------------------------------
@@ -254,14 +229,11 @@ BEGIN
          VALUES (s.distributor_nm)
       WHEN NOT MATCHED BY SOURCE THEN DELETE
          ;
-
       EXEC sp_assert_tbl_pop 'Distributor';
-
       -----------------------------------------------------------------------------------
       -- ASSERTION: all the main static data tables merged
       -----------------------------------------------------------------------------------
       EXEC sp_log 2, @fn,'120: ASSERTION: all the static data tables merged.';
-
       -----------------------------------------------------------------------------------
       -- POSTCONDITION checks
       -----------------------------------------------------------------------------------
@@ -275,7 +247,6 @@ BEGIN
    -- POST 07: PathogenType table populated
    -- POST 08: Type table populated
    -- POST 09: Use table populated
-
       -----------------------------------------------------------------------------------
       -- 23: Completed processing OK
       -----------------------------------------------------------------------------------
@@ -286,7 +257,6 @@ BEGIN
       EXEC sp_log 4, @fn, '500: Caught exception: ', @error_msg;
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn, '999: leaving: OK';
 END
 /*
@@ -302,5 +272,5 @@ SELECT COUNT(*) FROM Pathogen;
 SELECT COUNT(*) FROM [Type];
 SELECT COUNT(*) FROM [Use];
 */
-
 GO
+

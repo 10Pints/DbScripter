@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ==================================================================
 -- Author:      Terry Watts
 -- Create date: 07-APR-2024
@@ -37,15 +33,12 @@ BEGIN
    DECLARE 
       @fn        VARCHAR(35)   = 'CRT_TST_RTNS_INIT'
      ,@n         INT
-
    SET NOCOUNT ON;
-
    EXEC sp_log 2, @fn, '000: starting
 @qrn   :[', @qrn,']
 @trn   :[', @trn,']
 @ad_stp:[', @ad_stp,']'
 ;
-
    --  populate the 2 routine details tables
    EXEC test.sp_set_rtn_details @qrn, @trn, @cora, @ad_stp, 1 -- 1: throw if error
    SELECT * FROM [test].[RtnDetails];
@@ -54,10 +47,7 @@ BEGIN
 END
 /*
 EXEC tSQLt.Run 'test.test_068_sp_crt_tst_rtns';
-
 EXEC tSQLt.RunAll;
 */
-
-
-
 GO
+

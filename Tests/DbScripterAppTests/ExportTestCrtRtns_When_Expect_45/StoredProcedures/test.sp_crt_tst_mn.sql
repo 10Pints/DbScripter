@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- =====================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 20-NOV-2023
@@ -43,33 +39,26 @@ BEGIN
    ,@tst_rtn_nm         VARCHAR(60)
    ,@script_file_path   VARCHAR(500) 
    ,@bckslsh            VARCHAR(1) = NCHAR(92)
-
    SET NOCOUNT ON;
-
    BEGIN TRY
       ----------------------------------------------------------------------------------------------------------------------------
       -- Init
       ----------------------------------------------------------------------------------------------------------------------------
       EXEC sp_log 2, @fn,'000: starting';
-
       SELECT
          @tst_rtn_nm = tst_rtn_nm
       FROM test.RtnDetails;
-
       SET @script_file_path = CONCAT(@folder, @bckslsh, @tst_rtn_nm, '.sql');
-
       ---------------------------------------------------------------------------------
       -- Create the main script in the TstDef table-
       ----------------------------------------------------------------------------------
       EXEC sp_log 2, @fn,'010: Creating the script in the TstDef table: calling sp_crt_tst_mn_script';
       EXEC test.sp_crt_tst_mn_script;
-
       ----------------------------------------------------------------------------------
       -- Save the script to file
       ----------------------------------------------------------------------------------
       EXEC sp_log 1, @fn,'020: Save the script to file';
       EXEC test.sp_save_mn_script_file @script_file_path;
-
       ----------------------------------------------------------------------------------
       -- Processing complete 
       ----------------------------------------------------------------------------------
@@ -79,7 +68,6 @@ BEGIN
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn, '999 leaving, OK';
 END
 /*
@@ -88,7 +76,5 @@ EXEC tSQLt.Run 'test.test_066_sp_crt_tst_mn';
 EXEC tSQLt.Run 'test.test_067_sp_crt_tst_mn';
 EXEC tSQLt.RunAll;
 */
-
-
-
 GO
+

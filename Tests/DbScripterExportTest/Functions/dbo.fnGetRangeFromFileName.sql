@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ===============================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2023
@@ -31,16 +29,13 @@ BEGIN
      ,@range      VARCHAR(60)
      ,@ndx        INT
      ,@ext        VARCHAR(20)
-
    SET @ndx       = CHARINDEX('!',@filePath_inc_rng);
    SET @file_path = IIF(@ndx=0, @filePath_inc_rng,  SUBSTRING(@filePath_inc_rng, 1, @ndx-1));
-
    SELECT
        @ext    = ext
       ,@file_nm= fileNm
    FROM dbo.fnGetFileDetails(@file_path)
    ;
-
    SET @range= IIF
    (
       @ext IN('xlsx', 'xls')
@@ -51,7 +46,6 @@ BEGIN
          )
       ,NULL
    ); -- Excel range has a max len of 31
-
    INSERT INTO @t(file_nm, file_path, [range], ext, ndx) VALUES (@file_nm, @file_path, @range, @ext, @ndx);
    RETURN;
 END
@@ -59,5 +53,5 @@ END
 EXEC tSQLt.Run 'test.test_013_fnGetRangeFromFileName';
 SELECT * FROM dbo.fnGetFileDetails('D:\Dev\Farming\Tests\test_066\LRAP-221018-2.txt');
 */
-
 GO
+

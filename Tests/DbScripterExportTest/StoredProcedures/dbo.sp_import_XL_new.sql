@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ===========================================================================================
 -- Author:      Terry Watts
 -- Create date: 31-JAN-2024
@@ -34,7 +31,6 @@ BEGIN
    DECLARE 
     @fn           VARCHAR(35)   = N'IMPRT_XL_NEW'
    ,@cmd          VARCHAR(4000)
-
    EXEC sp_log 2, @fn,'000: starting:
 @import_file:[', @import_file, ']
 @range      :[', @range, ']
@@ -43,26 +39,20 @@ BEGIN
 @start_row  :[', @start_row,']
 @end_row    :[', @end_row  ,']'
 ;
-
    SET @cmd = CONCAT('DROP table if exists [', @table, ']');
    EXEC( @cmd)
-
    IF @fields IS NULL EXEC sp_get_flds_frm_hdr_xl @import_file, @range, @fields OUT; -- , @range
-
    EXEC sp_log 2, @fn,'010: importing data';
    SET @cmd = ut.dbo.fnCrtOpenRowsetSqlForXlsx(@table, @fields, @import_file, @range, 1);
    EXEC sp_log 2, @fn,'020: import cmd:
 ', @cmd;
    EXEC( @cmd);
-
    SET @row_cnt = @@rowcount;
    IF @expect_rows = 1 EXEC sp_assert_gtr_than @row_cnt, 0, 'expected some rows to be imported';
-
    EXEC sp_log 2, @fn, '999: leaving OK, imported ', @row_cnt,' rows';
 END
 /*
 EXEC dbo.sp_import_XL_new 'D:\Dev\Repos\Farming_Dev\Data\ForeignKeys.xlsx', 'Sheet1$', 'ForeignKeys';
 */
-
-
 GO
+

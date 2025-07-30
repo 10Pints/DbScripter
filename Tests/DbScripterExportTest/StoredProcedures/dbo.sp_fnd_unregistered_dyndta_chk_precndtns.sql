@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================================================================
 -- Author:      Terry Watts
 -- Create date: 17-NOV-2024
@@ -28,27 +25,21 @@ BEGIN
    DECLARE
     @fn        VARCHAR(35)   = N'sp_fnd_unmtchd_dyndta_chk_precndtns'
    ;
-
    SET NOCOUNT ON;
    EXEC sp_log 2, @fn,'000: starting';
-
    --------------------------------------------------------------------
    -- Validate preconditions
    --------------------------------------------------------------------
-
    EXEC sp_log 1, @fn,'010: validating preconditions: dynamic data populated';
-
    IF EXISTS (SELECT 1 FROM ChemicalStaging           WHERE chemical_nm IS NULL)                         --THROW 63859, 'ChemicalStaging has null chemical_nm fields', 1;
    BEGIN
       SELECT * FROM ChemicalStaging  WHERE chemical_nm IS NULL;
       THROW 63859, 'ChemicalStaging has null chemical_nm fields', 1;
    END
-
    IF EXISTS (SELECT 1 FROM ChemicalActionStaging     WHERE chemical_nm IS NULL OR action_nm IS NULL)    --THROW 63859, 'ChemicalActionStaging has null chemical_nm or action_nm fields', 1;
    BEGIN
       SELECT* FROM ChemicalActionStaging     WHERE chemical_nm IS NULL OR action_nm IS NULL
    END
-
    IF EXISTS (SELECT 1 FROM ChemicalStaging           WHERE chemical_nm IS NULL)                         THROW 63859, 'ChemicalStaging has null chemical_nm fields', 1;
    IF EXISTS (SELECT 1 FROM ChemicalActionStaging     WHERE chemical_nm IS NULL OR action_nm IS NULL)    THROW 63859, 'ChemicalActionStaging has null chemical_nm or action_nm fields', 1;
    IF EXISTS (SELECT 1 FROM ChemicalProductStaging    WHERE chemical_nm IS NULL OR product_nm IS NULL)   THROW 63859, 'ChemicalProductStaging has null  fields', 1;
@@ -59,7 +50,6 @@ BEGIN
    IF EXISTS (SELECT 1 FROM ProductCompanyStaging     WHERE company_nm IS NULL OR product_nm IS NULL)    THROW 63859, 'ProductCompanyStaging has null company_nm or product_nm fields', 1;
    IF EXISTS (SELECT 1 FROM ProductStaging            WHERE product_nm IS NULL)                          THROW 63859, 'ProductStaging has null product_nm fields', 1;
    IF EXISTS (SELECT 1 FROM ProductUseStaging         WHERE product_nm IS NULL OR use_nm IS NULL)        THROW 63859, 'ProductUseStaging has null product_nm OR use_nm fields', 1;
-
    --------------------------------------------------------------------
    -- ASSERTION: sp_find_unmatched_dynamic_data preconditions valid
    --------------------------------------------------------------------
@@ -67,7 +57,6 @@ BEGIN
 END
 /*
 EXEC sp_find_unmatched_dynamic_data;
-
 SELECT COUNT(*) FROM ChemicalStaging        
 SELECT COUNT(*) FROM ChemicalActionStaging  
 SELECT COUNT(*) FROM ChemicalProductStaging 
@@ -87,6 +76,5 @@ Others*
 Insecticide/ Nematicide
 Pgr
 */
-
-
 GO
+

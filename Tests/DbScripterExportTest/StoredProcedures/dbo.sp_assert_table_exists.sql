@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 08-FEB-2020
@@ -29,26 +27,22 @@ BEGIN
       ,@sql       VARCHAR(200)
       ,@n         INT
       ,@exists    BIT
-
    EXEC sp_log @log_level, @fnThis, '000: starting,
 @table_spec:[',@table_spec,']
 @ex_num:    [',@ex_num,']
 @ex_msg:    [',@ex_msg,']'
 ;
-
    IF @ex_num IS NULL SET @ex_num = 62250;
    IF @ex_msg IS NULL SET @ex_msg = CONCAT('[',@table_spec,'] does not exist.');
-
    IF dbo.fnTableExists(@table_spec) = 0
    BEGIN
       EXEC sp_raise_exception @ex_num, @ex_msg, @fn=@fn;
    END
-
    EXEC sp_log @log_level, @fnThis, '010: table exists';
 END
 /*
 EXEC tSQLt.RunAll;
 EXEC tSQLt.Run 'test.test_036_sp_chk_table_exists';
 */
-
 GO
+

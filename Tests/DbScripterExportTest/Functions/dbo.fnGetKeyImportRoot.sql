@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =================================================================================
 -- Author:      Terry Watts
 -- Create date: 02-AUG-2023
@@ -19,6 +16,5 @@ END
 /*
 PRINT CONCAT('[', dbo.fnGetKeyImportRoot(), ']');
 */
-
-
 GO
+

@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================================================================================
 -- Author:      Terry Watts
 -- Create date: 25-FEB-2024
@@ -27,14 +24,11 @@ BEGIN
    DECLARE
     @cmd                VARCHAR(MAX)
    ,@nl                 NCHAR(2)=NCHAR(13)+NCHar(10);
-
    -- New table: select fields into table   , existing table: insert into table (fields)   
    IF @new = 1 SET @cmd = CONCAT('SELECT ', @fields, ' INTO [', @table, ']')
    ELSE        SET @cmd = CONCAT('INSERT INTO [', @table,'] (', @fields, ')', @nl,'SELECT ', @fields);
-
    -- Fixup the range ensure [] and $
    SET @range = dbo.fnFixupXlRange(@range);
-
    SET @cmd = CONCAT(@cmd, '
 FROM OPENROWSET
 (
@@ -44,7 +38,6 @@ FROM OPENROWSET
    ,''SELECT * FROM ',@range,'''
 )'
    );
-
    RETURN @cmd;
 END
 /*
@@ -56,6 +49,5 @@ PRINT dbo.fnCrtOpenRowsetSqlForXlsx(
 ,0
 );
 */
-
-
 GO
+

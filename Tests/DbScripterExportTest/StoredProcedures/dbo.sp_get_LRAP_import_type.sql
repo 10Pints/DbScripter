@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ===================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-Oct-20243
@@ -18,21 +16,16 @@ BEGIN
        @fields    VARCHAR(4000) = NULL
       ,@fn        VARCHAR(50)   = 'sp_get_LRAP_import_type'
       ,@file_type BIT
-
    SET NOCOUNT OFF;
-
    EXEC sp_log 2, @fn,'000: starting
    import_file:[',@import_file,']';
-
    EXEC sp_get_flds_frm_hdr_txt
        @file      = @import_file
       ,@fields    = @fields    OUT
       ,@file_type = @file_type OUT
    ;
-
    SET @fields = LOWER(RTRIM(@fields, ','));
    PRINT @fields;
-
    SET @import_id =
    CASE 
    WHEN @fields = 'id,company,ingredient,product,concentration,formulation_type,uses,toxicity_category,registration,expiry,entry_mode,crops,pathogens'
@@ -49,21 +42,16 @@ BEGIN
       THEN 3
    ELSE -1
    END
-
    EXEC sp_log 1, @fn, '999: leaving, import_id = ', @import_id;
 END
 /*
 ID,NAME OF COMPANY,ACTIVE INGREDIENT,PRODUCT NAME,CONCENTRATION,FORMLTN TY,USE/S,TOXICITY CATEGORY,REGISTRATION NO.,EXPIRY DATE,MODE OF ENTRY,CROPS,PESTS / WEEDS / DISEASES,RECOMMENDED RATE,MRL,PHI,RE-ENTRY PERIOD
-
    EXEC tSQLt.Run 'test.test_087_sp_get_LRAP_import_type';
    EXEC tSQLt.RunAll;
-
 id,COMPANY,INGREDIENT,PRODUCT,CONCENTRATION,FORMULATION_TYPE,USES,TOXICITY_CATEGORY,REGISTRATION,EXPIRY,ENTRY_MODE,CROPS,Pathogens'
 id,NAME OF COMPANY,ACTIVE INGREDIENT,PRODUCT NAME,CONCENTRATION,FORMULATION TYPE,USE/S,TOXICITY CATEGORY,REGISTRATION NO.,EXPIRY DATE,MODE OF ENTRY,CROPS,PESTS / WEEDS / DISEASES'
 ID,COMPANY,ACTIVE INGREDIENT,PRODUCT NAME,CONCENTRATION,FORMLTN TY,USES,TOX CAT,REGISTRATION NO.,EXPIRY DATE,MODE OF ENTRY,CROPS,Pathogens,RECOMMENDED RATE,MRL,PHI,RE-ENTRY PERIOD'
-
  'id,NAME OF COMPANY,ACTIVE INGREDIENT,PRODUCT NAME,CONCENTRATION,FORMULATION TYPE,USE/S,TOXICITY CATEGORY,REGISTRATION NO.,EXPIRY DATE,MODE OF ENTRY,CROPS,PESTS / WEEDS / DISEASES,RECOMMENDED RATE,MRL (Proposed),PHI,RE-ENTRY PERIOD'
-
 */
-
 GO
+

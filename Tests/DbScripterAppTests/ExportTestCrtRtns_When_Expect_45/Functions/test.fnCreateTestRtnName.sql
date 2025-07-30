@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- =============================================
 -- Author:      Terry watts
 -- Create date: 05-JUL-2020
@@ -37,7 +33,5 @@ END
 /*
 PRINT test.fnCreateTestRtnName('fnLen',43, 'M');
 */
-
-
-
 GO
+

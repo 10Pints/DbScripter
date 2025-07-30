@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================================================================
 -- Author:      Terry Watts
 -- Create date: 04-JAN-2021
@@ -20,14 +17,10 @@ AS
 BEGIN
    DECLARE   @v      FLOAT(24)
             ,@res    INT
-
    SET @v   = abs(@a - @b);
-
    IF(@v < @epsilon)
       RETURN 0;  -- a = b within the tolerance of epsilon
-
    -- ASSERTION  a is signifcantly different to b
-
    -- 10-7 is the tolerance for floats
    SET @v   = round(@a - @b, 7);
    SET @res = IIF( @v>0.0, 1, -1);
@@ -47,6 +40,5 @@ PRINT CONCAT('[dbo].[fnCompareFloats2](0.1,  0.10001 , 0.00001)    : ', [dbo].[f
 PRINT CONCAT('[dbo].[fnCompareFloats2](0.1,  0.000011, 0.00001)    : ', [dbo].[fnCompareFloats2](0.1,  0.100011, 0.00001), ' T08 out of tolerance: EXP -1')
 PRINT CONCAT('[dbo].[fnCompareFloats2](0.100011, 0.1, 0.00001)     : ', [dbo].[fnCompareFloats2](0.100011, 0.1, 0.00001) , '  T09 out of tolerance: EXP  1')
 */
-
-
 GO
+

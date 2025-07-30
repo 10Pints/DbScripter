@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ========================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2023
@@ -23,6 +20,5 @@ END
 /*
    EXEC test.test_fnIsExcel;
 */
-
-
 GO
+

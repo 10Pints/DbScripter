@@ -1,0 +1,59 @@
+﻿{
+   "Logging": {
+      "LogLevel": {
+         "Default": "Debug",
+         "System": "Information",
+         "Microsoft": "Information"
+      }
+   },
+
+   "ThreadSettings": { "MaxThreads": 4 },
+
+   "Serilog": {
+      "MinimumLevel": {
+         "Default": "Verbose",
+         "Override": {
+            "System": "Information",
+            "Microsoft": "Information"
+         }
+      },
+
+      "WriteTo": [
+         {
+            "Name": "File",
+            "Args": {
+               "path": "D:\\Logs\\Farming.log",
+               "rollingInterval": "Day",
+               "restrictedToMinimumLevel": "Verbose"
+            }
+         }
+      ]
+   },
+
+   "appSettings": {
+      "Name": "AppSettings.01",
+      "Server": "DevI9",
+      "Instance": "",
+      "Database": "Farming_dev",
+      "Script Dir": "D:\\Dev\\DbScripter\\Tests\\DbScripterExportTest",
+      "Script File": "Farming_dev schema.DbScripterExportTest.sql",
+      "CreateMode": "Create",
+      "RequiredAssemblies": "RegEx,SQLRegEx,tSQLtCLR",
+      "RequiredSchemas": "dbo,test",
+      "RequiredTypes": "Schema,Tables,Procedures,Functions,Views,Assemblies",
+      "RequiredFunctions": "[dbo].[fnFindPathogen],[dbo].[fnCompareFloats],[dbo].[Regex_Match_Count],[test].[fnCrtScriptFileName]",
+      "RequiredProcedures": "[dbo].[_main_import],[dbo].[sp_assert_table_exists]",
+      "RequiredTables": "dbo.Chemical,[dbo].[ChemicalUse],[test].[RtnDetails],[test].[HlprDef]",
+      "RequiredViews": "[dbo].[audit_vw],[dbo].[ChemicalProduct_vw]",
+      "RequiredUserDefinedDataTypes": "[dbo].[MyDataType]",
+      "RequiredUserDefinedTableTypes": "[dbo].[ChkFldsNotNullDataType],[dbo].[EPPO],[dbo].[IdNmTbl]",
+      "RequiredUserDefinedTypes": "[tSQLt].[Private]",
+      "AddTimestamp": "false",
+      "ScriptUseDb": "true",
+      "DisplayScript": "true",
+      "DisplayLog": "true",
+      "LogFile": "D:\\Logs\\Farming.log",
+      "LogLevel": "INFO",
+      "IsExportingData": "false"
+   }
+}

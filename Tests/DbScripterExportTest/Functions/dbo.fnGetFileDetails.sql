@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 20-SEP-2024
@@ -48,14 +46,12 @@ DECLARE
    ,@filePathRev  VARCHAR(1000)
    ,@bckslsh      VARCHAR(1) = NCHAR(92)
 ;
-
       SET @len         = dbo.fnLen(@filePath);
       SET @filePathRev = REVERSE(@filePath);
       SET @slashRevPos = CHARINDEX(@bckslsh, @filePathRev);
       SET @dotRevPos   = CHARINDEX('.', @filePathRev);
       SET @dotPos      = iif(@dotRevPos=0, 0, @len - @dotRevPos+1);
       SET @slashPos    = @len - @slashRevPos+1;
-
    -- Beware empty file path
       IF (@len > 0) AND (@slashRevPos > 1)
       BEGIN
@@ -65,7 +61,6 @@ DECLARE
          SET @ext        = REVERSE(SUBSTRING(@filePathRev, 1, @dotRevPos-1));
          SET @fileNmNoExt= SUBSTRING(@filePath, @slashPos+1, @dotPos-@slashPos-1);
       END
-
       IF(CHARINDEX(@bckslsh, @filePath) = 0)
       BEGIN
          SET @fileNm     = @filePath;
@@ -74,7 +69,6 @@ DECLARE
          SET @folder     = NULL
          SET @fileNmNoExt= SUBSTRING(@filePath, @slashPos+1, iif(@dotPos = 0, @len,@dotPos-@slashPos-1))
       END
-
       INSERT INTO @t( filePath, folder, FileNm, fileNmNoExt, ext, filePathRev,[len], slashPos, slashRevPos, dotPos, dotRevPos)
       VALUES        (@filePath,@folder,@fileNm,@fileNmNoExt,@ext,@filePathRev,@len ,@slashPos,@slashRevPos,@dotPos,@dotRevPos);
    RETURN;
@@ -82,23 +76,19 @@ END
 /*
 EXEC tSQLt.Run 'test.test_096_fnGetFileDetails';
 SELECT * FROM dbo.fnGetFileDetails('Caller')
-
 SELECT * FROM dbo.fnGetFileDetails('D:\Dev\Farming\Data\CallRegister.txt.abc')
 SELECT * FROM dbo.fnGetFileDetails('D:\Dev\Farming\Data\CallRegister.abc')
 SELECT * FROM dbo.fnGetFileDetails('CallRegister.abc.txt')
 SELECT * FROM dbo.fnGetFileDetails('')
 SELECT * FROM dbo.fnGetFileDetails(NULL)
-
                    20
 D:\Dev\Farming\Data\CallRegister.txt
                 17
 txt.retsigeRllaC\ataD\gnimraF\veD\:D
-
             13
 CallRegister.txt
 SELECT * FROM dbo.fnGetFileDetails('D:\Dev\Farming\Tests\test_096_GetFileDetails\CallRegister.abc.txt')
-
 SELECT * FROM dbo.fnGetFileDetails('LRAP-221018.txt')
 */
-
 GO
+

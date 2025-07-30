@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 31-MAR-2024
@@ -39,13 +37,11 @@ CREATE PROCEDURE [dbo].[sp_mrg_mn_tbls_post_cks]
 AS
 BEGIN
    SET NOCOUNT OFF;
-
    DECLARE 
        @fn        VARCHAR(30)  = N'MRG_MN_TBLS_POST_CHKS'
       ,@error_msg VARCHAR(MAX)  = NULL
       ,@file_path VARCHAR(MAX)
       ,@id        INT = 1
-
    BEGIN TRY
       -----------------------------------------------------------------------------------
       EXEC sp_log 2, @fn,'000: starting, running postcondition validation checks';
@@ -71,7 +67,6 @@ BEGIN
       EXEC sp_assert_tbl_pop 'ProductCompany';
       EXEC sp_assert_tbl_pop 'ProductUse';
       EXEC sp_assert_tbl_pop 'Use';
-
       -----------------------------------------------------------------------------------
       -- 2: Detailed checks
       -----------------------------------------------------------------------------------
@@ -79,23 +74,18 @@ BEGIN
       EXEC sp_log 2, @fn,'005: Action';
       EXEC sp_check_field_not_null 'Action','action_id';
       EXEC sp_check_field_not_null 'Action','action_nm';
-
       EXEC sp_log 2, @fn,'010: Chemical';
       EXEC sp_check_field_not_null 'Chemical','chemical_id';
       EXEC sp_check_field_not_null 'Chemical','chemical_nm';
-
       EXEC sp_log 2, @fn,'015: Company';
       EXEC sp_check_field_not_null 'Company','company_id';
       EXEC sp_check_field_not_null 'Company','company_nm';
-
       EXEC sp_log 2, @fn,'020: Crop';
       EXEC sp_check_field_not_null 'Crop','crop_id';
       EXEC sp_check_field_not_null 'Crop','crop_nm';
-
       EXEC sp_log 2, @fn,'025: Distributor';
       EXEC sp_check_field_not_null 'Distributor','distributor_id';
       EXEC sp_check_field_not_null 'Distributor','distributor_name';
-
       EXEC sp_log 2, @fn,'030: Pathogen';
       EXEC sp_check_field_not_null 'Pathogen','pathogen_id';
       EXEC sp_check_field_not_null 'Pathogen','pathogen_nm';
@@ -106,48 +96,39 @@ BEGIN
       EXEC sp_check_field_not_null 'Pathogen','biological_cure';
       EXEC sp_check_field_not_null 'Pathogen','notes';
       EXEC sp_check_field_not_null 'Pathogen','urls';
-
       EXEC sp_log 2, @fn,'035: PathogenType';
       EXEC sp_check_field_not_null 'PathogenType','pathogenType_id';
       EXEC sp_check_field_not_null 'PathogenType','pathogenType_nm';
-
       EXEC sp_log 2, @fn,'040: Product';
       EXEC sp_check_field_not_null 'Product','product_id';
       EXEC sp_check_field_not_null 'Product','product_nm';
-
       EXEC sp_log 2, @fn,'045: Type';
       EXEC sp_check_field_not_null 'Type','type_id';
       EXEC sp_check_field_not_null 'Type','type_nm';
-
       EXEC sp_log 2, @fn,'050: Use';
       EXEC sp_check_field_not_null 'Use','use_id';
       EXEC sp_check_field_not_null 'Use','use_nm';
-
       EXEC sp_log 2, @fn,'060: ChemicalAction';
       EXEC sp_check_field_not_null 'ChemicalAction','chemical_id';
       EXEC sp_check_field_not_null 'ChemicalAction','action_id';
       EXEC sp_check_field_not_null 'ChemicalAction','chemical_nm';
       EXEC sp_check_field_not_null 'ChemicalAction','action_nm';
       EXEC sp_check_field_not_null 'ChemicalAction','created';
-
       EXEC sp_log 2, @fn,'065: ChemicalProduct';
       EXEC sp_check_field_not_null 'ChemicalProduct','chemical_id';
       EXEC sp_check_field_not_null 'ChemicalProduct','product_id';
       EXEC sp_check_field_not_null 'ChemicalProduct','chemical_nm';
       EXEC sp_check_field_not_null 'ChemicalProduct','product_nm';
-
       EXEC sp_log 2, @fn,'070: ChemicalUse';
       EXEC sp_check_field_not_null 'ChemicalUse','chemical_id';
       EXEC sp_check_field_not_null 'ChemicalUse','use_id';
       EXEC sp_check_field_not_null 'ChemicalUse','chemical_nm';
       EXEC sp_check_field_not_null 'ChemicalUse','use_nm';
-
       EXEC sp_log 2, @fn,'075: CropPathogen';
       EXEC sp_check_field_not_null 'CropPathogen','crop_id';
       EXEC sp_check_field_not_null 'CropPathogen','pathogen_id';
       EXEC sp_check_field_not_null 'CropPathogen','crop_nm';
       EXEC sp_check_field_not_null 'CropPathogen','pathogen_nm';
-
       EXEC sp_log 2, @fn,'080: PathogenChemical';
       EXEC sp_check_field_not_null 'PathogenChemical','pathogen_id';
       EXEC sp_check_field_not_null 'PathogenChemical','chemical_id';
@@ -155,17 +136,14 @@ BEGIN
       EXEC sp_check_field_not_null 'PathogenChemical','pathogen_nm';
       EXEC sp_check_field_not_null 'PathogenChemical','chemical_nm';
       EXEC sp_check_field_not_null 'PathogenChemical','created';
-
       EXEC sp_log 2, @fn,'085: ProductCompany';
       EXEC sp_check_field_not_null 'ProductCompany','product_id';
       EXEC sp_check_field_not_null 'ProductCompany','company_id';
       EXEC sp_check_field_not_null 'ProductCompany','product_nm';
       EXEC sp_check_field_not_null 'ProductCompany','company_nm';
-
       EXEC sp_log 2, @fn,'090: ProductUse';
       EXEC sp_check_field_not_null 'ProductUse','product_id';
       EXEC sp_check_field_not_null 'ProductUse','use_id';
-
       EXEC sp_log 2, @fn,'095: ProductUse';
       EXEC sp_check_field_not_null 'ProductUse','product_nm';
       EXEC sp_check_field_not_null 'ProductUse','use_nm';
@@ -173,7 +151,6 @@ BEGIN
       -----------------------------------------------------------------------------------
       -- Detailed checks
       -----------------------------------------------------------------------------------
-
       -----------------------------------------------------------------------------------
       -- 23: Completed processing OK
       -----------------------------------------------------------------------------------
@@ -183,11 +160,10 @@ BEGIN
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn, '999: leaving: OK';
 END
 /*
 EXEC sp_sp_mrg_mn_tbls_post_cks;
 */
-
 GO
+

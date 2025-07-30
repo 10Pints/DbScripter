@@ -1,10 +1,5 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
-GO
-
-
 -- ======================================================
 -- Author:      Terry Watts
 -- Create date: 16-Dec-2023
@@ -29,25 +24,20 @@ BEGIN
       ,@dt           DATE = GetDate()
       ,@ad_stp       BIT
       ,@maxLineLen   INT
-
    SELECT
        @qrn       = qrn
       ,@tst_rtn_nm= iif(@is_hlpr = 1, hlpr_rtn_nm, tst_rtn_nm)
       ,@ad_stp    = ad_stp
     FROM test.RtnDetails;
-
    SELECT @maxLineLen = MAX(dbo.fnLen(dbo.fnTrim(line)))
    FROM test.fnGetRtnDesc(); -- @qrn, @ad_stp)
-
    SET @line = CONCAT('--',REPLICATE('=', @maxLineLen));
-
    INSERT INTO @t( line) VALUES
     ('SET ANSI_NULLS ON')
    ,('GO')
    ,('SET QUOTED_IDENTIFIER ON')
    ,('GO')
    ;
-
 /*
       INSERT INTO @t( line) 
       SELECT line 
@@ -62,28 +52,21 @@ BEGIN
    ,(CONCAT('-- Description: ',iif(@is_hlpr=1,'test helper','main test routine'),' for the ',@qrn, ' routine ',iif(@is_hlpr=1,'tests ', '')))
    ,('--')
    ,('-- Tested rtn description:')
-
    INSERT INTO @t(line)
    SELECT line FROM test.fnGetRtnDesc(); -- @qrn, @ad_stp
-
    INSERT INTO @t( line) VALUES (@line)
-
    -- Reset the comment line length to be long enough to cover the new lines from the tested rtn desc
    SELECT @maxLineLen = MAX(dbo.fnLen(dbo.fnTrim(line))) FROM @t;
    SET @line =  CONCAT('--', REPLICATE('=', @maxLineLen));
    UPDATE @t SET line = @line where line like '--===%'
-
    RETURN;
 END
 /*
 EXEC tSQLt.Run 'test.test_086_sp_crt_tst_hlpr_script';
    SELECT line FROM test.fnCrtCodeTstHdr('test.test_086_sp_crt_tst_hlpr_script', 1)
-
    SELECT * FROM test.fnCrtCodeTstHdr('dbo.fnSysRtnCfg', 1)
    SELECT * FROM test.fnCrtCodeTstHdr('test.sp_crt_tst_hlpr_script', 0)
    SELECT * FROM test.fnCrtCodeTstHdr('test.sp_crt_tst_hlpr_script', 1)
 */
-
-
-
 GO
+

@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- =============================================================
 -- Author:      Terry Watts
 -- Create date: 16-Apr-2024
@@ -32,12 +28,10 @@ BEGIN
    ,@sc_fn_ret_ty       VARCHAR(50)
    ,@ad_stp             BIT = 0
    ,@tst_rtn_nm         VARCHAR(60)
-
    SELECT
        @tst_rtn_nm = tst_rtn_nm
       ,@ad_stp     = ad_stp
    FROM test.RtnDetails;
-
    INSERT INTO @t (line)
    VALUES
     ('')
@@ -57,14 +51,11 @@ BEGIN
    ,(CONCAT('EXEC tSQLt.Run ''test.', @tst_rtn_nm, ''';'))
    ,('*/')
    ;
-
    RETURN;
 END
 /*
 EXEC tSQLt.Run 'test.test_086_sp_crt_tst_hlpr_script';
 EXEC tSQLt.RunAll;
 */
-
-
-
 GO
+

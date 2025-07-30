@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ====================================================
 -- Procedure:   sp_SetFixupRowId
 -- Description: sets the row id during staging2 fixup
@@ -18,13 +16,11 @@ BEGIN
    SET NOCOUNT ON;
    DECLARE @key NVARCHAR(50) = dbo.fnGetCtxFixupStgIdKey()
    ;
-
    EXEC sp_set_session_context @key, @row_id;
-
 END
 /*
 EXEC SetCtxFixupStgId 999;
 PRINT dbo.fnGetCtxFixupStgId();
 */
-
 GO
+

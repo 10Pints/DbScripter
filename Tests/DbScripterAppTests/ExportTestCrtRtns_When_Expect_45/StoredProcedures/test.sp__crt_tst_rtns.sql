@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ==================================================================
 -- Author:      Terry Watts
 -- Create date: 15-APR-2024
@@ -49,9 +45,7 @@ BEGIN
    DECLARE 
     @fn              VARCHAR(35)   = 'sp_crt_tst_rtns'
    ,@n               INT
-
    SET NOCOUNT ON;
-
    BEGIN TRY
       EXEC sp_log 2, @fn, '00: starting:
    @qrn     :[',@qrn      ,']
@@ -60,25 +54,21 @@ BEGIN
    @ad_stp  :[',@ad_stp   ,']
    @ad_stp  :[',@ad_stp   ,']
    ';
-
       ----------------------------------------------------------------------------------------
       -- INIT crt_tst_rtns_init
       ----------------------------------------------------------------------------------------
       EXEC sp_log 2, @fn, '05: test.calling sp_crt_tst_fn_hlpr';
       EXEC test.sp_crt_tst_rtns_init @qrn, @trn, @cora, @ad_stp;
-
       ----------------------------------------------------------------------------------------
       -- Create the hlpr rtn (script and procdure from script)
       ----------------------------------------------------------------------------------------
       EXEC test.sp_crt_tst_hlpr @folder;
       EXEC sp_log 3, @fn, '50: stopping early - while TDD';
-
       ----------------------------------------------------------------------------------------
       -- Create the mn rtn  (script and procdure from script)
       ----------------------------------------------------------------------------------------
       EXEC sp_log 2, @fn, '10: calling test.sp_crt_tst_fn_mn';
       EXEC test.sp_crt_tst_mn @folder;
-
       ----------------------------------------------------------------------------------------
       --    Completed processing
       ----------------------------------------------------------------------------------------
@@ -88,7 +78,6 @@ BEGIN
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn, '999 leaving, OK';
 END
 /*
@@ -97,6 +86,5 @@ SELECT * FROM test.fnGetUntestedRtns();
 TRUNCATE TABLE AppLog;
 EXEC tSQLt.RunAll;
 */
-
-
 GO
+

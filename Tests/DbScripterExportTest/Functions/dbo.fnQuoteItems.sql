@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ===============================================================
 -- Author:      Terry watts
 -- Create date: 30-MAR-2020
@@ -23,5 +21,5 @@ END
 /*
 PRINT fnQuoteItems('a,b,c,d,e,f');
 */
-
 GO
+

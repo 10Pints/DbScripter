@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 01-FEB-2021
@@ -18,7 +15,6 @@ BEGIN
    DECLARE @ty   VARCHAR(500)
    SELECT @type = SQL_VARIANT_PROPERTY(@v, 'BaseType');
    SET @ty = CONVERT(VARCHAR(500), @type);
-
    RETURN
       CASE
          WHEN @ty = 'uniqueidentifier' THEN  1
@@ -27,6 +23,5 @@ BEGIN
 */
    RETURN iif(CONVERT(VARCHAR(500), SQL_VARIANT_PROPERTY(@v, 'BaseType')) = 'uniqueidentifier', 1, 0);
 END
-
-
 GO
+

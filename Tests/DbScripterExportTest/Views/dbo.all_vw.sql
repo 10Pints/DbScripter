@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 29-JUL-2023
@@ -44,5 +42,5 @@ FROM
 /*
 SELECT * FROM all_vw
 */
-
 GO
+

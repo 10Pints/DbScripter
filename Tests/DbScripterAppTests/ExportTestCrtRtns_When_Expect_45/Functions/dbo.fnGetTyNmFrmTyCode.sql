@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ======================================================
 -- Author:      Terry Watts
 -- Create date: 12-NOV-2023
@@ -57,7 +53,5 @@ END
 /*
 PRINT dbo.fnGetTyNmFrmTyCode('TF')
 */
-
-
-
 GO
+

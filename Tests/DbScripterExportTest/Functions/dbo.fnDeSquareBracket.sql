@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =================================================
 -- Author:      Terry Watts
 -- Create date: 24-NOV-2023
@@ -29,6 +26,5 @@ END
 /*
    EXEC test.sp_crt_tst_rtns 'dbo.fnDeSquareBracket', 69
 */
-
-
 GO
+

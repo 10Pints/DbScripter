@@ -8,6 +8,9 @@ namespace DbScripterLibNS
    /// </summary>
    public enum SqlTypeEnum
    {
+      //[EnumAlias("Unknown", "Unknown")]
+      //Unknown = -1,
+
       [EnumAlias("Assembly", "SqlAssembly")]
       Assembly,
 

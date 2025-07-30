@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 --===========================================================
 -- Author:      Terry watts
 -- Create date: 18-MAY-2020
@@ -31,6 +27,5 @@ ORDER BY [schema_nm], [type], [name]
 SELECT * FROM SysRtns_vw WHERE ty_code = 'P' AND schema_nm IN ('dbo','test')
 SELECt top 500 * from sys.objects WHERE name like 'sp_%'
 */
-
-
 GO
+

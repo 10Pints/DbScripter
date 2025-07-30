@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ======================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2024
@@ -24,21 +22,16 @@ BEGIN
     @fn           VARCHAR(35)   = 'IMPRT_LRAP_FILE_XLS'
    ,@error_msg    VARCHAR(500)
    ,@is_xl        BIT
-
    --SET @import_id = dbo.fnGetImportIdFromName(@import_file);
-
    EXEC sp_log 1, @fn, '00: starting
 import_file:[',@import_file,']
 import_id:  [',@import_id     ,']';
-
    BEGIN TRY
       EXEC sp_register_call @fn;
-
       --------------------------------------------------------------------
       -- Processing start'
       --------------------------------------------------------------------
       --SET @range = dbo.fnFixupXlRange(@range);
-
       ------------------------------------------------------------------------------
       -- 3. import the LRAP register file using the appropriate format importer
       ------------------------------------------------------------------------------
@@ -62,7 +55,6 @@ import_id:  [',@import_id     ,']';
          EXEC sp_log 4, @fn, '25: ', @error_msg;
          EXEC sp_raise_exception 56471, @error_msg;
       END
-
       --------------------------------------------------------------------
       -- Processing complete';
       --------------------------------------------------------------------
@@ -81,5 +73,5 @@ EXEC sp_import_LRAP_file_xls
    ,@range           = 'LRAP-221018 230813$A:N'
    ,@import_id       = 221018;
 */
-
 GO
+

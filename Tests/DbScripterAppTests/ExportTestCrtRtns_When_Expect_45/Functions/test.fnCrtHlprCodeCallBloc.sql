@@ -1,9 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- ==============================================================================================
 -- Author:      Terry Watts
 -- Create date: 18-Apr-2024
@@ -40,27 +37,22 @@ BEGIN
    ,@rtn_ty_code  VARCHAR(2)
    ,@ad_stp       BIT
    ,@nl           VARCHAR(2) = CHAR(13)+CHAR(10)
-
    SELECT
        @qrn         = qrn
       ,@rtn_ty_code = rtn_ty_code
       ,@ad_stp      = ad_stp
    FROM test.RtnDetails
-
    IF @ad_stp = 1 INSERT INTO @t (line) VALUES (CONCAT(@tab2,'-- fnCrtHlprCodeCallBloc rtn ty:', @rtn_ty_code));
-
    WHILE 1=1
    BEGIN
       -- Add the rtn type if debugging
  --     IF @ad_stp = 1 INSERT INTO @t (line) VALUES( CONCAT(@tab2, '-- @rtn_ty_code:', @rtn_ty_code));
-
       INSERT INTO @t (line) VALUES
         (CONCAT(@tab2, 'WHILE 1 = 1'))
        ,(CONCAT(@tab2, 'BEGIN'))
        ,(CONCAT(@tab3, 'BEGIN TRY'))
        ,(CONCAT(@tab4, 'EXEC sp_log 1, @fn, ''010: Calling the tested routine: ', @qrn, ''';'))
        ,(CONCAT(@tab4, @line))
-
       IF @rtn_ty_code = 'P'
       BEGIN
          INSERT INTO @t (line)
@@ -71,26 +63,22 @@ BEGIN
         ,(CONCAT(@tab4,'SELECT @act_row_cnt = @@ROWCOUNT;'))
          BREAK;
       END
-
       IF @rtn_ty_code = 'FN'
       BEGIN
          INSERT INTO @t (line)
             SELECT line FROM test.fnCrtHlprCodeCallFn();
          BREAK;
       END
-
       IF @rtn_ty_code = 'TF'
       BEGIN
          INSERT INTO @t (line)
             SELECT line FROM test.fnCrtHlprCodeCallTF();
          BREAK;
       END
-
       -- If here then unrecognised @rtn_ty_code
       INSERT INTO @t (line) VALUES( CONCAT('-- Unrecognised @rtn_ty_code:', @rtn_ty_code));
       BREAK;
    END -- while
-
    INSERT INTO @t (line) VALUES
        (CONCAT(@tab4, @line))
       ,(CONCAT(@tab4, 'EXEC sp_log 1, @fn, ''020: returned from ', @qrn, ''';'))
@@ -126,10 +114,8 @@ BEGIN
       ,(CONCAT(@tab3, '-- TEST:'))
       ,(CONCAT(@tab3,'EXEC sp_log 2, @fn, ''080: running tests   '';'))
    ;
-
     INSERT INTO  @t (line) 
     SELECT line FROM test.fnCrtHlprCodeChkExps();
-
     INSERT INTO  @t (line) VALUES
      ('')
     ,(CONCAT(@tab3, @line))
@@ -138,12 +124,10 @@ BEGIN
     ,(CONCAT(@tab3, 'BREAK'))
     ,(CONCAT(@tab2, 'END --WHILE'))
    ;
-
    RETURN;
 END
 /*
 EXEC tSQLt.Run 'test.test_086_sp_crt_tst_hlpr_script';
-
 EXEC tSQLt.RunAll
 SELECT * FROM test.fnCrtHlprCodeCall('SP',1);
 SELECT * FROM test.fnCrtHlprCodeCall('F',1);
@@ -151,6 +135,5 @@ SELECT * FROM test.fnCrtHlprCodeCall('TF',1);
 SELECT * FROM test.RtnDetails;
 EXEC test.sp__crt_tst_rtns 'dbo.sp_Import_Role', @trn=26, @ad_stp=1;
 */
-
-
 GO
+

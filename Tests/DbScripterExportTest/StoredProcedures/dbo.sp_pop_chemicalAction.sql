@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ===========================================================================
 -- Author:      Terry Watts
 -- Create date: 22-OCT-2023
@@ -22,15 +20,12 @@ CREATE PROCEDURE [dbo].[sp_pop_chemicalAction]
 AS
 BEGIN
    SET NOCOUNT OFF;
-
    DECLARE
      @fn          VARCHAR(35)   = N'POP_ChemicalAction'
     ,@row_cnt     INT = -1
-
    BEGIN TRY
       EXEC sp_log 2, @fn, '01: starting, validation chks';
       --EXEC sp_register_call @fn;
-
       ------------------------------------------------------------------
       -- VALIDATION:
       ------------------------------------------------------------------
@@ -38,17 +33,14 @@ BEGIN
       -- PRE02: EntryModeType table populated
       EXEC sp_assert_tbl_pop 'Chemical';
       EXEC sp_assert_tbl_pop 'Action';
-
       ------------------------------------------------------------------
       -- ASSERTION: precondition validation passed
       ------------------------------------------------------------------
       EXEC sp_log 2, @fn, '05: passed validation chks';
-
       ------------------------------------------------------------------
       -- Process
       ------------------------------------------------------------------
       EXEC sp_log 2, @fn, '10: Process';
-
             -- First update the names in the link table
       UPDATE ChemicalAction 
       SET chemical_nm=X.chemical_nm
@@ -61,7 +53,6 @@ BEGIN
       ) AS X
       WHERE ChemicalAction.action_id = X.action_id
         AND ChemicalAction.chemical_id = X.chemical_id;
-
       -- Now merge
       MERGE ChemicalAction as target
       USING
@@ -76,9 +67,7 @@ BEGIN
          INSERT (  chemical_id,   action_id,   chemical_nm,   action_nm)
          VALUES (s.chemical_id, s.action_id, s.chemical_nm, s.action_nm)
       ;
-
       SET @row_cnt = @@ROWCOUNT;
-
       ------------------------------------------------------------------
       -- check postconditions
       ------------------------------------------------------------------
@@ -90,7 +79,6 @@ BEGIN
       EXEC sp_assert_equal 1, @row_cnt, 'Mancozeb should only have 1 entry in ChemicalActionStaging, count: ', @row_cnt, @ex_num=53224, @fn=@fn;
       SELECT @row_cnt = COUNT(*) FROM ChemicalActionStaging WHERE chemical_nm='Mancozeb' AND action_nm='CONTACT';
       EXEC sp_assert_equal 1, @row_cnt, 'Mancozeb mode should be CONTACT in ChemicalActionStaging, count: ', @row_cnt, @ex_num=53224, @fn=@fn;
-
       ------------------------------------------------------------------
       -- ASSERTION: postcondition validation passed
       ------------------------------------------------------------------
@@ -101,12 +89,11 @@ BEGIN
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn, '99: leaving, updated ', @row_cnt, ' rows', @row_count=@row_cnt;
 END
 /*
 EXEC sp_pop_chemicalAction; -- 91 -> 156 -> 332 rows
 SELECT * FROM [ChemicalAction];
 */
-
 GO
+

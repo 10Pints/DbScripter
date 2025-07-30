@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ===================================================
 -- Author:      Terry Watts
 -- Create date: 17-JUL-2023
@@ -20,12 +17,10 @@ BEGIN
    SELECT DISTINCT TOP 10000 company
    FROM Staging2
    ORDER BY company;
-
    RETURN;
 END
 /*
 SELECT company from dbo.fnListS2Companies();
 */
-
-
 GO
+

@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 --========================================================================
 -- Author:      Terry Watts
 -- Create date: 06-NOV-2024
@@ -17,7 +15,6 @@ GO
 --
 -- Tests:
 --    027_sp_update_s2
-
 -- xls order:
 -- id, command, table, field, search_clause
 --, filter_field, filter_clause, not_clause
@@ -52,16 +49,12 @@ BEGIN
       ,@error_msg VARCHAR(2000)
       ,@nl        NCHAR(2) = NCHAR(13) + NCHAR(10)
    ;
-
    BEGIN TRY
       EXEC sp_log 1, @fn, '000: starting, setting defaults';
-
       IF @comments IS NOT NULL
          SET @extras = CONCAT('comments =''',@comments, '''');
-
       IF @execute is null
          SET @execute = 1;
-
       EXEC sp_update
        @table_nm        = 'staging2'
       ,@field_nm        = @field
@@ -82,17 +75,15 @@ BEGIN
       ,@update_sql      = @update_sql OUT
       ,@execute         = @execute
      ;
-
    END TRY
    BEGIN CATCH
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 1, @fn, '999: leaving, @fixup_cnt: ', @fixup_cnt;
 END
 /*
 EXEC tSQLt.Run 'test.test_027_sp_update_s2';
 */
-
 GO
+

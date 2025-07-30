@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =================================================================
 -- Author:      Terry Watts
 -- Create date: 25-NOV-2023
@@ -24,7 +21,6 @@ BEGIN
       ,@log_level_key NVARCHAR(50) = dbo.fnGetLogLevelKey()
       ,@msg           VARCHAR(200)
    ;
-
    EXEC sys.sp_set_session_context @key = @log_level_key, @value = @level;
    SET @msg = CONCAT('sp_set_log_level: 000: Setting logging level from [', @old_log_level,'] TO [',@level,']');
    EXEC sp_log 2, @fn, @msg;
@@ -33,6 +29,5 @@ END
 /*
 EXEC sp_set_log_level 1;
 */
-
-
 GO
+

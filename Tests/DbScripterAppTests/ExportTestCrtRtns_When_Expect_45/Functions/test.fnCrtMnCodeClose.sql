@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ====================================================================================
 -- Author:      Terry Watts
 -- Create date: 16-APR-2024
@@ -29,12 +25,10 @@ BEGIN
     @tst_rtn_nm   VARCHAR(50)
    ,@tab1         NCHAR(3) = '   '
    ,@ad_stp       BIT
-
    SELECT
       @tst_rtn_nm = tst_rtn_nm
       ,@ad_stp    = ad_stp
    FROM test.RtnDetails;
-
    INSERT INTO @t( line)
    VALUES
     ('')
@@ -45,13 +39,10 @@ BEGIN
    ,('EXEC tSQLt.RunAll;')
    ,(CONCAT('EXEC tSQLt.Run ''test.', @tst_rtn_nm,''';'))
    ,('*/')
-
    RETURN;
 END
 /*
 SELECT * FROM test.fnCrtCodeMnTstSig()
 */
-
-
-
 GO
+

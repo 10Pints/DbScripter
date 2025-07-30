@@ -1,9 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 CREATE TABLE [test].[RtnDetails](
 	[qrn] [varchar](90) NULL,
 	[schema_nm] [varchar](60) NULL,
@@ -21,5 +18,5 @@ CREATE TABLE [test].[RtnDetails](
 	[prm_cnt] [int] NULL,
 	[display_tables] [bit] NULL
 ) ON [PRIMARY]
-
 GO
+

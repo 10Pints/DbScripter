@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =========================================================
 -- Author:      Terry Watts
 -- Create date: 06-JAN-2025
@@ -15,5 +13,5 @@ AS
 BEGIN
    RETURN dbo.fnGetSessionContextAsString(dbo.fnGetCtxFixupSrchClsKey());
 END
-
 GO
+

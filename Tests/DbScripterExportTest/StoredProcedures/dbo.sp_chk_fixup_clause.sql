@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 01-JUL-2023
@@ -21,12 +19,9 @@ BEGIN
        @cnt INT
       ,@msg VARCHAR(200)
       ,@sql NVARCHAR(MAX)
-
    SET NOCOUNT OFF;
-
    SET @sql = CONCAT('SELECT @cnt = COUNT(*) FROM ',@table, ' WHERE ', @col, ' LIKE ''', @fixup_clause, '''');
    PRINT CONCAT('sql: ', @sql);
-
    EXEC sp_executesql 
       @sql
       ,N'@cnt INT OUT'
@@ -37,8 +32,7 @@ BEGIN
       SET @msg = CONCAT(' there are ', @cnt,' instances of [', @fixup_clause, '] in ', @table);
       THROW 50130, @msg, 1;
    END
-
    PRINT CONCAT('[',@fixup_clause, '] does not exist in ', @table);
 END
-
 GO
+

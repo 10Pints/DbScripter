@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE [dbo].[FertHandler](
 	[region] [varchar](5) NOT NULL,
 	[company_nm] [varchar](80) NOT NULL,
@@ -12,5 +10,5 @@ CREATE TABLE [dbo].[FertHandler](
 	[license] [varchar](25) NOT NULL,
 	[expiry_date] [date] NOT NULL
 ) ON [PRIMARY]
-
 GO
+

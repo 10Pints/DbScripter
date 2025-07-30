@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-OCT-2024
@@ -38,13 +35,11 @@ CREATE   PROCEDURE [dbo].[sp_pop_dyn_dta_post_chks]
 AS
 BEGIN
    SET NOCOUNT OFF;
-
    DECLARE 
        @fn        VARCHAR(30)  = N'pop_dyn_dta_post_chks'
       ,@error_msg VARCHAR(MAX)  = NULL
       ,@file_path VARCHAR(MAX)
       ,@id        INT = 1
-
    BEGIN TRY
       -----------------------------------------------------------------------------------
       EXEC sp_log 2, @fn,'000: starting, running postcondition validation checks';
@@ -71,7 +66,6 @@ BEGIN
       EXEC dbo.sp_assert_tbl_pop 'ProductUseStaging';
       EXEC dbo.sp_assert_tbl_pop 'TypeStaging';
       EXEC dbo.sp_assert_tbl_pop 'UseStaging';
-
       -----------------------------------------------------------------------------------
       -- Detailed checks
       -----------------------------------------------------------------------------------
@@ -96,7 +90,6 @@ BEGIN
       EXEC sp_check_field_not_null 'CompanyStaging','company_nm';
       EXEC sp_log 2, @fn,'240: CropStaging';
       EXEC sp_check_field_not_null 'CropStaging','crop_nm';
-
       EXEC sp_log 2, @fn,'245: DistributorStaging';
       EXEC sp_check_field_not_null 'DistributorStaging','distributor_id';
       EXEC sp_check_field_not_null 'DistributorStaging','distributor_nm';
@@ -104,38 +97,30 @@ BEGIN
       EXEC sp_check_field_not_null 'DistributorStaging','province';
       EXEC sp_check_field_not_null 'DistributorStaging','address';
       --EXEC sp_check_field_not_null 'DistributorStaging','manufacturers';
-
       EXEC sp_log 2, @fn,'250: PathogenStaging';
       EXEC sp_check_field_not_null 'PathogenStaging','pathogen_nm';
       EXEC sp_check_field_not_null 'PathogenStaging','pathogenType_nm';
       EXEC sp_log 2, @fn,'255: PathogenTypeStaging';
       EXEC sp_check_field_not_null 'PathogenTypeStaging','pathogenType_id';
       EXEC sp_check_field_not_null 'PathogenTypeStaging','pathogenType_nm';
-
       EXEC sp_log 2, @fn,'260: ChemicalProductStaging';
       EXEC sp_check_field_not_null 'ChemicalProductStaging','chemical_nm';
       EXEC sp_check_field_not_null 'ChemicalProductStaging','product_nm';
-
       EXEC sp_log 2, @fn,'265: ChemicalUseStaging';
       EXEC sp_check_field_not_null 'ChemicalUseStaging','chemical_nm';
       EXEC sp_check_field_not_null 'ChemicalUseStaging','use_nm';
-
       EXEC sp_log 2, @fn,'270: CropPathogenStaging';
       EXEC sp_check_field_not_null 'CropPathogenStaging','crop_nm';
       EXEC sp_check_field_not_null 'CropPathogenStaging','pathogen_nm';
-
       EXEC sp_log 2, @fn,'280: PathogenChemicalStaging';
       EXEC sp_check_field_not_null 'PathogenChemicalStaging','pathogen_nm';
       EXEC sp_check_field_not_null 'PathogenChemicalStaging','chemical_nm';
-
       EXEC sp_log 2, @fn,'285: ProductCompanyStaging';
       EXEC sp_check_field_not_null 'ProductCompanyStaging','product_nm';
       EXEC sp_check_field_not_null 'ProductCompanyStaging','company_nm';
-
       EXEC sp_log 2, @fn,'290: ProductUseStaging';
       EXEC sp_check_field_not_null 'ProductUseStaging','product_nm';
       EXEC sp_check_field_not_null 'ProductUseStaging','use_nm';
-
       IF EXISTS (SELECT 1 FROM ChemicalStaging         WHERE chemical_nm IS NULL)                        SELECT * FROM ChemicalStaging          WHERE chemical_nm IS NULL;
       IF EXISTS (SELECT 1 FROM ChemicalActionStaging   WHERE chemical_nm IS NULL OR action_nm IS NULL)   SELECT * FROM ChemicalActionStaging    WHERE chemical_nm IS NULL OR action_nm IS NULL
       IF EXISTS (SELECT 1 FROM ChemicalProductStaging  WHERE chemical_nm IS NULL OR product_nm IS NULL)  SELECT * FROM ChemicalProductStaging   WHERE chemical_nm IS NULL OR product_nm IS NULL
@@ -146,7 +131,6 @@ BEGIN
       IF EXISTS (SELECT 1 FROM ProductStaging          WHERE product_nm IS NULL)                         SELECT * FROM ProductStaging           WHERE product_nm IS NULL
       IF EXISTS (SELECT 1 FROM ProductCompanyStaging   WHERE product_nm IS NULL OR company_nm IS NULL)   SELECT * FROM ProductCompanyStaging    WHERE product_nm IS NULL OR company_nm IS NULL
       IF EXISTS (SELECT 1 FROM ProductUseStaging       WHERE product_nm IS NULL OR use_nm IS NULL)       SELECT * FROM ProductUseStaging        WHERE product_nm IS NULL OR use_nm IS NULL
-
       -----------------------------------------------------------------------------------
       -- 23: Completed processing OK
       -----------------------------------------------------------------------------------
@@ -156,7 +140,6 @@ BEGIN
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn, '999: leaving: OK';
 END
 /*
@@ -167,6 +150,5 @@ FROM INFORMATION_SCHEMA.COLUMNS c
 JOIN list_tables_vw  tv ON c.TABLE_NAME = tv.TABLE_NAME
 WHERE c.TABLE_NAME LIKE '%staging' AND c.TABLE_NAME NOT IN ('ImportCorrectionsStaging','MosaicVirusStaging') order by c.TABLE_NAME,ordinal_position;
 */
-
-
 GO
+

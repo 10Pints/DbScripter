@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ======================================================================
 -- Author:      Terry Watts
 -- Create date: 28-JUN-2023
@@ -51,20 +49,14 @@ BEGIN
    ,@file_exists     INT
    ,@nl              NCHAR(2) = NCHAR(13)+NCHAR(10)
    ;
-
    EXEC sp_log 2, @fn, '000: starting, file: [', @import_tsv_file, ']';
-
    BEGIN TRY
-
       EXEC sp_log 1, @fn, '010: deleting import log files';
-
       EXEC xp_cmdshell 'DEL D:\Logs\PesticideRegisterImportCorrectionsErrors.log.Error.Txt', NO_OUTPUT;
       EXEC xp_cmdshell 'DEL D:\Logs\PesticideRegisterImportCorrectionsErrors.log'          , NO_OUTPUT;
-
       -- chk if file exists
       EXEC sp_log 1, @fn, '020: checking the import file exists';
       EXEC xp_fileexist @import_tsv_file, @file_exists OUT;
-
       -- POST03: @import_tsv_file must exist OR exception 64871 thrown
       IF @file_exists = 0
       BEGIN
@@ -72,9 +64,7 @@ BEGIN
          EXEC sp_log 4, @fn, '030: ', @error_msg;
          THROW 64871, '',1;
       END
-
       EXEC sp_log 1, @fn, '040: import file exists';
-
       SET @sql = CONCAT
       (
          'BULK INSERT ImportCorrectionsStaging_vw FROM ''', @import_tsv_file, '''
@@ -86,14 +76,11 @@ BEGIN
             ,ERRORFILE       = ''D:\Logs\PesticideRegisterImportCorrectionsErrors.log''
          );'
       );
-
       EXEC sp_log 2, @fn, '050: exec import sql:',@nl,
 @sql;
-
       EXEC @RC = sp_executesql @sql;
       SET @row_cnt = @@ROWCOUNT
       EXEC sp_log 2, @fn, '050: imported ', @row_cnt, ' rows';
-
       -- POST04: bulk insert cmd succeeded   OR exception 64872 thrown
       IF @RC <> 0
       BEGIN
@@ -101,7 +88,6 @@ BEGIN
          EXEC sp_log 4, @fn, '060: error raised during bulk insert cmd :', @RC, ' Error msg: ', @error_msg, ' File: ', @import_tsv_file;
          THROW 64872, @error_msg,1;
       END
-
       -- POST05: at least 1 row was imported OR exception 64873 thrown
       IF @row_cnt = 0
       BEGIN
@@ -109,7 +95,6 @@ BEGIN
          EXEC sp_log 4, @fn, @error_msg;
          THROW 64873, @error_msg, 1;
       END
-
       --SET IDENTITY_INSERT ImportCorrections ON;
    END TRY
    BEGIN CATCH
@@ -119,18 +104,14 @@ BEGIN
       EXEC sp_log 4, @fn, '501: caught exception: ',@error_msg, ' see the import log files: D:\Logs\PesticideRegisterImportCorrectionsErrors.log*';
       EXEC sp_log 4, @fn, '510: @sql:
      ', @sql;
-
      DECLARE @ex_num INT = ERROR_NUMBER();
-
       THROW @ex_num, @error_msg, 1;
    END CATCH
-
    EXEC sp_log 2, @fn, '999: leaving';
    RETURN @RC;
 END
 /*
 EXEC tSQLt.Run 'test.test_sp_import_correction_files'
-
 ----------------------------------------------------------------------------------------------
 EXEC sp_Reset_CallRegister;
 TRUNCATE TABLE ImportCorrectionsStaging;
@@ -141,5 +122,5 @@ SELECT * FROM ImportCorrectionsStaging;
 SELECT * FROM ImportCorrections;
 ----------------------------------------------------------------------------------------------
 */
-
 GO
+

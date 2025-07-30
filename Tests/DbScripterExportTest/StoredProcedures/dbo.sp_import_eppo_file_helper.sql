@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =======================================================================
 -- Author:      Terry Watts
 -- Create date: 11-Nov-2024
@@ -38,11 +35,9 @@ BEGIN
    ,@bckslsh            VARCHAR(1)    = NCHAR(92)
    ,@tab                VARCHAR(1)    = NCHAR(9)
    ,@nl                 VARCHAR(2)    = NCHAR(13) + NCHAR(10)
-
    IF @file             IS NULL SET @file = CONCAT(REPLACE(@table, 'Staging',''), '.txt');
    IF @field_terminator IS NULL SET @field_terminator = ',';
    IF @folder           IS NULL SET @folder = 'D:\Dev\Farming\Data\EPPO.bayer';
-
    SET @path = CONCAT(@folder, @bckslsh, @file);
    EXEC sp_log 1, @fn, 'starting
 table           :[',@table           ,']
@@ -56,7 +51,6 @@ last_row        :[',@last_row        ,']
 exp_row_cnt     :[',@exp_row_cnt     ,']
 row_cnt         :[',@row_cnt         ,']
    ';
-
    EXEC sp_import_txt_file
        @table           = @table
       ,@view            = NULL
@@ -69,7 +63,6 @@ row_cnt         :[',@row_cnt         ,']
       ,@non_null_flds   = @non_null_flds
       ,@row_cnt         = @row_cnt OUT
       ;
-
    IF @exp_row_cnt IS NOT NULL EXEC sp_assert_equal @exp_row_cnt, @row_cnt, 'exp/act row count'
    EXEC sp_log 1, @fn, 'leaving';
 END
@@ -77,6 +70,5 @@ END
 EXEC tSQLt.Run 'test.test_022_sp_import_eppo_file_helper';
 EXEC sp_import_eppo_file_helper 'EPPO_GafGroupStaging'
 */
-
-
 GO
+

@@ -1,0 +1,71 @@
+﻿{
+   "Logging": {
+      "LogLevel": {
+         "Default": "Debug",
+         "System": "Information",
+         "Microsoft": "Information"
+      }
+   },
+
+   "Serilog": {
+      "MinimumLevel": {
+         "Default": "Verbose",
+         "Override": {
+            "System": "Information",
+            "Microsoft": "Information"
+         }
+      },
+
+      "WriteTo": [
+         {
+            "Name": "File",
+            "Args": {
+               "path": "D:\\Dev\\DbScripter\\Tests\\DbScripterTests\\AppExportTest\\AppExportTest.log",
+               "rollingInterval": "Day",
+               "restrictedToMinimumLevel": "Verbose"
+            }
+         }
+      ]
+   },
+
+   "ThreadSettings": { "MaxThreads": 4 },
+   "appSettings": {
+      "Name": "AppExportTest",
+      "Server": "DevI9",
+      "Instance": "",
+      "Database": "Dorsu_Dev",
+      "Script Dir": "D:\\Dev\\DbScripter\\Tests\\DbScripterTests\\AppExportTest",
+      "Script File": "Dorsu_dev schema.sql",
+      "CreateMode": "Create",
+      "RequiredTypes": "",
+      "RequiredAssemblies": "RegEx",
+      "RequiredSchemas": "dbo,test,tSQLt",
+      "RequiredFunctions": "",
+      "RequiredProcedures": "[test].[sp__crt_tst_rtns],test.sp_tst_hlpr_st,test.sp_tst_hlpr_hndl_success,test.sp_tst_hlpr_hndl_failure,[tSQLt].[AssertIsSubString],test.sp_tst_hlpr_hndl_failure,test.sp_tst_hlpr_hndl_success,test.sp_tst_mn_st,test.sp_tst_mn_cls",
+      "RequiredTables": "",
+      "RequiredTableTypes": "",
+      "RequiredUserDefinedDataTypes": "",
+      "RequiredUserDefinedTableTypes": "",
+      "RequiredUserDefinedTypes": "",
+      "RequiredViews": "",
+
+      "UnwantedAssemblies": "Microsoft.SqlServer.Types",
+      "UnwantedSchemas": "INFORMATION_SCHEMA,sys",
+      "UnwantedFunctions": "fn_diagramobjects",
+      "UnwantedProcedures": "",
+      "UnwantedTables": "sysdiagrams",
+      "UnwantedTableTypes": "",
+      "UnwantedUserDefinedDataTypes": "",
+      "UnwantedUserDefinedTableTypes": "",
+      "UnwantedUserDefinedTypes": "",
+      "UnwantedViews": "",
+
+      "AddTimestamp": "false",
+      "ScriptUseDb": "true",
+      "DisplayScript": "true",
+      "DisplayLog": "true",
+      "LogFile": "D:\\Dev\\DbScripter\\Tests\\DbScripterTests\\AppExportTest\\AppExportTest.log",
+      "LogLevel": "INFO",
+      "IsExportingData": "false"
+   }
+}

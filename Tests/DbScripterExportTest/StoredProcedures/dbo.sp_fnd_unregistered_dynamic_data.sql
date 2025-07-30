@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =================================================================================================
 -- Author:      Terry Watts
 -- Create date: 04-NOV-2024
@@ -46,19 +44,15 @@ BEGIN
    ,@tot_cnt   INT = 0
    ,@was_error INT = 0
     ;
-
    SET NOCOUNT ON;
    EXEC sp_log 2, @fn,'000: starting';
-
    BEGIN TRY
       TRUNCATE TABLE UnregisteredItem;
-
       --------------------------------------------------------------------
       -- Validate preconditions
       --------------------------------------------------------------------
       EXEC sp_log 1, @fn,'010: validating dynamic data populated';
       EXEC sp_fnd_unregistered_dyndta_chk_precndtns;
-
       --------------------------------------------------------------------
       -- Check for bad data in the LRAP extracted dynamic data tables
       -- to do this we need assocated primary static data from non LRAP sources
@@ -78,7 +72,6 @@ BEGIN
       EXEC sp_log 4, @fn,'500: caught exception';
       EXEC sp_log_exception @fn;
    END CATCH
-
    SELECT CONCAT('Total unregisterd count = ', @tot_cnt) AS [Total unregisterd count    .];
    SELECT * FROM UnregisteredItem;
    EXEC sp_log 2, @fn, '999: leaving, errors?: ',@was_error;
@@ -91,5 +84,5 @@ EXEC sp_fnd_unregistered_dynamic_data;
 SELECT * FROM UnregisteredItem;
 EXEC sp_appLog_display @dir=0;-- desc
 */
-
 GO
+

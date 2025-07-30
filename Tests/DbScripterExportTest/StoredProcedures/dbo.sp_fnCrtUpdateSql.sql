@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 --========================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 07-NOV-2024
@@ -82,28 +80,21 @@ cs       :[',@cs_s     ,']
    IF @cs        IS NULL SET @cs        = 0; -- case insensitve search
    IF @filter_op =  ''   SET @filter_op = '<EMPTY>';
    IF @field2_op =  ''   SET @field2_op = '<EMPTY>';
-
    EXEC sp_log 1, @fn, '005: params after setting defaults
 filter_op:[',@filter_op,']
 field2_op:[',@field2_op,']';
-
    -------------------------------------------------
    -- Validating Preconditions
    -------------------------------------------------
    EXEC sp_log 1, @fn, '010: validating preconditions';
-
    -- PRE 01: @filter_op must be IN ('EQUALS'  OR 'IN')  OR Exception 56741, '@filter_op must be IN ('EQUALS'  OR 'IN') '
    IF @filter_field_nm IS NOT NULL AND @filter_op NOT IN ('EQUALS', 'IN')
       EXEC sp_raise_exception 56741, '@filter_op must be IN (''EQUALS'' OR ''IN'') but was:[',@filter_op,']',@fn=@fn;
-
    -- PRE 02: @field2_op must be IN ('REPLACE' OR 'ADD') OR Exception 56741, '@field2_op must be IN ('REPLACE' OR 'ADD')'
    IF @field2_nm IS NOT NULL AND @field2_op NOT IN ('REPLACE', 'ADD') exec sp_raise_exception 56741, 'field2_op must be IN (''REPLACE'' OR ''ADD'') but was:[',@field2_op,']';
-
    EXEC sp_log 1, @fn, '020: validated  preconditions OK';
-
    WHILE 1=1
    BEGIN
-
       -------------------------------------------------
       -- Stage 1: set sql: UPDATE @table SET @field =
       -------------------------------------------------
@@ -112,17 +103,14 @@ field2_op:[',@field2_op,']';
           'SET', @nl,@tab
          ,' [',@field_nm,']='
       )
-
       -----------------------------------------------
       -- Assertion: sql: UPDATE @table SET @field = Replace clause
       -----------------------------------------------
-
       -------------------------------------------------------------------------------
       -- Stage 2: set sql = UPDATE @table SET @field = exact clause or Replace clause
          --  depending on if ( NUL or MT or EXACT) or not
       -------------------------------------------------------------------------------
       SET @is_exact = iif((@search_clause IS NULL) OR (dbo.fnLen(@search_clause) = 0) OR (@exact_match = 1), 1, 0);
-
       IF (@is_exact = 1)
       BEGIN
          -- Create exact clause
@@ -133,11 +121,9 @@ field2_op:[',@field2_op,']';
          -- Create replace clause
           SET @set_cls = CONCAT(@set_cls, 'REPLACE([', @field_nm, '], ''', @search_clause, ''', ''',@replace_clause, ''')');
       END
-
       --------------------------------------------------------------------------------------------------------------------
       -- Assertion: sql: UPDATE @table SET @field = @replace_clause or =REPLACE(field, @search_clause, @replace_clause) NL
       --------------------------------------------------------------------------------------------------------------------
-
       ----------------------------------------------------------------
       -- Stage 3: add other set field clauses
       -- 250107: field2: if null or empty and ADD dont add comma only
@@ -154,12 +140,10 @@ field2_op:[',@field2_op,']';
                   , '], IIF(',@field2_nm,' IS NULL OR ',@field2_nm,'='''','''','','')',',''', @field2_clause, ''')')-- ADD
                 )
          );
-
          ----------------------------------------------------
          -- Assertion: sql: contains all required set fields
          ----------------------------------------------------
       END
-
       -- Set any extra field values
       -- sql clause to add one or more extra field values e,g 'comments=''some comment'' '
       IF @extras IS NOT NULL
@@ -170,14 +154,12 @@ field2_op:[',@field2_op,']';
              @set_cls, @NL, @tab, ',', @extras
          );
       END
-
       --======================================
       -- Stage 4 Add WHERE clauses
       --======================================
       -- EXEC sp_log 1, @fn, '040: Stage 4 starting - add WHERE clauses';
       SET @where_cls = CONCAT('WHERE', @NL, @tab,' [',@field_nm,']')
       -- EXEC sp_log 1, @fn, '051: is act: ', @is_exact;
-
       IF @is_exact = 1
       BEGIN
          -- EXEC sp_log 1, @fn, '053: in if @is_exact = 1 TRU brnch';
@@ -188,13 +170,11 @@ field2_op:[',@field2_op,']';
          -- EXEC sp_log 1, @fn, '057: in if @is_exact = 1 FLS brnch';
          SET @where_cls = CONCAT( @where_cls, ' LIKE ''%', @search_clause,'%''');
       END
-
       ---------------------------------------------------------------
       -- Case sensitive
       ---------------------------------------------------------------
       if(@cs=1)
          SET @where_cls = CONCAT(@where_cls, ' COLLATE Latin1_General_CS_AS');
-
       ----------------------------------------------------------------------
       -- Stage 5 Add 'and search field not like clause'
       -- Only add this if @replace_clause is not a subset of @search_clause
@@ -203,18 +183,15 @@ field2_op:[',@field2_op,']';
       BEGIN
          SET @where_cls = CONCAT( @where_cls, @NL
          ,'AND [',@field_nm,'] NOT LIKE ''%', @replace_clause, '%''');
-
          if(@cs=1)
             SET @where_cls = CONCAT(@where_cls, ' COLLATE Latin1_General_CS_AS');
       END
-
       ---------------------------------------------------------------
       -- Stage 6: If filter field is specified
       ---------------------------------------------------------------
       If @filter_field_nm IS NOT NULL AND @filter_field_nm IS NOT NULL
       BEGIN
          -- Depending on the filter_op: {'=' OR 'IN'}
-
          IF @filter_op = 'EQUALS'
          BEGIN
             -- EXEC sp_log 1, @fn, '160 filter op is ''EQUALS''';
@@ -226,10 +203,8 @@ field2_op:[',@field2_op,']';
             SELECT @filter_clause = string_agg( CONCAT('''', TRIM(value),''''), ',') FROM string_split(@filter_clause, ',')
             SET @filter_sql    = CONCAT(' IN (', @filter_clause,')' );
          END
-
          SET @where_cls = CONCAT(@where_cls, @nl, 'AND [', @filter_field_nm, ']', @filter_sql);
       END
-
       ---------------------------------------------------------------
       -- Stage 7: If not clause is specified
       -- 250107: not like '' should not be scripted as NOT LIKE'%%' BUT like NOT LIKE''''
@@ -248,13 +223,10 @@ field2_op:[',@field2_op,']';
             ,'AND [',@field_nm,'] NOT LIKE ''%', @not_clause, '%''');
          END
       END
-
      -- Terminate the statement
       SET @where_cls = CONCAT( @where_cls, @NL,';');
-
       SET @select_sql = CONCAT('SELECT * FROM ', @table_nm, @NL, @where_cls);
       SET @update_sql = CONCAT('UPDATE ', @table_nm, @NL, @set_cls, @NL, @where_cls);
-
       ---------------------------------------------------------------
       -- Completed SQL
       ---------------------------------------------------------------
@@ -265,7 +237,6 @@ field2_op:[',@field2_op,']';
       EXEC sp_log 1, @fn, '420: ',@nl,'Update SQL:',@nl, @update_sql;
       PRINT @Line2;
       BREAK
-
    END -- WHILE 1=1
    EXEC sp_log 1, @fn, '999: leaving';
 END
@@ -274,5 +245,5 @@ EXEC tSQLt.Run 'test.test_018_fnCrtUpdateSql';
 EXEC dbo.sp_appLog_display @dir = 0;
 EXEC dbo.sp_appLog_display @fn='sp_fnCrtUpdateSql';
 */
-
 GO
+

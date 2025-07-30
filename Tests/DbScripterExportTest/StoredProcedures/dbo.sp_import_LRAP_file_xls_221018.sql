@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ======================================================================================
 -- Author:      Terry Watts
 -- Create date: 15-MAR-2024
@@ -37,19 +35,16 @@ BEGIN
    ,@row_cnt      INT
    ,@table        VARCHAR(35)   = 'Staging1'
    ,@table_exists INT
-
    EXEC sp_log 1, @fn, '00: starting
 import_file:[', @import_file, ']
 clr_first  :[', @clr_first  , ']
 ';
-
    --EXEC sp_register_call @fn;
    --------------------------------------------------------------------
    -- Processing start'
    --------------------------------------------------------------------
    SET @table_exists = dbo.fnTableExists(@table);
    EXEC sp_assert_equal 1, @table_exists, 'table ', @table, ' does not exist';
-
    ----------------------------------------------------------------------------
    -- 1. import the LRAP register file using the appropriate format importer
    ----------------------------------------------------------------------------
@@ -65,7 +60,6 @@ clr_first  :[', @clr_first  , ']
          ,@expect_rows  = @clr_first   -- optional @expect_rows to assert has imported rows
          ,@row_cnt      = @row_cnt OUT  -- optional count of imported rows
          ;
-
    --------------------------------------------------------------------
    -- Processing complete'
    --------------------------------------------------------------------
@@ -78,5 +72,5 @@ EXEC sp_reset_CallRegister;
 EXEC sp_import_LRAP_file_xls_221018 'D:\Dev\Repos\Farming\Data\LRAP-221018-230813.xlsx', 'LRAP-221018 230813$A:N';
 SELECT * FROM staging1;
 */
-
 GO
+

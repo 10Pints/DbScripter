@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE [dbo].[EPPO_NtxLink](
 	[identifier] [varchar](8) NULL,
 	[datatype] [varchar](8) NULL,
@@ -13,5 +11,5 @@ CREATE TABLE [dbo].[EPPO_NtxLink](
 	[grp_dtype] [varchar](4) NULL,
 	[grp_code] [varchar](8) NULL
 ) ON [PRIMARY]
-
 GO
+

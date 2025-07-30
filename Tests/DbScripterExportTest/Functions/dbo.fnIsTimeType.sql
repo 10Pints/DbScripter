@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 08-DEC-2024
@@ -17,6 +14,5 @@ AS
 BEGIN
    RETURN iif(@ty IN ('date','datetime','datetime2','datetimeoffset','smalldatetime','TIME'), 1, 0);
 END
-
-
 GO
+

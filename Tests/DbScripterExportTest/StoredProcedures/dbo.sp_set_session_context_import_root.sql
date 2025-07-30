@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ======================================================================================================
 -- Author:       Terry Watts
 -- Create date:  02-AUG-2023
@@ -20,6 +17,5 @@ END
 /*
 EXEC tSQLt.Run 'test.test_100_fnGetSessionContextImportRoot';
 */
-
-
 GO
+

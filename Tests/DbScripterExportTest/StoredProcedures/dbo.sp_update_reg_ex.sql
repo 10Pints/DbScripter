@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-FEB-2025
@@ -46,18 +44,14 @@ CREATE PROCEDURE [dbo].[sp_update_reg_ex]
 AS
 BEGIN
    SET NOCOUNT OFF;
-
    DECLARE
     @fn              VARCHAR(35)   = 'sp_update_reg_ex'
    ,@nl              NCHAR(2)       = NCHAR(13)+NCHAR(10)
    ,@error_msg       VARCHAR(2000)
    ,@log_level       INT = dbo.fnGetLogLevel()
    ,@line            VARCHAR(200) = REPLICATE('-', 200)
-
    IF @filter_op IS NULL SET @filter_op = 'LIKE'
-
    SET @fixup_cnt = 0;
-
    If @log_level < 1
       EXEC sp_log 0, @fn, '000: starting';
       /*
@@ -76,14 +70,11 @@ extras         :[',@extras         , ']
 execute        :[',@execute        , ']
 ';
 */
-
    BEGIN TRY
       EXEC sp_log 0, @fn,'010: executing update sql   '
-
       -- Wrap each item in single quotes if the @filter_op is IN
       IF( @filter_op = 'IN')
          SELECT @filter_clause = dbo.fnQuoteItems(@filter_clause);
-
       SET @select_sql = CONCAT
 (
 'SELECT
@@ -99,11 +90,9 @@ execute        :[',@execute        , ']
 --,'AND [',@field_nm,'] NOT LIKE ''%', @replace_clause,'%''', @nl
 ,';'
 );
-
       PRINT CONCAT(@nl, @line);
       EXEC sp_log 1, @fn, '030: SELECT SQL:',@nl, @select_sql;
       PRINT CONCAT(@line, @nl);
-
       -- UPDATE Staging2 SET crops = dbo.RegEx_Replace(crops, 'Snap.*Bean[s]*', 'Green Beans') WHERE crops LIKE '%Green Bean%'
       SET @update_sql = CONCAT
 (
@@ -121,7 +110,6 @@ SET [',@field_nm,']=dbo.RegEx_Replace([',@field_nm,'], ''', @search_clause, ''',
 )
 ;
       EXEC sp_log 1, @fn, '030: UPDATE SQL:',@nl, @update_sql;
-
       IF @execute = 1
       BEGIN
          EXEC sp_log 2, @fn,'040: EXECUTING UPDATE sql';
@@ -129,7 +117,6 @@ SET [',@field_nm,']=dbo.RegEx_Replace([',@field_nm,'], ''', @search_clause, ''',
       END
       ELSE
          EXEC sp_log 2, @fn,'030: NOT EXECUTING UPDATE sql';
-
       SET @fixup_cnt = @@rowcount;
       EXEC sp_log 1, @fn, '040: executed sql, updated ', @fixup_cnt, ' rows',@row_count = @fixup_cnt;
    END TRY
@@ -137,17 +124,14 @@ SET [',@field_nm,']=dbo.RegEx_Replace([',@field_nm,'], ''', @search_clause, ''',
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 0, @fn, '999: leaving, @fixup_cnt: ',@fixup_cnt;
 END
 /*
 DECLARE
     @select_sql      NVARCHAR(4000) = NULL OUT -- can be stored on the corrections table, or for testing
    ,@update_sql      NVARCHAR(4000) = NULL OUT -- can be stored on the corrections table, or for testing
-
 dbo.sp_update_reg_ex 'staging2', 'crops', '[ ]*Cruciferae[ ]*', 'Crucifers'
-
 EXEC tSQLt.Run 'test.test_069_sp_update_reg_ex';
 */
-
 GO
+

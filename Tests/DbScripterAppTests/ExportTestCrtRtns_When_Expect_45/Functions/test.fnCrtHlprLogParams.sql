@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- =============================================================
 -- Author:      Terry Watts
 -- Create date: 17-Apr-2024
@@ -33,20 +29,17 @@ BEGIN
    ,@ad_stp             BIT         = 0
    ,@tst_rtn_nm         VARCHAR(60)
    ,@max_prm_len        INT
-
    SELECT
        @tst_rtn_nm   = tst_rtn_nm
       ,@ad_stp       = ad_stp
       ,@rtn_ty_code  = rtn_ty_code
       ,@max_prm_len  = max_prm_len
    FROM test.RtnDetails;
-
    ------------------------------------------
    -- Create the input params
    ------------------------------------------
    SELECT @max_prm_len = MAX(dbo.fnLen(param_nm)) FROM test.paramDetails
    --INSERT INTO @t (line) SELECT @max_prm_len as max_prm_len;
-
    INSERT INTO @t (line)
    SELECT
       CONCAT
@@ -60,7 +53,6 @@ BEGIN
    FROM test.ParamDetails
    WHERE tst_ty = 'TST'
    ;
-
    INSERT INTO @t (line)
    SELECT
       CONCAT
@@ -74,7 +66,6 @@ BEGIN
    FROM test.ParamDetails
    WHERE tst_ty = 'INP'
    ;
-
    ------------------------------------------
    -- Create the exp paams
    ------------------------------------------
@@ -91,7 +82,6 @@ BEGIN
    FROM test.ParamDetails
    WHERE tst_ty ='EXP' AND is_exception = 0
    ;
-
    ----------------------------------------------------
    -- Add @exp_RC param if tstd rtn is a procedure
    ----------------------------------------------------
@@ -106,7 +96,6 @@ BEGIN
          ,','']', iif(@ad_stp = 1, ' -- SP', '')
       )
    )
-
    INSERT INTO @t (line)
    SELECT
       CONCAT
@@ -119,21 +108,16 @@ BEGIN
    FROM test.ParamDetails
    WHERE tst_ty ='EXP' AND is_exception = 1
    ;
-
    INSERT INTO @t (line) VALUES
     (''';')
     ;
-
    RETURN;
 END
 /*
    EXEC tSQLt.Run 'test.test_056_fnCrtHlprLogParams';
 select line FROM test.fnCrtHlprLogParams()
-
 EXEC tSQLt.Run 'test.test_051_fnCrtHlprLogParams';
 EXEC test.sp__crt_tst_rtns 'dbo].[fnSplitKeyValuePairs'
 */
-
-
-
 GO
+

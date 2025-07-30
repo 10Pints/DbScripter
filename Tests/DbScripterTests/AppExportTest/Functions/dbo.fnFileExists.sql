@@ -1,0 +1,19 @@
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- ===============================================================
+-- Author:      Terry Watts
+-- Create date: 30-MAR-2020
+-- Description: returns true if the file exists, false otherwise
+-- ===============================================================
+CREATE FUNCTION [dbo].[fnFileExists](@path varchar(512))
+RETURNS BIT
+AS
+BEGIN
+     DECLARE @result INT
+     EXEC master.dbo.xp_fileexist @path, @result OUTPUT
+     RETURN cast(@result as bit)
+END
+GO
+

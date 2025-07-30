@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =======================================================
 -- Author:      Terry Watts
 -- Create date: 06-NOV-2024
@@ -34,9 +31,7 @@ AS
 BEGIN
    DECLARE
     @fn        VARCHAR(35)   = 'UPDATE_S2_PATH'
-
    EXEC sp_log 1, @fn, '000: starting, @exact_match: ', @exact_match;
-
    EXEC sp_update_s2
        @field          = 'pathogens'
       ,@search_clause  = @search_clause
@@ -54,7 +49,6 @@ BEGIN
       ,@update_sql     = @update_sql      OUT
       ,@execute        = @execute   -- if clr then just return the sqls dont actually update
    ;
-
    EXEC sp_log 1, @fn, '999: leaving';
 END
 /*
@@ -62,6 +56,5 @@ DECLARE @fixup_cnt INT = 0
 EXEC sp_update_S2_path 'Selective And Systemic Post-','Selective,Systemic,Post-emergent', NULL, NULL, @fixup_cnt OUT;
 EXEC sp__main_import  @start_stage=4, @start_row=255, @stop_row=255, @restore_s3_s2=1, @import_file='D:\Dev\Farming\Data\LRAP-221018.txt' ,@cor_file = 'D:\Dev\Farming\Data\ImportCorrections 221018.txt'; -- stage 4 pre S2 fixup  the old 221018 import
 */
-
-
 GO
+

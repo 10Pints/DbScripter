@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =====================================================================================================
 -- Author:      Terry Watts
 -- Create date: 14-DEC-2024
@@ -49,7 +47,6 @@ BEGIN
    ,@cor_path     VARCHAR(100)
    ,@cursor       CURSOR
    ,@file_row_cnt INT         = 0
-
    BEGIN TRY
       EXEC sp_log 1, @fn, '000: starting';
       
@@ -59,39 +56,29 @@ BEGIN
       EXEC sp_log 1, @fn, '010: Validating preconditions';
       EXEC sp_assert_tbl_pop 'dbo.ImportState', @fn=@fn;
       EXEC sp_assert_tbl_pop 'dbo.CorFiles'   , @fn=@fn;
-
    SELECT
        @import_root = import_root
       ,@file_cnt    = cor_file_cnt
    FROM ImportState;
-
       --------------------------------------------------------------
       -- Validated preconditions
       --------------------------------------------------------------
       EXEC sp_log 1, @fn, '020: ASSERTION: Validated preconditions';
-
    EXEC sp_log 1, @fn, '030: params:
 import_root:[',@import_root,']
 ';
-
       --------------------------------------------------------------
       -- Process
       --------------------------------------------------------------
       EXEC sp_log 1, @fn, '040: Process';
-
       EXEC sp_log 1, @fn, '050: clearing ImportCorrections table';
-
       SET @tot_cnt  = 0;
       SET @file_cnt = 0;
-
       TRUNCATE TABLE ImportCorrections;
-
       -- Get the cor files 1 at a time in order and import them
       SET @cursor = CURSOR FOR SELECT [file] FROM CorFiles ORDER BY id;
       OPEN @cursor;
-
       EXEC sp_log 1, @fn, '060: about to import';
-
       -- For each file: add the import to the Import corrections Staging table
       FETCH NEXT FROM @cursor INTO @cor_file;
       WHILE (@@FETCH_STATUS = 0)
@@ -102,7 +89,6 @@ import_root:[',@import_root,']
          EXEC sp_log 1, @fn, '070: file[',@file_cnt,'] importing ',@cor_file;
          SET @cor_path = CONCAT(@import_root, '\', @cor_file);
          EXEC sp_log 1, @fn, '080: import file [', @file_cnt,']: ',@cor_path;
-
          ------------------------------------------------------
          -- Import the file to staging
          ------------------------------------------------------
@@ -110,22 +96,17 @@ import_root:[',@import_root,']
          EXEC sp_import_cor_file @cor_path, @file_row_cnt OUT;
          EXEC sp_log 1, @fn, '100: imported. @row_cnt: ', @file_row_cnt, ' rows';
          SET @tot_cnt = @tot_cnt + @file_row_cnt; -- increment
-
          -- Set the file row cnt for the Import Summary Report
          UPDATE CorFiles SET row_cnt = @file_row_cnt WHERE [file] = @cor_file;
-
          EXEC sp_log 1, @fn, '110: imp file[', @file_cnt,'] completed ',@cor_path, ' import, ImportCorrections now has ', @tot_cnt, ' rows';
          FETCH NEXT FROM @cursor INTO @cor_file;
       END
-
          ------------------------------------------------------
       -- ASSERTION: ImportCorrections fully populated now
          ------------------------------------------------------
-
       SELECT @tot_cnt = COUNT(*) FROM ImportCorrections;
       -- PRE 01: at least 1 correction file passed in
       EXEC sp_assert_gtr_than @file_cnt, 0, '120: at least 1 correction file must be specified', @fn=@fn;
-
       --------------------------------------------------------------------
       -- Processing complete, get total corrections';
       --------------------------------------------------------------------
@@ -134,13 +115,11 @@ import_root:[',@import_root,']
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 1, @fn, '999: leaving, OK, ImportCorrections now has ',@tot_cnt, ' rows, there were ', @file_cnt,' imports';
 END
 /*
 EXEC tSQLt.Run 'test.test_001_import_cor_files';
-
 EXEC tSQLt.RunAll;
 */
-
 GO
+

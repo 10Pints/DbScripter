@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 25-NOV-2023
@@ -19,7 +15,5 @@ END
 /*
 EXEC test.sp_crt_tst_rtns 'dbo.fnGetLogLevelKey', 
 */
-
-
-
 GO
+

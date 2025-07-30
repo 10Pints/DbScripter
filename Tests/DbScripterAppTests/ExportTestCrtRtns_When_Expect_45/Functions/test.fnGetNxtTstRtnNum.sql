@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- =========================================================================
 -- Author:      Terry Watts
 -- Create date: 03-Dec-2023
@@ -20,7 +16,6 @@ RETURNS INT
 AS
 BEGIN
    DECLARE @ret INT
-
    -- first look for the first unused trn less than the max used trn
    SET @ret =
    (
@@ -37,7 +32,6 @@ BEGIN
       ) X
       WHERE nxt_trn>trn + 1
    );
-
    -- If not found take the max used trn + 1
    IF @ret IS NULL
       SELECT @ret = next_rtn_num
@@ -55,14 +49,11 @@ BEGIN
                AND IIF(SUBSTRING(rtn_nm, 6,3) LIKE '[0-9][0-9][0-9]', CONVERT(int, SUBSTRING(rtn_nm, 6,3)), 0) > 0
          ) X
       ) Y;
-
    IF @ret IS NULL SET @ret = 0;
    RETURN @ret;
 END
 /*
 PRINT test.fnGetNxtTstRtnNum();
 */
-
-
-
 GO
+

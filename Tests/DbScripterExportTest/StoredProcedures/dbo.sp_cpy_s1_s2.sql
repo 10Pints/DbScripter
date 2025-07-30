@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ===================================================================================
 -- Author:      Terry Watts
 -- Create date: 20-JUN-2023
@@ -22,28 +19,21 @@ BEGIN
       ,@cnt  INT = 0
       ,@result_msg   VARCHAR(500) = NULL
       ,@fn           VARCHAR(500) = 'CPY_S1_S2'
-
    SET NOCOUNT OFF;
-
    BEGIN TRY
       EXEC sp_log 1, @fn, '00:starting';
       --EXEC sp_register_call @fn;
       SET XACT_ABORT ON;
-
       EXEC sp_log 0, @fn, '01: truncating S2   ';
-
       TRUNCATE TABLE Staging2;
       SET @rc = @@ERROR;
-
       IF @RC <> 0
       BEGIN
          SET @result_msg = CONCAT('stage 1 TRUNCATE TABLE Staging2; failed: ',ERROR_MESSAGE());
          EXEC sp_log 4, @fn, @result_msg;
          THROW 50600, @result_msg, 1;
       END
-
       EXEC sp_log 1, @fn, '03: about to copy s1 -> S2   ';
-
       INSERT INTO dbo.staging2
       (
           id
@@ -87,18 +77,15 @@ BEGIN
          ,notes
          ,created
       FROM dbo.staging1;
-
       EXEC sp_log 1, @fn, '04: copied s1 -> S2   ';
       SET @rc  = @@ERROR;
       SET @cnt = @@ROWCOUNT;
-
       IF @RC <> 0
       BEGIN
          SET @result_msg = CONCAT('stage 2 insert failed: ',ERROR_MESSAGE());
          EXEC sp_log 4, @fn, @result_msg;
          THROW 50601, @result_msg, 1;
       END
-
       EXEC sp_log 1, @fn, '05: success   ';
    END TRY
    BEGIN CATCH
@@ -117,6 +104,5 @@ SELECT MAX(dbo.fnLen(pathogens)) FROM staging1;
 SELECT id, dbo.fnLen(pathogens), pathogens FROM staging1 WHERE dbo.fnLen(pathogens) > 200 ORDER BY dbo.fnLen(pathogens) DESC;
 SELECT * FROM staging2 where pathogens LIKE '%-%';
 */
-
-
 GO
+

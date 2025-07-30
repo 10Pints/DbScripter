@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 27-MAR-2020
@@ -40,9 +38,7 @@ BEGIN
        @fnThis    VARCHAR(35) = N'sp_assert_not_null_or_empty'
       ,@valTxt    VARCHAR(20)= @val
    ;
-
    EXEC sp_log @log_level, @fnThis, '000: starting,' ,@msg1,': @val:[',@val,']';
-
    IF dbo.fnLen(@val) > 0
    BEGIN
       ----------------------------------------------------
@@ -52,14 +48,12 @@ BEGIN
       EXEC sp_log @log_level, @fnThis, '010: OK, ASSERTION: val: [',@valTxt, '] IS NOT NULL';
       RETURN 0;
    END
-
    ----------------------------------------------------
    -- ASSERTION ERROR
    ----------------------------------------------------
    EXEC sp_log 3, @fn, '020: @val IS NULL OR EMPTY, raising exception';
    IF @ex_num IS NULL SET @ex_num = 50005;
    DECLARE @msg0 VARCHAR(20)= 'val is NULL or empty'
-
    EXEC sp_raise_exception
        @ex_num = @ex_num
       ,@msg1   = @msg0
@@ -92,5 +86,5 @@ EXEC sp_assert_not_null_or_empty NULL
 EXEC sp_assert_not_null_or_empty ''
 EXEC sp_assert_not_null_or_empty 'Fred'
 */
-
 GO
+

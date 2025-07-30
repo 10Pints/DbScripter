@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ======================================================
 -- Author:      Terry Watts
 -- Create date: 12-NOV-2023
@@ -19,7 +15,6 @@ SELECT
    ,sap.name                           AS prm_nm
    ,parameter_id                       AS ordinal
    ,UPPER(TYPE_NAME(system_type_id))   AS ty_nm
-
    ,IIF( TYPE_NAME(system_type_id) IN ('VARCHAR', 'NVARCHAR', 'NTEXT')
       ,CONCAT( UPPER(TYPE_NAME(system_type_id)), '('
               ,iif
@@ -47,12 +42,11 @@ SELECT
 FROM sys.all_parameters sap
      JOIN sys.all_objects so ON sap.object_id=so.object_id
  ;
-
 /*
 SELECT * FROM SysRtnPrms_vw WHERE rtn_nm = 'sp_ImportAttendanceGMeet2Staging';
 SELECT  * FROM paramsVw where param_nm ='' -- Scalar function, CLR scalar function return value
 SELECT TOP 100 * FROM sys.all_parameters sap JOIN sys.all_objects so ON sap.object_id=so.object_id;
 SELECT top 10 * FROM sys.sysobjects
 */
-
 GO
+

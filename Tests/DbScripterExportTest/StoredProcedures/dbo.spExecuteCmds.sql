@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =========================================================================
 -- Procedure:   dbo.spExecuteCmds
 -- Description: 
@@ -30,12 +28,10 @@ BEGIN
      ,@ndx INT = 0
      ,@sql NVARCHAR(MAX)
      ,@msg NVARCHAR(MAX)
-
       EXEC sp_log 1, @fn ,'000: starting
 @cmd  :[',@cmd  ,']
 @items:[',@items,']
 ';
-
       IF OBJECT_ID('dbo.#CmdsTbl', 'U') IS NULL
       CREATE table #CmdsTbl
       (
@@ -43,7 +39,6 @@ BEGIN
        ,sql NVARCHAR(MAX)
       )
       ELSE TRUNCATE TABLE #CmdsTbl;
-
    SET @sql = 
    CONCAT
    (
@@ -51,28 +46,22 @@ BEGIN
 SELECT CONCAT(''',@cmd,' '', value,'';'')
 FROM string_split(''', @items, ''','','');'
    );
-
    EXEC sp_log 1, @fn ,'010: @sql:
 ', @sql;
-
    EXEC (@sql);
-
    SELECT @end = COUNT(*) FROM #CmdsTbl;
    EXEC sp_log 1, @fn ,'020: start ndx: ', @ndx, ' count of rows (end): ', @end;
    SELECT * FROM #CmdsTbl;
-
    WHILE @ndx < = @end
    BEGIN
       SELECT
             @sql = [sql]
       FROM #CmdsTbl
       WHERE id = @ndx;
-
       EXEC sp_log 1, @fn, '090:[',@ndx,']: ', @sql;
       EXEC (@sql);
       SET @ndx = @ndx + 1
    END
-
    EXEC sp_log 1, @fn ,'999 leaving';
 END
 /*
@@ -81,5 +70,5 @@ EXEC tSQLt.RunAll;
 EXEC tSQLt.Run 'test.test_067_spExecuteCmds';
 EXEC spExecuteCmds
 */
-
 GO
+

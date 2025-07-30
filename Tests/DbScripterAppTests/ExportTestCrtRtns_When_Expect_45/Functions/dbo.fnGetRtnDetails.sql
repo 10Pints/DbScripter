@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ============================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 09-MAY-2020
@@ -41,15 +37,12 @@ BEGIN
       ,@rtn_nm       VARCHAR(4000)
       ,@ty_nm        VARCHAR(20)
       ,@qrn2         VARCHAR(120)
-
    SELECT
        @schema = schema_nm
       ,@rtn_nm = rtn_nm
       ,@qrn2   = CONCAT(schema_nm, '.', rtn_nm)
    FROM fnSplitQualifiedName(@qrn);
-
    SELECT @ty_nm = ty_nm FROM dbo.sysRtns_vw WHERE schema_nm = @schema and rtn_nm = 'fn_CamelCase';
-
    INSERT INTO @t
    (
        qrn
@@ -67,7 +60,6 @@ BEGIN
       ,ty_code
       ,is_clr
    FROM dbo.sysRtns_vw WHERE schema_nm = @schema and rtn_nm = @rtn_nm;
-
    RETURN;
 END
 /*
@@ -75,7 +67,5 @@ EXEC tSQLt.Run 'test.test_029_fnChkRtnExists';
 SELECT * FROM [dbo].[fnGetRtnDetails]('[dbo].[fnIsCharType]');
 SELECT * FROM [dbo].[fnGetRtnDetails]('sp_assert_rtn_exists');
 */
-
-
-
 GO
+

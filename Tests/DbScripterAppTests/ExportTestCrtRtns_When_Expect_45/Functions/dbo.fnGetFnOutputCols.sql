@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ===============================================================================
 -- Author:        Terry watts
 -- Create date:   05-APR-2024
@@ -35,15 +31,12 @@ BEGIN
       WHERE object_id=object_id(@q_rtn_nm)
       ORDER BY column_id
       ;
-
    RETURN;
 END
 /*
 EXEC test.test_042_fnGetFnOutputCols;
-
 SELECT * FROM dbo.fnGetFnOutputCols('test.fnCrtHlprSigParams');
 SELECT * FROM dbo.fnGetFnOutputCols('test.fnCrtHlprSigParams');
-
 SELECT name, column_id as ordinal, TYPE_NAME(user_type_id) as ty_nm, max_length, is_nullable
 FROM sys.columns
 WHERE object_id=object_id('test.fnCrtHlprSigParams')
@@ -56,6 +49,5 @@ ORDER BY column_id
 ;
 EXEC test.sp__crt_tst_rtns '[dbo].[fnGetFnOutputCols]';
 */
-
-
 GO
+

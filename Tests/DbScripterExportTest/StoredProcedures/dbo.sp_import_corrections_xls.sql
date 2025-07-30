@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==================================================================================================
 -- Author:      Terry Watts
 -- Create date: 31-JAN-2024
@@ -49,22 +46,18 @@ BEGIN
    ,@error_msg       VARCHAR(500)
    ,@file_exists     INT
    ;
-
    EXEC sp_log 2, @fn, '000: starting, 
 file:  [', @import_xls_file, ']
 @range:[',@range,']';
-
    BEGIN TRY
       -- Set defaults
       IF @range IS NULL SET @range = 'Sheet1$A:S'
-
       ----------------------------------------------------------------------------
       -- Parameter validation
       ----------------------------------------------------------------------------
       -- chk if file exists
       EXEC sp_log 1, @fn, '005: chk if file exists';
       EXEC xp_fileexist @import_xls_file, @file_exists OUT;
-
       -- POST03: @import_xls_file must exist OR exception 64871 thrown
       IF @file_exists = 0
       BEGIN
@@ -72,17 +65,14 @@ file:  [', @import_xls_file, ']
          EXEC sp_log 4, @fn, '010: ', @error_msg;
          THROW 64871, '',1;
       END
-
       ----------------------------------------------------------------------------
       -- ASSERTION: file exists
       ----------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '015: ASSERTION: file exists';
-
       ----------------------------------------------------------------------------
       -- Import file
       ----------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '020: importig file: calling sp_import_XL_existing';
-
       EXEC sp_import_XL_existing
           @import_file  = @import_xls_file
  --        ,@range        = @range
@@ -92,10 +82,8 @@ file:  [', @import_xls_file, ']
          ,@row_cnt      = @row_cnt OUT
          ,@expect_rows  = 1
          ;
-
       EXEC sp_log 1, @fn, '021';
       EXEC sp_log 1, @fn, '025: imported file OK (', @row_cnt, ' rows)';
-
       ----------------------------------------------------------------------------
       -- Checking post conditions
       -- POST04: openrowset cmd succeeded   OR exception 64872 thrown
@@ -106,7 +94,6 @@ file:  [', @import_xls_file, ']
       -- POST03: @import_xls_file must exist OR exception 64871 thrown     sp_import_XL_existing 
       -- POST04: openrowset cmd succeeded    OR exception 64872 thrown     sp_import_XL_existing 
       -- POST05: at least 1 row was imported OR exception 64873 thrown     sp_import_XL_existing @expect_rows  = 1
-
       IF @row_cnt = 0
       BEGIN
          SET @error_msg = 'No rows were imported';
@@ -119,20 +106,16 @@ file:  [', @import_xls_file, ']
       EXEC sp_log 4, @fn, '50: caught exception: ',@error_msg;
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn, '99: leaving, OK';
    RETURN;
 END
 /*
 EXEC sp_import_corrections_xls 'D:\Dev\Repos\Farming\Data\ImportCorrections 221018 230816-2000.xlsx'
-
 SELECT * FROM ImportCorrectionsStaging
 EXEC sp_import_corrections_xls 'D:\Dev\Repos\Farming\Data\ImportCorrections 231025 231106-0000.xlsx'
-
 EXEC tSQLt.Run 'test.test_sp_import_correction_files_xls'
 TRUNCATE TABLE ImportCorrectionsStaging;
 TRUNCATE TABLE ImportCorrections;
 */
-
-
 GO
+

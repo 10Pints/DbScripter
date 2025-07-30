@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE [dbo].[EPPO_RepcoStaging](
 	[identifier] [varchar](max) NULL,
 	[datatype] [varchar](max) NULL,
@@ -14,5 +12,5 @@ CREATE TABLE [dbo].[EPPO_RepcoStaging](
 	[grp_dtype] [varchar](max) NULL,
 	[grp_code] [varchar](max) NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-
 GO
+

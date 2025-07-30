@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 10-NOV-2023
@@ -37,24 +33,19 @@ BEGIN
    ,@tstd_rtn        VARCHAR(100)
    ,@qrn             VARCHAR(100)
    ;
-
    SELECT
        @qrn       = qrn
       ,@schema_nm = schema_nm
       ,@tstd_rtn  = rtn_nm
       ,@ad_stp    = ad_stp
    FROM test.RtnDetails;
-
    if(@ad_stp=1) INSERT INTO @t(line) VALUES(CONCAT('-- ', @fn));
-
    INSERT INTO @t(line) 
    SELECT line
    FROM dbo.fnGetRtnDef();
-
    SET @desc_st_row = (SELECT TOP 1 id FROM @t WHERE line LIKE '--%Description%');
    SET @desc_end_row= (SELECT TOP 1 id FROM @t WHERE line LIKE '%====%' AND id>@desc_st_row);
    DELETE FROM @t WHERE id NOT BETWEEN @desc_st_row AND @desc_end_row-1;
-
    UPDATE @t
    SET line = dbo.fnTrim(REPLACE(line, '-- Description:', '--'));
    RETURN;
@@ -67,7 +58,5 @@ SELECT * FROM dbo.fnGetRtnDef();
 EXEC tSQLt.RunAll;
 SELECT * FROM test.RtnDetails;
 */
-
-
-
 GO
+

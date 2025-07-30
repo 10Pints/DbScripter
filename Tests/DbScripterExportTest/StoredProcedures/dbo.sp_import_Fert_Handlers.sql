@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 05-NOV-2024
@@ -44,24 +42,20 @@ BEGIN
       ,@update_row_cnt     INT            = -1
       ,@null_type_row_cnt  INT            = -1
       ;
-
    SET NOCOUNT OFF
    BEGIN TRY
       EXEC sp_log 1, @fn, '000: starting:
 file  :[', @file  ,']
 folder:[', @folder,']
 ';
-
       ---------------------------------------
       -- Validate inputs
       ---------------------------------------
       IF @folder IS NOT NULL
          SET @file = CONCAT(@folder, @bkslsh, @file);
-
       ---------------------------------------
       -- Setup
       ---------------------------------------
-
       ---------------------------------------
       -- Process
       ---------------------------------------
@@ -71,18 +65,15 @@ folder:[', @folder,']
         ,@file       = @file
         ,@clr_first  = 1
         ;
-
       ---------------------------------------
       -- Do any fixup
       ---------------------------------------
       EXEC sp_log 1, @fn, '020: performing fixup = currently none';
-
       ---------------------------------------
       -- Copy to main table
       ---------------------------------------
       EXEC sp_log 1, @fn, '030: Clean copy to FertHandler main table';
       DELETE FROM FertHandler;
-
       INSERT INTO FertHandler
       (
           [region]
@@ -101,17 +92,14 @@ folder:[', @folder,']
          ,[expiry_date]
       FROM FertHandlerStaging
       ;
-
       ---------------------------------------
       -- Postcondition checks
       ---------------------------------------
       EXEC sp_log 1, @fn, '040: Performing postcondition checks';
       EXEC sp_assert_tbl_pop 'FertHandler';
-
       ---------------------------------------
       -- Completed processing OK
       ---------------------------------------
-
       SET @rc = 0; -- OK
       IF @display_tables = 1 SELECT * FROM FertHandler;
       EXEC sp_log 1, @fn, '300:completed import and fixup'
@@ -121,12 +109,11 @@ folder:[', @folder,']
       EXEC sp_log 4, @fn, '500: Caught exception: ', @error_msg;
       THROW;
    END CATCH
-
    EXEC sp_log 1, @fn, '996: leaving, RC: ', @rc
    RETURN @RC;
 END
 /*
 EXEC sp_import_Fert_Handlers 'D:\Dev\Farming\Data\Fert-Handlers-20240930.txt', 1;
 */
-
 GO
+

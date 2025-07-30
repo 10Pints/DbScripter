@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =========================================================================
 -- Author:      Terry watts
 -- Create date: 28-OCT-2024
@@ -17,7 +14,6 @@ AS
 BEGIN
    DECLARE @sql VARCHAR(MAX)
    SET NOCOUNT ON;
-
    SET @sql = CONCAT('IF EXISTS (SELECT 1 FROM [', @table, '] WHERE [',@field,'] IS NULL OR [',@field,'] IS NULL) EXEC sp_raise_exception 53621,  ''', @table, '.', @field,' has a null entry;'';');
    --PRINT @sql
    EXEC( @sql);
@@ -25,6 +21,5 @@ END
 /*
 EXEC tSQLt.RunAll;
 */
-
-
 GO
+

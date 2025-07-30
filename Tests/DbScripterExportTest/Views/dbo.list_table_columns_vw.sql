@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================================
 -- Author:      Terry Watts
 -- Create date: 06-NOV-2023
@@ -32,6 +29,5 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION;
 /*
 SELECT CONCAT(column_name) FROM list_table_columns_vw where table_name = 'PathogenStaging' and is_txt = 1;
 */
-
-
 GO
+

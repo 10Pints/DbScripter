@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ======================================================================================================
 -- Procedudure: NM:dbo].[sp_mn_imprt_ini
 -- Description: main import routine init, set the import state tables
@@ -103,10 +101,8 @@ BEGIN
    ,@imp_file        VARCHAR(500)
    ,@import_id       INT
    ,@file_type       VARCHAR(10)
-
       SET NOCOUNT OFF
       SET XACT_ABORT ON;
-
 -- R01: display the prms
     EXEC sp_log 2, @fn,'000: starting:
 import_root:   [', @import_root,   ']
@@ -119,52 +115,40 @@ stop_row:      [', @stop_row,      ']
 restore_s3_s2: [', @restore_s3_s2, ']
 log_level:     [', @log_level,     ']
 ';
-
-
    BEGIN TRY
       --********************************************************************************
       -- Set defaults:
       --********************************************************************************
       EXEC sp_log 1, @fn, '010: setting defaults';
-
       IF @import_root IS NULL SET @import_root = 'D:\Dev\Farming\Data';
       IF @start_row   IS NULL SET @start_row   = 1;
       IF @stop_row    IS NULL SET @stop_row    = 100000
-
       --********************************************************************************
       -- Validation
       --********************************************************************************
       EXEC sp_log 1, @fn, '020: validating preconditions';
-
       IF @start_stage NOT BETWEEN 0 AND 13      EXEC sp_raise_exception 50005, 'start_stage must be between 0 and 13';
       IF @stop_stage  NOT BETWEEN 0 AND 13      EXEC sp_raise_exception 50006, 'stop_stage must be between 0 and 13';
       IF @start_row   NOT BETWEEN 0 AND 1000000 EXEC sp_raise_exception 50005, 'start_row must be between 1 and 1000000';
       IF @stop_row    NOT BETWEEN 0 AND 1000000 EXEC sp_raise_exception 50005, '@stop_row must be between 1 and 1000000';
-
       If @start_stage < 7
       BEGIN
          -- R06.3: if stage < 7 then 1 or more cor files must be specified  if not raise exception 60003 'R05.3: 1: or more correction files must be specified if stage < 5'
          EXEC sp_assert_not_null_or_empty @cor_files, '030: 1 or more cor files must be specified if stage <5', @ex_num=60003, @fn=@fn;
          EXEC sp_log 1, @fn, '040: chk @import_root specified';
-
          -- POST 07: @file_type set = 'txt' or 'xlsx'  and not null
          EXEC sp_assert_not_null_or_empty @import_root, '101:  @import_root',@fn=@fn;
-
-
          -----------------------------------------------------------------------------------
          --R04: prefix the root to the import file
          -----------------------------------------------------------------------------------
          SET @import_file = CONCAT(@import_root, CHAR(92), @import_file);
-
          -- R05.1 @import_root: must be specified if stage < 5 -- if not raise exception 60001 'R05.1: import root must be specified if stage < 5'
          IF (@import_root IS NULL OR dbo.fnLen(@import_root)=0) AND @start_stage < 5
             EXEC sp_raise_exception 60001, '050: R05.1: import root must be specified if stage < 5', @fn=@fn;
-
          -- R05.3 @cor_files:   must be specified if stage < 5 -- if not raise exception 60003 @cor_files: must be specified if stage < 5
          IF (@cor_files   IS NULL OR dbo.fnLen(@cor_files)=0) AND @start_stage < 5
             EXEC sp_raise_exception 60003, '060: R05.3: 1 or more correction files must be specified if stage < 5', @fn=@fn;
       END
-
       -- R06.1: import root: must be specified/exist if stage < 4 if not raise exception 60001 'R05.1: import root must be specified if stage < 5'
       --        if stage < 7                         if not raise exception 60009 'R05.9: import id should be between 1 and 10'
       -- R02: Determine the file type - xlsx or txt if stage < 4
@@ -174,10 +158,8 @@ log_level:     [', @log_level,     ']
          EXEC sp_log 1, @fn,'080 getting the LRAP import file type([',@import_file,'])';
          SELECT @file_type = ext
          FROM dbo.fnGetFileDetails(@import_file);
-
          EXEC sp_log 1, @fn,'090 chk @file_type [',ext,']';
          EXEC sp_assert_not_null_or_empty @file_type, ' 131: @file_type', @fn= @fn;
-
          -- R03.1: Clear AppLog table - by the end of the ini process AppLog will have about 35 rows - so chk this post condidion now - its the only time it should be true
          -- POST 02: R02
          -----------------------------------------------------------------------------------
@@ -195,25 +177,19 @@ log_level:     [', @log_level,     ']
          IF (@import_id < 1) OR (@import_id>10) EXEC sp_raise_exception 60009,'140: R05.9: import id should be between 1 and 10', @fn=@fn;
       END
       EXEC sp_log 1, @fn,'150';
-
       IF @start_stage < 9
       BEGIN
          -- R05.4: start_stage must be between 0 and 10         -- if not raise exception 60004 'R05.4: start_stage must be between 0 and 10'
          IF (@start_stage <0) OR (@start_stage>10) EXEC sp_raise_exception 60004,'170: R05.4: start_stage must be between 0 and 10', @fn=@fn;
-
          -- R05.5: @stop_stage:  between 0 and 10, >= st stg    -- if not raise exception 60005 'R05.5: stop stage: must be between 0 and 10 and be >= start stage'
          IF (@stop_stage <0) OR (@stop_stage>10) OR (@start_stage > @stop_stage) EXEC sp_raise_exception 60005,'180: R05.5: stop stage: must be between 0 and 10 and be >= start stage', @fn=@fn;
-
          -- R05.6: start row must be between 0 and 100000 and be >= start row -- if not raise exception 60006 'R05.6: start row must be between 0 and 10000'
          IF (@start_row <0) OR (@start_row>100000) EXEC sp_raise_exception 60006,'190: R05.6: start row must be between 0 and 100000 and be >= start row', @fn=@fn;
-
          -- R05.7: 'R05.7: stop row must be between 0 and 100000 and be >= start row' - if not raise exception 60006 'R05.7: stop row must be between 0 and 100000 and be >= start row'
          IF (@stop_row < 0) OR (@stop_row > 100000) EXEC sp_raise_exception 60007,'200: R05.7: stop row must be between 0 and 100000 and be >= start row', @fn=@fn;
       END
-
       -- R05.8 @log_level:   between 0 and 4                -- if not raise exception 60008 'R05.8: @log_level: must be between 0 and 4'
       IF (@log_level <0 ) OR (@log_level >4 )  EXEC sp_raise_exception 60008,'210: R05.8: @log_level: must be between 0 and 4', @fn=@fn;
-
      -----------------------------------------------------------------------------------
       -- R03: Set the log level
       -----------------------------------------------------------------------------------
@@ -223,15 +199,11 @@ log_level:     [', @log_level,     ']
       --------------------------------------------------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '230: ASSERTION: Validated parameters';
       EXEC sp_set_log_level @log_level;-- POST 4: set the min log level
-
       SET @import_id_cpy = @import_id;
-
       --------------------------------------------------------------------------------------------
       -- ASSERTION: Validation succeeded
       --------------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '240: ASSERTION: Validation succeeded';
-
-
       --********************************************************************************
       -- Process
       --********************************************************************************
@@ -248,10 +220,8 @@ log_level:     [', @log_level,     ']
       -- R03.1: Clear AppLog table
      TRUNCATE TABLE Applog;
      TRUNCATE TABLE ImportState;
-
       -- ASSERTION: @import_id id known and > 0
       EXEC sp_set_ctx_imp_id @import_id;              -- POST 3: set import id
-
       -- R03: Clear tables
       EXEC sp_log 1, @fn, '260: chk postcondion R03: Cleared tables';
       --   R03.2: Clear CorrectionLog table
@@ -260,17 +230,14 @@ log_level:     [', @log_level,     ']
       EXEC sp_assert_tbl_not_pop 'S2UpdateLog';
       --   R03.4: Clear S2UpdateSummary table
       EXEC sp_assert_tbl_not_pop 'S2UpdateSummary';
-
       ----------------------------------------------------------------
    -- R15: Set the session context values:
          -------------------------------------------------------------
    -- R15.1 set ctx: import_root
    EXEC sp_set_session_context_import_root @import_root
-
    -- file type: txt or xlsx
    -- Cor files
    EXEC sp_log 1, @fn, '270: pop ImportState, Corfiles';
-
    -- Save parameters in state
    INSERT INTO ImportState
           ( import_root, import_file, cor_files, start_stage, stop_stage, start_row, stop_row, restore_s1_s2, restore_s3_s2
@@ -278,9 +245,7 @@ log_level:     [', @log_level,     ']
    VALUES (@import_root,@import_file,@cor_files,@start_stage,@stop_stage,@start_row,@stop_row,@restore_s1_s2,@restore_s3_s2
           ,@log_level,@import_eppo,@import_id,@file_type)
    ;
-
    EXEC sp_init_cor_files @cor_files = @cor_files, @import_root = @import_root;
-
          -------------------------------------------------------------
          -- 10: Completed processing
          -------------------------------------------------------------
@@ -298,5 +263,5 @@ EXEC tSQLt.Run 'test.test_099_sp_mn_imprt_ini';
 EXEC test.test_099_sp_mn_imprt_ini;
 EXEC sp_AppLog_display 'sp_mn_imprt_ini'
 */
-
 GO
+

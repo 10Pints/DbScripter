@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 05-MAR-2024
@@ -20,6 +17,5 @@ FROM DistributorStaging CROSS APPLY string_split(manufacturers, ',');
 /*
 SELECT * FROM DistributorStaging_vw
 */
-
-
 GO
+

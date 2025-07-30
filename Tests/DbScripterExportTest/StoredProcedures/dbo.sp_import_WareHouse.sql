@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-NOV-2024
@@ -50,35 +47,29 @@ BEGIN
       ,@update_row_cnt     INT            = -1
       ,@null_type_row_cnt  INT            = -1
       ;
-
    SET NOCOUNT OFF
    BEGIN TRY
       EXEC sp_log 1, @fn, '000: starting:
 file  :[', @file  ,']
 folder:[', @folder,']
 ';
-
       ---------------------------------------
       -- Validate inputs
       ---------------------------------------
       IF @folder IS NOT NULL
          SET @file = CONCAT(@folder, @bkslsh, @file);
-
       ----------------------------------------------------------------------------------
       -- Process
       ----------------------------------------------------------------------------------
-
       EXEC sp_log 1, @fn, '020: calling sp_bulk_import_tsv2';
       EXEC sp_import_txt_file
           @table        ='WarehouseStaging'
          ,@file         = @file
          ,@non_null_flds='region,company_nm,warehouse_nm,address,type,expiry'
          ;
-
       ----------------------------------------------------------------------------------
       -- Do any fixup
       ----------------------------------------------------------------------------------
-
       ----------------------------------------------------------------------------------
       -- Copy WarehouseStaging to main Warehouse table with fixup
       ----------------------------------------------------------------------------------
@@ -101,9 +92,7 @@ folder:[', @folder,']
          ,iif([type]='Both Fertilizer & Pesticide', 'Fertilizer,Pesticide', [type])
          ,CONVERT(DATE,[expiry])
       FROM WarehouseStaging;
-
       IF @display_tables = 1 SELECT * FROM Warehouse;
-
       ----------------------------------------------------------------------------------
       -- Completed processing OK
       ----------------------------------------------------------------------------------
@@ -115,7 +104,6 @@ folder:[', @folder,']
       EXEC sp_log 4, @fn, '500: Caught exception: ', @error_msg;
       THROW;
    END CATCH
-
    EXEC sp_log 1, @fn, '999: leaving, RC: ', @rc
    RETURN @RC;
 END
@@ -125,6 +113,5 @@ SELECT * from Warehouse;
 SELECT distinct [type] from Warehouse;
 SELECT distinct [region] from Warehouse order by region;
 */
-
-
 GO
+

@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ====================================================================
 -- Author       Terry Watts
 -- Create date: 21-MAR-2024
@@ -19,5 +17,5 @@ AS
 /*
 SELECT * FROM list_unregistered_pathogens_vw ORDER BY [Unregisterd Pathogen];
 */
-
 GO
+

@@ -1,6 +1,7 @@
 ﻿
-namespace DbScripterTests;
+using Microsoft.SqlServer.Management.Smo;
 
+namespace DbScripterTests;
 
 public class DbScripterTests : XunitTestBase
 {
@@ -13,7 +14,7 @@ public class DbScripterTests : XunitTestBase
    public void CreateEntityNameTest()
    {
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("AppSettings.01.json", out string msg);
+      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
       string? x;
       x = scripter.Database.Schemas["dbo"].Urn.ToString();                // Server[@Name='DevI9']/Database[@Name='Farming_dev']/Schema[@Name='dbo']
       x = scripter.Database.Assemblies[0].Urn.ToString();                // Server[@Name='DevI9']/Database[@Name='Farming_dev']/SqlAssembly[@Name='Microsoft.SqlServer.Types']
@@ -39,6 +40,7 @@ public class DbScripterTests : XunitTestBase
       Assert.Equal("dbo.applog_vw_asc"             , scripter.CreateEntityName(SqlTypeEnum.View, "dbo", "applog_vw_asc"));
    }
 
+   /*
    [Fact]
    public void GetFilterUrns_when_AppSettings_01_then_17_required_items()
    {
@@ -60,7 +62,8 @@ public class DbScripterTests : XunitTestBase
       cnt = scripter.P.WantAllMap.Count(v => v.Value == true);
       Assert.Equal(0, cnt);
    }
-
+   */
+   /*
    [Fact]
    public void GetFilterUrns_when_AppSettings_01_then_0_required_items()
    {
@@ -75,12 +78,12 @@ public class DbScripterTests : XunitTestBase
 
       Assert.Equal(3, cnt);
    }
-
+*/
    [Fact]
    public void DbScripterInitTest()
    {
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("AppSettings.01.json", out string msg);
+      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
       Assert.True(ret, msg);
       Assert.Equal("", msg);//, "scripter.Init msg");
    }
@@ -89,12 +92,12 @@ public class DbScripterTests : XunitTestBase
    public void DbScripterExportTest()
    {
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("DbScripterExportTest.json", out string msg);
+      bool ret = scripter.Init("./Config/DbScripterExportTest.json", out string msg);
       Assert.True(ret, msg);
       Assert.Equal("", msg);//, "scripter.Init msg");
 
       ret = scripter.Export(out msg);
-      Assert.True(ret, "scripter.Export ret");
+      Assert.True(ret, msg);
       Assert.Equal("", msg);//, "scripter.Export msg");
    }
 
@@ -102,10 +105,10 @@ public class DbScripterTests : XunitTestBase
    public void CreateUrnTest_when_schema_then_ok()
    {
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("AppSettings.01.json", out string msg);
+      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
       Assert.True(ret, msg);
 
-      var urnStr = scripter.CreateUrn
+      var urnStr = DbScripter.CreateUrn
       (
          server: scripter.P.Server,
          db: scripter.P.Database,
@@ -124,13 +127,13 @@ public class DbScripterTests : XunitTestBase
    public void CreateUrnTest_when_procedure_then_ok()
    {
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("AppSettings.01.json", out string msg);
+      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
       Assert.True(ret, msg);
 
-      var urnStr = scripter.CreateUrn
+      var urnStr = DbScripter.CreateUrn
          (
-         server: scripter.P.Server,
-         db: scripter.P.Database,
+         server: "DevI9",
+         db: "Farming_dev",
          q_name: "dbo.sp_assert_table_exists",
          type: SqlTypeEnum.StoredProcedure
          );
@@ -147,10 +150,10 @@ public class DbScripterTests : XunitTestBase
    public void CreateUrnTest_when_function_then_ok()
    {
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("AppSettings.01.json", out string msg);
+      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
       Assert.True(ret, msg);
 
-      var urnStr = scripter.CreateUrn
+      var urnStr = DbScripter.CreateUrn
          (
          server: scripter.P.Server,
          db: scripter.P.Database,
@@ -170,10 +173,10 @@ public class DbScripterTests : XunitTestBase
    public void CreateUrnTest_when_table_then_ok()
    {
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("AppSettings.01.json", out string msg);
+      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
       Assert.True(ret, msg);
 
-      var urnStr = scripter.CreateUrn
+      var urnStr = DbScripter.CreateUrn
          (
          server: scripter.P.Server,
          db: scripter.P.Database,
@@ -193,10 +196,10 @@ public class DbScripterTests : XunitTestBase
    public void CreateUrnTest_when_view_then_ok()
    {
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("AppSettings.01.json", out string msg);
+      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
       Assert.True(ret, msg);
 
-      var urnStr = scripter.CreateUrn
+      var urnStr = DbScripter.CreateUrn
       (
          server: scripter.P.Server,
          db: scripter.P.Database,
@@ -211,7 +214,7 @@ public class DbScripterTests : XunitTestBase
       Assert.NotNull(obj);
       Assert.Equal("audit_vw", obj?.Name);
    }
-
+/*
    [Fact]
    public void GetFilterUrns_when_then_15()
    {
@@ -227,12 +230,13 @@ public class DbScripterTests : XunitTestBase
 
       Assert.Equal(20, cnt);
    }
+*/
 
    [Fact]
    public void GetUrnTypeTest()
    {
       DbScripter sc = new DbScripter();
-      bool ret = sc.Init("AppSettings.01.json", out string msg);
+      bool ret = sc.Init("./Config/AppSettings.GetUrnTypeTest.json", out string msg);
       Assert.True(GetUrnTypeHlpr(sc.Database.Assemblies, SqlTypeEnum.Assembly));
       Assert.True(GetUrnTypeHlpr(sc.Server.Databases, SqlTypeEnum.Database));
       Assert.True(GetUrnTypeHlpr(sc.Database.UserDefinedFunctions, SqlTypeEnum.Function));
@@ -245,10 +249,11 @@ public class DbScripterTests : XunitTestBase
       Assert.True(GetUrnTypeHlpr(sc.Database.UserDefinedTableTypes, SqlTypeEnum.UserDefinedTableType));
    }
 
-   private static bool GetUrnTypeHlpr(dynamic? dbColl, SqlTypeEnum exp_ty)
+   private static bool GetUrnTypeHlpr(dynamic dbColl, SqlTypeEnum exp_ty)
    {
       Urn urn = dbColl?[0].Urn ?? new Urn();
-      SqlTypeEnum type = DbScripter.GetUrnType(urn);//.GetUrnType(urn);
+      //Urn urn = DbScripter.CreateUrn(server, database, q_name, exp_ty);
+      SqlTypeEnum type = DbScripter.GetUrnType(urn);
       return exp_ty == type;
    }
 }

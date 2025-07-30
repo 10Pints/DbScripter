@@ -1,10 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 30-MAR-2020
@@ -18,5 +14,5 @@ BEGIN
      EXEC master.dbo.xp_fileexist @path, @result OUTPUT
      RETURN cast(@result as bit)
 END
-
 GO
+

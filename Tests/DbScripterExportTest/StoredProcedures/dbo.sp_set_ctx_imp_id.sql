@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ====================================================
 -- Author:       Terry Watts
 -- Create date:  19-AUG-2023
@@ -22,6 +19,5 @@ END
 EXEC sp_set_ctx_imp_id 35
 PRINT CONCAT(dbo.fnGetSessionKeyImportId(), ': [', dbo.fnGetSessionValueImportId(),']');
 */
-
-
 GO
+

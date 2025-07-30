@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =====================================================================
 -- Author:      Terry Watts
 -- Create date: 13-Nov-2024
@@ -35,7 +32,6 @@ CREATE   PROCEDURE [dbo].[sp_import_eppo]
    ,@field_terminator NCHAR(1)      = NULL
    ,@exp_cnts         VARCHAR(2000)= NULL
    ,@display_tables   BIT           = NULL
-
 AS
 BEGIN
    SET NOCOUNT ON;
@@ -46,39 +42,32 @@ BEGIN
    ,@table        VARCHAR(60)
    ,@eppo         Eppo
    ;
-
    -- Set defaults as necessary
    IF @folder           IS NULL SET @folder           = 'D:\Dev\Farming\Data\EPPO.bayer';
    IF @field_terminator IS NULL SET @field_terminator = ',';
    IF @display_tables   IS NULL SET @display_tables   = 0;
-
    EXEC sp_log 2, @fn,'000: starting:
 folder:          [', @folder,   ']
 field_terminator:[', @field_terminator, ']
 exp_cnts        :[', @exp_cnts        , ']
 display_tables  :[', @display_tables  , ']'
 ;
-
    BEGIN TRY
          -------------------------------------------------------------------------------------------
          -- 01: Validate parameters
          -------------------------------------------------------------------------------------------
          EXEC sp_log 1, @fn,'010: validating parameters';
-
          -------------------------------------------------------------------------------------------
          -- 02: Initialise
          -------------------------------------------------------------------------------------------
           EXEC sp_log 1, @fn,'020: validating parameters';
-
            -------------------------------------------------------------------------------------------
          -- 03: Process
          -------------------------------------------------------------------------------------------
          EXEC sp_log 1, @fn,'030: starting process';
-
          IF @exp_cnts IS NOT NULL
          BEGIN
             EXEC sp_log 2, @fn, '040: checking the expected row cnts   ';
-
             INSERT INTO @eppo(ordinal, [table], exp_row_cnt)
             SELECT ordinal, [table], exp_row_cnt
             FROM
@@ -86,34 +75,28 @@ display_tables  :[', @display_tables  , ']'
                SELECT ordinal, SUBSTRING(value, 1,CHARINDEX(':', value)-1) AS [table], SUBSTRING(value, CHARINDEX(':', value)+1, 900) AS [exp_row_cnt]
                FROM string_split(@exp_cnts, ',',1) as A
             ) X;
-
             SELECT * FROM @eppo;
          END
-
          -------------------------------------------------------------------------------------------
       -- STAGE 1: sp_import_eppo_files: these files are imported into their associated stagig files
          -------------------------------------------------------------------------------------------
          EXEC sp_log 1, @fn,'050: STAGE 1: calling sp_import_eppo_files';
-
          EXEC sp_import_eppo_files
              @folder
             ,@field_terminator
             ,@exp_cnts
             ,@display_tables
             ;
-
          -------------------------------------------------------------------------------------------
       -- STAGE 2: any fixup can be performed
          -------------------------------------------------------------------------------------------
          EXEC sp_log 1, @fn,'060: STAGE 2: any fixup can be performed';
          EXEC sp_import_eppo_fixup;
-
          -------------------------------------------------------------------------------------------
       -- STAGE 3: merge staging tables into the main EPPO tables converting types as necessary
          -------------------------------------------------------------------------------------------
          EXEC sp_log 1, @fn,'070: STAGE 3: calling sp_import_eppo_merge';
          EXEC sp_import_eppo_merge @display_table = @display_tables;
-
             -------------------------------------------------------------------------------------------
          -- 04: Check postconditions
          -------------------------------------------------------------------------------------------
@@ -135,7 +118,6 @@ display_tables  :[', @display_tables  , ']'
          EXEC sp_assert_tbl_populated 'EPPO_pfllink';
          EXEC sp_assert_tbl_populated 'EPPO_pflname';
          EXEC sp_assert_tbl_populated 'EPPO_repco';
-
             -------------------------------------------------------------------------------------------
          -- 05: Process complete
          -------------------------------------------------------------------------------------------
@@ -145,13 +127,11 @@ display_tables  :[', @display_tables  , ']'
       EXEC sp_log_exception @fn, ' 550: ';
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn,'999: leaving:';
 END
 /*
 EXEC tSQLt.Run 'test.test_021_sp_import_eppo';
 SELECT * FROM gailinkStaging;
 */
-
-
 GO
+

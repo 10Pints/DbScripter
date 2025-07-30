@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==============================================================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 19-JUN-2023
@@ -50,14 +48,11 @@ BEGIN
        @fn        VARCHAR(35)   = N'BLK_INSRT PEST REG 230721'
       ,@RC        INT            = -1
       ,@import_nm VARCHAR(20)
-
    --SET @import_nm = dbo.fnGetSessionValueImportId();
-
    EXEC sp_log 2, @fn, '000: starting
 imprt_csv_file:[',@imprt_csv_file, ']
 clr_first     :[',@clr_first,      ']
 ';
-
    --EXEC sp_register_call @fn;
    EXEC @RC = sp_bulk_insert_LRAP @imprt_csv_file, 'RegisteredPesticideImport_230721_vw',@clr_first=@clr_first;
    EXEC sp_log 2, @fn, 'Bulk_insert of [', @imprt_csv_file, ' leaving, @RC: ', @RC;
@@ -66,5 +61,5 @@ END
 /*
 EXEC sp_bulk_insert_pesticide_register_230721 'D:\Dev\Repos\Farming\Data\LRAP-231025-231103.txt';
 */
-
 GO
+

@@ -1,11 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
 -- ================================================================================================================================
 -- Author:      Terry Watts
 -- Create date: 09-Nov-2023
@@ -49,34 +44,27 @@ BEGIN
    ,@hlpr_rtn_nm        VARCHAR(100)
    ,@script_file_path   VARCHAR(500) 
    ,@bckslsh            VARCHAR(1) = NCHAR(92)
-
    SET NOCOUNT ON;
-
    BEGIN TRY
       ----------------------------------------------------------------------------------------------------------------------------
       -- Init
       ----------------------------------------------------------------------------------------------------------------------------
       EXEC sp_log 2, @fn,'000: starting';
       TRUNCATE TABLE Test.HlprDef;
-
       SELECT
          @hlpr_rtn_nm = hlpr_rtn_nm
       FROM test.RtnDetails;
-
       SET @script_file_path = CONCAT(@folder, @bckslsh, @hlpr_rtn_nm, '.sql');
-
       ---------------------------------------------------------------------------------
       -- Create the Helper script in the TstHlpr table
       ----------------------------------------------------------------------------------
       EXEC sp_log 2, @fn, '010: Creating the script in the TstHlpr table: calling sp_crt_tst_hlpr_script';
       EXEC test.sp_crt_tst_hlpr_script;
-
       ----------------------------------------------------------------------------------
       -- Save the script to file
       ----------------------------------------------------------------------------------
       EXEC sp_log 2, @fn, '020: Create the Helper script file';
       EXEC test.sp_crt_hlpr_script_file @script_file_path;
-
       ----------------------------------------------------------------------------------
       -- Processing complete 
       ----------------------------------------------------------------------------------
@@ -86,7 +74,6 @@ BEGIN
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn, '999 leaving, OK';
 END
 /*
@@ -94,7 +81,5 @@ TRUNCATE TABLE APPLog
 EXEC tSQLt.Run 'test.test_081_sp_crt_tst_hlpr';
 EXEC tSQLt.RunAll;
 */
-
-
-
 GO
+

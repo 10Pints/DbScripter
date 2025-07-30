@@ -1,16 +1,10 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
 -- =========================================================================
 -- Author:      Terry Watts
 -- Create date: 22-MAR-2020
 -- Description: Logs to output and to the AppLog table
-
 -- Level: 0 DEBUG
 --        1 INFO
 --        2 NOTE
@@ -72,10 +66,8 @@ BEGIN
       ,@log_msg         VARCHAR(4000)
       ,@display_msg     VARCHAR(4000)
       ,@row_count_str   VARCHAR(30) = NULL
-
    SET NOCOUNT ON
    SET @min_log_level = COALESCE(dbo.fnGetLogLevel(), 1); -- Default: INFO
-
    SET @lvl_msg = 
    CASE
       WHEN @level = 0 THEN 'DEBUG'
@@ -85,11 +77,8 @@ BEGIN
       WHEN @level = 4 THEN 'ERROR'
       ELSE '???? '
    END;
-
    SET @fn= dbo.fnPadRight(@fn, 45);
-
    IF @row_count IS NOT NULL SET @row_count_str = CONCAT(' rowcount: ', @row_count)
-
    SET @log_msg = CONCAT
    (
        @msg00 ,@msg01 ,@msg02 ,@msg03, @msg04, @msg05, @msg06 ,@msg07 ,@msg08 ,@msg09 
@@ -119,11 +108,9 @@ BEGIN
       ,@msg240,@msg241,@msg242,@msg243,@msg244,@msg245,@msg246,@msg247,@msg248,@msg249 
       ,@row_count_str
    );
-
    -- Always log to log table
    INSERT INTO AppLog (rtn, msg, [level], row_count)
    VALUES (dbo.fnTrim(@fn), @log_msg, @level, @row_count);
-
    -- Only display if required
    IF @level >= @min_log_level
    BEGIN
@@ -131,7 +118,6 @@ BEGIN
          SET @display_msg =  CONCAT(@lvl_msg, ' ',@fn, ': ', @log_msg);
       ELSE
          SET @display_msg =  CONCAT(@lvl_msg, ' ', @log_msg);
-
       PRINT @display_msg;
    END
 END
@@ -139,7 +125,5 @@ END
 EXEC tSQLt.RunAll;
 SELECT * From AppLog
 */
-
-
-
 GO
+

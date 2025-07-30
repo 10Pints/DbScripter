@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-JUN-2023
@@ -48,16 +46,12 @@ BEGIN
       ,@sql    VARCHAR(4000)
       ,@msg    VARCHAR(500)
       ;
-
    EXEC sp_log 1, @fn, '000: starting';
    --EXEC sp_register_call @fn;
-
    -- Remove wrapping "
    EXEC sp_log 1, @fn, '010: remove wrapping double quotes from the following columns: search_clause, not_clause, replace_clause, crops, chk';
-
    -- REMOVE the first 2 imported header rows
    --DELETE FROM ImportCorrectionsStaging WHERE id2<3;
-
    UPDATE ImportCorrectionsStaging
    SET
        [action]       = dbo.fnTrim2( [action]       , '"')
@@ -74,10 +68,8 @@ BEGIN
       ,comments       = dbo.fnTrim2( comments       , '"')
       ,exact_match    = dbo.fnTrim2( exact_match    , '"')
    ;
-
    -- we do use regex - but they wont have an opening [
    EXEC sp_log 1, @fn, '020: remove wrapping []{}';
-
    -- 10-JUL-2023: Wrapping brackets are now {} to avoid clash with regex [] brackets
    UPDATE ImportCorrectionsStaging  
    SET
@@ -85,7 +77,6 @@ BEGIN
        ,replace_clause = dbo.fnTrim2( replace_clause, '{')
        ,not_clause     = dbo.fnTrim2( not_clause,     '{')
        ;
-
    EXEC sp_log 1, @fn, '030: remove wrapping []{}';
    UPDATE ImportCorrectionsStaging
    SET
@@ -93,12 +84,10 @@ BEGIN
        ,replace_clause = dbo.fnTrim2( replace_clause, '}')
        ,not_clause     = dbo.fnTrim2( not_clause,     '}')
        ;
-
    -- 240201: XL imports using openrowset to the xl file directly limit the field width to 255
    --         so we are using a second field to hold chars 256-end then concat this to the search field here
    --EXEC sp_log 1, @fn, '040: joining search_clause and  search_clause_cont => search_clause';
    --UPDATE ImportCorrectionsStaging SET search_clause = CONCAT(search_clause, search_clause_cont);
-
    -- Run checks
    EXEC sp_log 1, @fn, '050: running checks';
    IF EXISTS
@@ -111,7 +100,6 @@ BEGIN
       OR replace_clause LIKE '%}'
       OR not_clause     LIKE '{%'
       OR not_clause     LIKE '%}'
-
       OR search_clause  LIKE '"%'
       OR search_clause  LIKE '%"'
       OR replace_clause LIKE '"%'
@@ -124,7 +112,6 @@ BEGIN
       EXEC sp_log 4, @fn, @msg;
       THROW 58126, @msg, 1;
    END
-
    EXEC sp_log 1, @fn, '999: leaving OK';
    RETURN 0;
 END
@@ -138,10 +125,9 @@ WHERE id =43;
 SELECT id, search_clause, replace_clause  FROM ImportCorrections WHERE search_clause  like '%{%';
 SELECT id, search_clause, replace_clause  FROM ImportCorrections WHERE replace_clause like '%}%';
 SELECT id, search_clause, replace_clause  FROM ImportCorrections WHERE replace_clause like '%"%';
-
 SELECT * FROM ImportCorrectionsStaging;
 EXEC sp_fixup_import_corrections_staging;
 SELECT Count(*) from ImportCorrectionsStaging;
 */
-
 GO
+

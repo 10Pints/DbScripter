@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =========================================================================
 -- Author:      Terry Watts
 -- Create date: 23-Jul-2024
@@ -19,11 +16,10 @@ AS
 BEGIN
    DECLARE @ret VARCHAR(MAX)
    SELECT @ret = CONCAT(@@SERVERNAME, '.', DB_NAME(), '.', @rtn_nm,'.sql');
-
 RETURN @ret;
 END
 /*
 PRINT test.fnCrtScriptFileName('MyRtn','D:\tmp');
 */
-
 GO
+

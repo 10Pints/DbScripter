@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================================================================================================
 -- Author:      Terry watts
 -- Create date: 02-NOV-2024
@@ -35,18 +33,14 @@ BEGIN
    DECLARE
        @fn           VARCHAR(35) = N'import_static_data_staging'
       ,@file_path    VARCHAR(600)
-
    SET NOCOUNT ON;  -- default: 'D:\Dev\Farming\Data'
-
    BEGIN TRY
       EXEC sp_log 1, @fn,'000: starting
 @import_root   :[',@import_root, ']
 @display_tables:[',@display_tables,']
 ';
-
    -- PRE 01: import_root specified
       EXEC sp_assert_not_null_or_empty @import_root, 'PRE 01: @import_root must be specified';
-
       --------------------------------------------------------------------------------------------
       -- 1. Import the ActionStaging table
       --------------------------------------------------------------------------------------------
@@ -57,7 +51,6 @@ BEGIN
          ,@non_null_flds= ' action_id,action_nm '
          ,@display_table= @display_tables
          ;
-
       --------------------------------------------------------------------------------------------
       -- 2. Import the ChemicalStaging table
       --------------------------------------------------------------------------------------------
@@ -68,7 +61,6 @@ BEGIN
          ,@non_null_flds= 'chemical_nm'
          ,@display_table= @display_tables
          ;
-
       --------------------------------------------------------------------------------------------
       -- 3. Import the CompanyStaging table
       --------------------------------------------------------------------------------------------
@@ -79,7 +71,6 @@ BEGIN
          ,@non_null_flds= 'company_nm'
          ,@display_table= @display_tables
          ;
-
       --------------------------------------------------------------------------------------------
       -- 4. Import the CropStaging table
       --------------------------------------------------------------------------------------------
@@ -90,7 +81,6 @@ BEGIN
          ,@non_null_flds= 'crop_nm'
          ,@display_table= @display_tables
          ;
-
       --------------------------------------------------------------------------------------------
       -- 5. Import the CropPathogenStaging table
       --------------------------------------------------------------------------------------------
@@ -101,7 +91,6 @@ BEGIN
          ,@non_null_flds= 'crop_nm,pathogen_nm'
          ,@display_table= @display_tables
          ;
-
   --------------------------------------------------------------------------------------------
       -- 6. Import the DistributorStaging table
       --------------------------------------------------------------------------------------------
@@ -112,12 +101,10 @@ BEGIN
          ,@non_null_flds= 'distributor_id,distributor_nm,region,province,address'
          ,@display_table= @display_tables
          ;
-
       --------------------------------------------------------------------------------------------
       -- 7. Import the FertHandlerStaging table
       --------------------------------------------------------------------------------------------
       EXEC sp_import_Fert_Handlers 'Fert-Handlers-20240930.txt' , @import_root, @display_tables = @display_tables;
-
       --------------------------------------------------------------------------------------------
       -- 8. Import the MosaicVirusStaging table
       --------------------------------------------------------------------------------------------
@@ -126,7 +113,6 @@ BEGIN
          ,@folder        = @import_root
          ,@display_tables= @display_tables
          ;
-
       --------------------------------------------------------------------------------------------
       -- 9. Import the PathogenTypeStaging table
       --------------------------------------------------------------------------------------------
@@ -138,7 +124,6 @@ BEGIN
          ,@non_null_flds= 'pathogenType_id,pathogenType_nm'
          ,@display_table= @display_tables
         ;
-
       --------------------------------------------------------------------------------------------
       -- 10. Import the PathogenStaging table
       --------------------------------------------------------------------------------------------
@@ -151,7 +136,6 @@ BEGIN
          ,@non_null_flds= 'pathogen_nm,pathogenType_nm'
          ,@display_table= @display_tables
          ;
-
       --------------------------------------------------------------------------------------------
       -- 11. Import the PestHandler table satging and mn
       --------------------------------------------------------------------------------------------
@@ -160,7 +144,6 @@ BEGIN
           ,@folder        = @import_root
           ,@display_tables= @display_tables
           ;
-
       --------------------------------------------------------------------------------------------
       -- 12. Import the UseStaging table
       --------------------------------------------------------------------------------------------
@@ -172,12 +155,10 @@ BEGIN
          ,@non_null_flds= 'use_id,use_nm'
          ,@display_table= @display_tables
          ;
-
       --------------------------------------------------------------------------------------------
       -- 13. Import the WareHouseStaging table
       --------------------------------------------------------------------------------------------
       EXEC sp_import_WareHouse     'Fert-Warehouse-20231231.txt', @import_root, @display_tables = @display_tables;
-
       --------------------------------------------------------------------------------------------
       -- Postcondition checks - chk only primary tables
       --------------------------------------------------------------------------------------------
@@ -199,22 +180,19 @@ BEGIN
       EXEC sp_assert_tbl_pop 'Use';                   -- 12
       EXEC sp_assert_tbl_pop 'WareHouseStaging';      -- 13
       EXEC sp_assert_tbl_pop 'WareHouse';             -- 13
-
       --------------------------------------------------------------------------------------------
       -- Completed processing OK
       --------------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn,'800: Completed processing OK';
-
    END TRY
    BEGIN CATCH
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 1, @fn, '999: leaving OK';
 END
 /*
 EXEC sp_import_static_data_staging 'D:\Dev\Farming\Data';
 */
-
 GO
+

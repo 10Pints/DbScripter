@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==============================================================================
 -- Author:      Terry Watts
 -- Create date: 16-AUG-2023
@@ -36,6 +33,5 @@ order by y.cor_id;
 /*
 SELECT TOP 50 * FROM audit_vw;
 */
-
-
 GO
+

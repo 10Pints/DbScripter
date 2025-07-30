@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =================================================================================
 -- Author:      Terry Watts
 -- Create date: 07-NOV-2024
@@ -50,15 +48,12 @@ CREATE PROCEDURE [dbo].[sp_update]
 AS
 BEGIN
    SET NOCOUNT OFF;
-
    DECLARE
     @fn              VARCHAR(35)   = 'sp_update'
    ,@nl              NCHAR(2)       = NCHAR(13)+NCHAR(10)
    ,@error_msg       VARCHAR(4000)
    ,@log_level       INT = dbo.fnGetLogLevel()
-
    SET @fixup_cnt = 0;
-
    If @log_level < 1
       EXEC sp_log 0, @fn, '000: starting
 table_nm       :[',@table_nm       , '] 
@@ -77,7 +72,6 @@ field2_clause  :[',@field2_clause  , ']
 extras         :[',@extras         , ']
 execute        :[',@execute        , ']
 ';
-
    EXEC sp_fnCrtUpdateSql
     @table_nm       = @table_nm
    ,@field_nm       = @field_nm
@@ -95,15 +89,12 @@ execute        :[',@execute        , ']
    ,@extras         = @extras
    ,@select_sql     = @select_sql OUT
    ,@update_sql     = @update_sql OUT
-
    BEGIN TRY
       EXEC sp_log 0, @fn,'010: executing update sql'
-
       IF @execute = 1
          EXEC (@update_sql);
       ELSE
          EXEC sp_log 2, @fn,'030: NOT EXECUTING UPDATE sql (@execute=0)';
-
       SET @fixup_cnt = @@rowcount;
       EXEC sp_log 1, @fn, '040:executed sql, updated ', @fixup_cnt, ' rows',@row_count = @fixup_cnt;
    END TRY
@@ -113,7 +104,6 @@ execute        :[',@execute        , ']
       DECLARE @line VARCHAR(4000) = REPLICATE('+', dbo.fnLen(@error_msg) + 46);
       PRINT CONCAT(@nl, @line);
       EXEC sp_log 4, @fn, @error_msg;
-
       EXEC sp_log 0, @fn, '520: params
 table_nm       :[',@table_nm       , '] 
 field_nm       :[',@field_nm       , ']
@@ -134,12 +124,11 @@ execute        :[',@execute        , ']
       PRINT CONCAT(@line, @nl);
       THROW 70000, @error_msg, 1;
    END CATCH
-
    EXEC sp_log 0, @fn, '999: leaving, @fixup_cnt: ',@fixup_cnt;
 END
 /*
 DECLARE @delta INT = 0
 EXEC sp_update_s2 'entry_mode', 'Contact/selective','contact,selective';
 */
-
 GO
+

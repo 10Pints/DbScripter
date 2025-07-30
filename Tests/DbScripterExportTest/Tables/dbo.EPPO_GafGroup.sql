@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE [dbo].[EPPO_GafGroup](
 	[identifier] [varchar](10) NULL,
 	[datatype] [varchar](5) NULL,
@@ -19,5 +17,5 @@ CREATE TABLE [dbo].[EPPO_GafGroup](
 	[authority] [varchar](50) NULL,
 	[shortname] [varchar](80) NULL
 ) ON [PRIMARY]
-
 GO
+

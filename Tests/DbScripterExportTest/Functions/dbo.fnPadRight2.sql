@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- =============================================    
 -- Author:      Terry Watts
 -- Create date: 23-JUN-2023
@@ -22,10 +19,8 @@ BEGIN
    DECLARE 
       @ret  VARCHAR(1000)
      ,@len  INT
-
    IF @s IS null
       SET @s = '';
-
    SET @len = ut.dbo.fnLen(@s)
    RETURN LEFT( CONCAT( @s, REPLICATE( @pad, @width-@len)), @width)
 END
@@ -34,6 +29,5 @@ SELECT CONCAT('[', dbo.fnPadRight2('a very long string indeed - its about time w
 SELECT CONCAT('[', dbo.fnPadRight2('', 25, '.'), ']  ');
 SELECT CONCAT('[', dbo.fnPadRight2(NULL, 25, '.'), ']  ');
 */
-
-
 GO
+

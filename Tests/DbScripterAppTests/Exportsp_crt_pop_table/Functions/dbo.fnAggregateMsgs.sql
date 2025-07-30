@@ -1,9 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- ============================================================
 -- Author:      Terry Watts
 -- Create date: 19-JUL-2025
@@ -38,9 +35,7 @@ RETURNS VARCHAR(MAX)
 AS
 BEGIN
     DECLARE @result VARCHAR(MAX);
-
     DECLARE @msgs TABLE (txt VARCHAR(MAX));
-
     INSERT INTO @msgs (txt)
     SELECT TRIM(value)
     FROM (VALUES
@@ -50,10 +45,8 @@ BEGIN
         (@msg15), (@msg16), (@msg17), (@msg18), (@msg19)
     ) AS V(value)
     WHERE value IS NOT NULL AND LTRIM(RTRIM(value)) <> '';
-
     SELECT @result = STRING_AGG(txt, ' ') FROM @msgs;
-
     RETURN @result;
 END
-
 GO
+

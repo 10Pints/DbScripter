@@ -1,9 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- ================================================================
 -- Author:      Terry Watts
 -- Create date: 25-MAR-2020
@@ -42,9 +39,7 @@ BEGIN
        @fnThis    VARCHAR(35) = 'sp_raise_exception'
       ,@msg       VARCHAR(max)
    ;
-
    DECLARE @msgs TABLE (txt VARCHAR(MAX));
-
    SELECT @msg =  dbo.fnAggregateMsgs
    (
        @msg0,  @msg1,  @msg2,  @msg3,  @msg4
@@ -52,10 +47,8 @@ BEGIN
       ,@msg10, @msg11, @msg12, @msg13, @msg14
       ,@msg15, @msg16, @msg17, @msg18, @msg19
    );
-
    IF @ex_num IS NULL SET @ex_num = 53000; -- default
       EXEC sp_log 4, @fnThis, '000: throwing exception ', @ex_num, ' ', @msg, ' st: 1';
-
    ------------------------------------------------------------------------------------------------
    -- Validate
    ------------------------------------------------------------------------------------------------
@@ -65,7 +58,6 @@ BEGIN
       SET @ex_num = abs(@ex_num) + 50000;
       EXEC sp_log 3, @fnThis, '010: supplied exception number is too low changing to ', @ex_num;
    END
-
    ------------------------------------------------------------------------------------------------
    -- Throw the exception
    ------------------------------------------------------------------------------------------------
@@ -74,9 +66,5 @@ END
 /*
 EXEC tSQLt.Run 'test.test_076_sp_raise_exception';
 */
-
-
-
-
-
 GO
+

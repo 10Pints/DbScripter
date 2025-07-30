@@ -1,11 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
 -- ======================================================================
 -- Author:      Terry Watts
 -- Create Date: 06-AUG-2023
@@ -53,30 +48,24 @@ BEGIN
    ,@act_cnt         INT           = -1
    ,@schema_nm       VARCHAR(50)
    ;
-
    SET NOCOUNT ON;
-
    SELECT 
        @table     = rtn_nm 
       ,@schema_nm = schema_nm
    FROM dbo.fnSplitQualifiedName(@table)
    ;
-
    SET @sql = CONCAT('SELECT @act_cnt = COUNT(*) FROM [', @schema_nm, '].[', @table, ']');
    EXEC sp_executesql @sql, N'@act_cnt INT OUT', @act_cnt OUT
-
    IF @display_row_cnt = 1
    BEGIN
       EXEC sp_log 1, @fnThis, @msg0, 'table:[', @table, '] has ', @act_cnt, ' rows';
    END
-
    IF @exp_cnt IS NOT null
    BEGIN
       IF @exp_cnt <> @act_cnt
       BEGIN
          IF @ex_msg IS NULL
             SET @ex_msg = CONCAT('Table: ', @table, ' row count: exp ',@exp_cnt,'  act:', @act_cnt);
-
          EXEC sp_log 4, @fnThis ,'040: @exp_cnt (', @exp_cnt, ')<> @act_cnt (', @act_cnt, ') raising exception: ',@ex_msg;
        --EXEC sp_raise_exception @ex_num, @ex_msg, 1, @fn=@fn;
          EXEC sp_raise_exception
@@ -111,7 +100,6 @@ BEGIN
       BEGIN
          IF @ex_msg IS NULL
             SET @ex_msg = CONCAT('Table: ', @table, ' does not have any rows');
-
          EXEC sp_log 4, '070: table ',@table,' has no rows: ', @ex_msg;
          THROW @ex_num, @ex_msg, 1;
       END
@@ -129,6 +117,5 @@ END
    EXEC dbo.sp_assert_tbl_po 'AppLog'
    IF EXISTS (SELECT 1 FROM [dummytable]) PRINT '1' ELSE PRINT '0'
 */
-
-
 GO
+

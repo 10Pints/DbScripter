@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ---------------------------------------------------------------------------------------------------------------------
 -- Author:      Terry Watts
 -- Create date: 29-JAN-2024
@@ -36,12 +33,9 @@ BEGIN
       ,@row_count    INT
       ,@ndx          INT         = 3
       ,@spc          VARCHAR(1) = N' '
-
    SET NOCOUNT OFF;
-
    BEGIN TRY
       EXEC sp_log 2, @fn, '000: starting';
-
       -- ---------------------------------------------------------
       --    1. Remove header rows 
       -- ---------------------------------------------------------
@@ -49,7 +43,6 @@ BEGIN
       SET @row_count = @@ROWCOUNT
       SET @fixup_cnt = @fixup_cnt + @row_count;
       EXEC sp_log 1, @fn, '005: removed ',@row_count, ' header rows from staging 1';
-
       -- ---------------------------------------------------------
       --    1. fixup spelling errors: 
       -- ---------------------------------------------------------
@@ -59,13 +52,11 @@ BEGIN
       SET @row_count = @@ROWCOUNT
       SET @fixup_cnt = @fixup_cnt + @row_count;
       EXEC sp_log 1, @fn, '020: fixup [Perrenial] -> [Perennial] updated ', @row_count, ' rows';
-
       -- 250107: pathogens: remove trailing commas
        UPDATE staging1 SET pathogens   = TRIM(',' FROM pathogens) WHERE pathogens LIKE '%,';
       SET @row_count = @@ROWCOUNT
       SET @fixup_cnt = @fixup_cnt + @row_count;
       EXEC sp_log 1, @fn, '030: removed trailing commas, updated ', @row_count, ' rows';
-
          -----------------------------------------------------------------------------------
          -- Completed processing
          -----------------------------------------------------------------------------------
@@ -77,12 +68,10 @@ BEGIN
       EXEC sp_log 4, @fn, '500: caught exception: ',@msg;
       throw;
    END CATCH
-
    EXEC sp_log 2, @fn, '999: leaving OK, @fixup_cnt: ', @fixup_cnt, @row_count = @fixup_cnt;
 END
 /*
 EXEC sp_fixup_s1_pathogens;
 */
-
-
 GO
+

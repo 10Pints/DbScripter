@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 22-JUN-2023
@@ -103,21 +101,17 @@ BEGIN
    ,@where_clause    VARCHAR(MAX) = NULL
    ,@comments_clause VARCHAR(1000)
    ;
-
    EXEC sp_log 0, @fn, '000: starting: id: ', @id, ' must_update: ', @must_update;
-
    SET @result_msg = 'NOT SET';
    EXEC SetCtxFixupRowId   @id;
    EXEC SetCtxFixupStgId   @row_id;
    EXEC SetCtxFixupFile    @stg_file;
    EXEC SetCtxFixupSrchCls @search_clause;
    EXEC SetCtxFixupRepCls  @replace_clause;
-
    -- 241221: added comments, but only for the current list of tables that have a comments field
    IF @table_nm IN ('staging3','s2_tst_bak','s1_tst_221018','s1_tst_221018_bak','ImportCorrections'
 ,'staging2','ImportCorrectionsStaging_vw','s2_tst','ImportCorrectionsStaging')
       SET @comments_clause = CONCAT('comments=''', @comments, '''');
-
    BEGIN TRY
       WHILE 1=1
       BEGIN
@@ -125,7 +119,6 @@ BEGIN
          --EXEC sp_set_ctx_cor_id @id;
          --EXEC dbo.sp_set_session_context @search_cls_key,  @search_clause
          --EXEC dbo.sp_set_session_context @replace_cls_key, @replace_clause
-
          -- 240129: added preprocessing to remove wrapping {} and "" from @search_clause, @replace_clause,@not_clause
          -- Preprocess params
          -- RESP 01. remove {} from the search_clause parameter
@@ -140,14 +133,11 @@ BEGIN
          SET @not_clause     = REPLACE( REPLACE(@not_clause, '{',''), '}','');
          -- RESP 06. remove "  from the not_clause parameter
          SET @not_clause     = REPLACE(@not_clause, '"','');
-
          SET @command = dbo.fnTrim(@command);
-
          ---------------------------------------------------------------------------------------------------------------------
          -- Validate args
          ---------------------------------------------------------------------------------------------------------------------
          EXEC sp_log 0, @fn, '010: validating args';
-
          -- POST 01: command must be valid 
          IF (@command IS NULL OR dbo.fnTrim(@command) = '')
          BEGIN
@@ -156,17 +146,13 @@ BEGIN
             SET @rc = 2; -- Error
             BREAK;
          END
-
          -- ASSERTION: stop handled (PRE CONDITIONS)
-
          -------------------------------------------
          -- Process
          -------------------------------------------
-
          IF (@command = 'sp_update')
          BEGIN
             EXEC sp_log 0, @fn, '030 handling command: sp_update';
-
             EXEC @rc = dbo.sp_update
                          @table_nm       = @table_nm
                         ,@field_nm       = @field_nm
@@ -187,21 +173,17 @@ BEGIN
                         ,@update_sql     = @update_sql OUT -- can be stored on the corrections table, or for testing
                         ,@execute        = @execute
                         ;
-
             SET @result_msg = 
             CASE
                WHEN @rc=0 THEN 'OK'
                WHEN @rc=1 THEN 'STOP'
                ELSE 'ERROR'
             END;
-
             BREAK;
          END
-
          IF (@command = 'sp_update_path')
          BEGIN
             EXEC sp_log 0, @fn, '040 handling command: sp_update_path';
-
             EXEC @rc = sp_update_S2_path
                 @search_clause   = @search_clause
                ,@filter_field_nm = @filter_field_nm
@@ -218,21 +200,17 @@ BEGIN
                ,@update_sql      = @update_sql OUT
                ,@execute         = @execute
                ;
-
             SET @result_msg = 
             CASE
                WHEN @rc=0 THEN 'OK'
                WHEN @rc=1 THEN 'STOP'
                ELSE 'ERROR'
             END;
-
             BREAK;
          END
-
          IF (@command = 'sp_update_s2')
          BEGIN
             EXEC sp_log 0, @fn, '050 handling command: sp_update_s2';
-
             EXEC @rc = sp_update_s2
                 @field           = @field_nm
                ,@search_clause   = @search_clause
@@ -250,31 +228,24 @@ BEGIN
                ,@update_sql      = @update_sql OUT
                ,@execute         = @execute
                ;
-
 -- Rtn: dbo.sp_S2_fixup_row
-
             SET @result_msg = 
             CASE
                WHEN @rc=0 THEN 'OK'
                WHEN @rc=1 THEN 'STOP'
                ELSE 'ERROR'
             END;
-
             BREAK;
          END
-
          IF @command = 'SQL' -- sql contains the sql
          BEGIN
             SET @update_sql = @search_clause;
             EXEC sp_log 1, @fn, '060 sql:
 ',@update_sql;
-
             -- Record the update sql
             --UPDATE ImportCorrections SET update_sql = @update_sql WHERE id = @id;
-
             EXEC @rc = sp_executesql @update_sql;
             SET @fixup_cnt_delta = @@ROWCOUNT;
-
             EXEC sp_log 0, @fn, '070 SQL command ran, checking rc code';
             IF @rc = 0
             BEGIN
@@ -285,19 +256,15 @@ BEGIN
                SET @result_msg = CONCAT('080: sp_executesql @sql returned error code ', @rc);
                BREAK;
             END
-
             -------------------------------------------
             -- ASSERTION EXEC @sql ran ok maybe no rows
             -------------------------------------------
-
             EXEC sp_log 0, @fn, '090 SQL command ran ok (@rc chk passed)';
             BREAK;
          END -- end IF @command = 'SQL'
-
         IF (@command = 'reg_ex')
          BEGIN
             EXEC sp_log 0, @fn, '030 handling command: reg_ex';
-
             EXEC @rc = dbo.sp_update_reg_ex
                          @table_nm       = @table_nm
                         ,@field_nm       = @field_nm
@@ -318,29 +285,23 @@ BEGIN
                         ,@update_sql     = @update_sql OUT -- can be stored on the corrections table, or for testing
                         ,@execute        = @execute
                         ;
-
             SET @result_msg = 
             CASE
                WHEN @rc=0 THEN 'OK'
                WHEN @rc=1 THEN 'STOP'
                ELSE 'ERROR'
             END;
-
             BREAK;
          END
-
          -------------------------------------------
          -- ASSERTION If here then unhandled cmd
          -------------------------------------------
-
          SET @result_msg = CONCAT( 'ERROR unrecognised command: [', @command, '] id: ', @id, ' ',@result_msg);
          EXEC sp_log 4, @fn, '100 ', @result_msg;
          SET @rc = 2;
          BREAK;
       END -- end while 1=1
-
       EXEC sp_log 1, @fn, '110: fixup_cnt: ',@fixup_cnt_delta, ' must_update: ', @must_update, ' result_msg: ', @result_msg;
-
       UPDATE ImportCorrections
       SET
           select_sql = @select_sql
@@ -348,12 +309,10 @@ BEGIN
          ,update_cnt = @fixup_cnt_delta
          ,result_msg = @result_msg
       WHERE id = @id;
-
          -------------------------------------------
       -- Record the results
           -------------------------------------------
       SET @fixup_cnt = @fixup_cnt + @fixup_cnt_delta;
-
      IF(@fixup_cnt_delta=0 AND @must_update=1 AND @execute=1)
       BEGIN
          SET @result_msg = CONCAT(' Error in row_id[',@id,'] file: [', @stg_file, '] row ', @row_id,': no rows were updated. but must update chk specified ');
@@ -361,7 +320,6 @@ BEGIN
          THROW 56656, @result_msg, 1;
          SET @rc = 2;
       END
-
       ---------------------------------------------------------------------------------------------------------------------
       -- Process complete
       ---------------------------------------------------------------------------------------------------------------------
@@ -370,7 +328,6 @@ BEGIN
    BEGIN CATCH
       DECLARE @ex_msg VARCHAR(500) = CONCAT('ERROR: row: ', @id, ', caught exception ',ERROR_MESSAGE());
       EXEC .sp_log_exception @fn, '510: import row id:', @id, ' ', @ex_msg;
-
       -- Log the results in the ImportCorrections table
       UPDATE ImportCorrections
       SET
@@ -379,16 +336,13 @@ BEGIN
          ,update_cnt = @fixup_cnt
          ,result_msg = @ex_msg
       WHERE id = @id;
-
       THROW;
    END CATCH
-
    EXEC sp_log 0, @fn, '999: leaving';
    RETURN @rc;
 END
 /*
 EXEC test.sp__crt_tst_rtns '[dbo].[sp_S2_fixup_row]', 8
 */
-
-
 GO
+

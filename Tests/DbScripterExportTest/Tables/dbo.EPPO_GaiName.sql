@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE [dbo].[EPPO_GaiName](
 	[identifier] [varchar](8) NULL,
 	[datatype] [varchar](4) NULL,
@@ -19,5 +17,5 @@ CREATE TABLE [dbo].[EPPO_GaiName](
 	[authority] [varchar](64) NULL,
 	[shortname] [varchar](128) NULL
 ) ON [PRIMARY]
-
 GO
+

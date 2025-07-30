@@ -26,7 +26,8 @@ public class ParamsTests : XunitTestBase
       LogW("This is a warning");
 
       Params p = new();
-      Assert.True(p.LoadConfigFromFile("AppSettings.Params.01.json", out string msg), msg);
+
+      Assert.True(p.LoadConfigFromFile("./Config/AppSettings.Params.01.json", out string msg), msg);
 
       Assert.Equal("AppSettings.Params.01", p.Name);
       Assert.True(p.Server?.Equals("DevI9") ?? false);
@@ -72,7 +73,7 @@ public class ParamsTests : XunitTestBase
    public void InitTest_when_default_then_()
    {
       Params p = new();
-      Assert.True(p.Init("AppSettings.01.json", out string msg), msg);
+      Assert.True(p.Init("./Config/AppSettings.01.json", out string msg), msg);
       Assert.Equal(2, p.RequiredSchemas.Count);
       Assert.Equal("dbo", p.RequiredSchemas[0]);
       Assert.Equal("test", p.RequiredSchemas[1]);
@@ -83,7 +84,7 @@ public class ParamsTests : XunitTestBase
    {
       CommonLib.Logger.LogS();
       Params p = new();
-      Assert.True(p.Init("AppSettings.Params.01.json", out string msg), msg);
+      Assert.True(p.Init("./Config/AppSettings.Params.01.json", out string msg), msg);
       Assert.Equal(2, p.RequiredSchemas.Count);
       Assert.Equal("dbo", p.RequiredSchemas[0]);
       Assert.Equal("test", p.RequiredSchemas[1]);
@@ -94,7 +95,7 @@ public class ParamsTests : XunitTestBase
    public void LoadAssembliesTest()
    {
       Params p = new();
-      Assert.True(p.Init("AppSettings.01.json", out string msg), msg);
+      Assert.True(p.Init("./Config/AppSettings.01.json", out string msg), msg);
       Assert.Equal(3, p.RequiredAssemblies.Count);
       Assert.Equal("RegEx", p.RequiredAssemblies[0]);
       Assert.Equal("tSQLtCLR", p.RequiredAssemblies[2]);
@@ -104,7 +105,7 @@ public class ParamsTests : XunitTestBase
    public void RequiredItemsTest()
    {
       Params p = new();
-      Assert.True(p.Init("AppSettings.01.json", out string msg), msg);
+      Assert.True(p.Init("./Config/AppSettings.01.json", out string msg), msg);
 
       Assert.True(ChkRequiredItems<string>(p.RequiredAssemblies, 3, "RegEx", "tSQLtCLR"));
       Assert.True(ChkRequiredItems<string>(p.RequiredFunctions, 4, "[dbo].[fnFindPathogen]", "[test].[fnCrtScriptFileName]"));
@@ -135,8 +136,8 @@ public class ParamsTests : XunitTestBase
    {
       LogS();
       Params p = new();
-      Assert.True(p.Init("AppSettings.01.json", out string msg), msg);
-      Assert.True(p.LoadConfigFromFile("AppSettings.01.json", out msg), msg);
+      Assert.True(p.Init("./Config/AppSettings.01.json", out string msg), msg);
+      Assert.True(p.LoadConfigFromFile("./Config/AppSettings.01.json", out msg), msg);
 
       Assert.Equal("AppSettings.01", p.Name);
       Assert.True(p.Server?.Equals("DevI9") ?? false);

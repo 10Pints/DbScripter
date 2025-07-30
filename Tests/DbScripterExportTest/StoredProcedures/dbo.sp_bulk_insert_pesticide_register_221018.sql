@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ========================================================
 -- Author:      Terry Watts
 -- Create date: 01-AUG-2023
@@ -40,7 +38,6 @@ BEGIN
    DECLARE
     @fn              VARCHAR(35)   = N'_BLK_INSRT PEST REG 221018'
    ,@RC              INT            = -1
-
    EXEC sp_log 2, @fn, '000: starting
 import_file:[',@import_file,']
 clr_first  :[',@clr_first  ,']
@@ -53,5 +50,5 @@ END
 TRUNCATE TABLE Staging1;
 EXEC sp_bulk_insert_pesticide_register_221018 'D:\Dev\Repos\Farming\Data\Ph DepAg Registered Pesticides LRAP-221018 Export\LRAP-221018 230809-0815.tsv';
 */
-
 GO
+

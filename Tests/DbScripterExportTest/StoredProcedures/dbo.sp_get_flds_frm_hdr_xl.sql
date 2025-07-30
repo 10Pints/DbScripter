@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ==========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-FEB-2024
@@ -37,13 +34,11 @@ BEGIN
     @fn           VARCHAR(35)   = N'GET_FLDS_FRM_HDR_XL'
    ,@cmd          NVARCHAR(4000)
    ,@n            INT
-
    EXEC sp_log 1, @fn, '000: starting, 
 @import_file:  [', @import_file,']
 @range:        [', @range,']
 @fields:       [', @fields,']
 ';
-
    BEGIN TRY
       -------------------------------------------------------
       -- Param validation, fixup
@@ -54,41 +49,33 @@ BEGIN
          SET @range = SUBSTRING(@import_file, @n+1, 100);
          SET @import_file = SUBSTRING(@import_file,1, @n-1);
       END
-
       -- soert out []$ etc.
       SET @range = dbo.fnFixupXlRange(@range);
-
       --------------------------------------------------------------------------------------------------------
       -- PRE 01: @spreadsheet must be specified OR EXCEPTION 58000, 'spreadsheet must be specified'
       --------------------------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '010: checking PRE 01,. @range: [',@range,']';
       EXEC sp_assert_not_null_or_empty @import_file, 'spreadsheetfile  must be specified', @ex_num=58000--, @fn=@fn;
-
       --------------------------------------------------------------------------------------------------------
       -- PRE 02: @spreadsheet exists,           OR EXCEPTION 58001, 'spreadsheet does not exist'
       --------------------------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '020: checking PRE 02';
-
       IF dbo.fnFileExists(@import_file) = 0 
          EXEC sp_raise_exception 58001, @import_file, ' does not exist'--, @fn=@fn
-
       --------------------------------------------------------------------------------------------------------
       -- PRE 03: @range not null or empty       OR EXCEPTION 58002, 'range must be specified'
       --------------------------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '025: checking PRE 03';
       EXEC sp_assert_not_null_or_empty @range, 'range must be specified', @ex_num=58002--, @fn=@fn;
-
       -------------------------------------------------------
       -- ASSERTION: Passed parameter validation
       -------------------------------------------------------
       EXEC sp_log 1, @fn, '030: Passed parameter validation';
-
       -------------------------------------------------------
       -- Process
       -------------------------------------------------------
       EXEC sp_log 1, @fn, '040: processing';
       DROP TABLE IF EXISTS temp;
-
       -- IMEX=1 treats everything as text
       SET @cmd = 
          CONCAT
@@ -102,16 +89,13 @@ BEGIN
          ,''SELECT TOP 2 * FROM ',@range,'''
       )'
          );
-
       EXEC sp_log 1, @fn, '050: open rowset sql:
    ', @cmd;
-
       EXEC(@cmd);
       SELECT @fields = string_agg(CONCAT('concat (''['',','', column_name, ','']''',')'), ','','',') FROM list_table_columns_vw WHERE TABLE_NAME = 'temp';
       SELECT @cmd = CONCAT('SET @fields = (SELECT TOP 1 CONCAT(',@fields, ') FROM [temp])');
       EXEC sp_log 1, @fn, '060: get fields sql:
    ', @cmd;
-
       EXEC sp_executesql @cmd, N'@fields VARCHAR(4000) OUT', @fields OUT;
    END TRY
    BEGIN CATCH
@@ -129,6 +113,5 @@ DECLARE @fields VARCHAR(MAX);
 EXEC sp_get_fields_from_xl_hdr 'D:\Dev\Repos\Farming\Data\Distributors.xlsx!Distributors$A:H', @fields OUT;
 PRINT @fields;
 */
-
-
 GO
+

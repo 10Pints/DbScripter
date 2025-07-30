@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 25-MAY-2020
@@ -26,6 +23,5 @@ END
 /*
 PRINT CONCAT('[',dbo.fnGetSessionContextAsInt(N'cor_id'),']')
 */
-
-
 GO
+

@@ -2,12 +2,12 @@
 Parameters:
 
 --------------------------------------------------------------------------------
- Type            : Params
+ Type                         : Params
 --------------------------------------------------------------------------------
- CreateMode      : Create
- Database        : Dorsu_dev
- DisplayLog      : True
- DisplayScript   : True
+ CreateMode                   : Create
+ Database                     : Dorsu_dev
+ DisplayLog                   : True
+ DisplayScript                : True
  IndividualFiles              : False
  Instance                     : 
  IsExprtngData                : False
@@ -19,10 +19,10 @@ Parameters:
  RequiredFunctions            : System.Collections.Generic.List`1[System.String]
  RequiredProcedures           : System.Collections.Generic.List`1[System.String]
  RequiredTables               : System.Collections.Generic.List`1[System.String]
- RequiredViews                : System.Collections.Generic.List`1[System.String]
- RequiredUserDefinedTypes     : System.Collections.Generic.List`1[System.String]
  RequiredUserDefinedDataTypes : System.Collections.Generic.List`1[System.String]
  RequiredUserDefinedTableTypes: System.Collections.Generic.List`1[System.String]
+ RequiredUserDefinedTypes     : System.Collections.Generic.List`1[System.String]
+ RequiredViews                : System.Collections.Generic.List`1[System.String]
  Want All:                  : Assembly
  Want All:                  : Database
  Want All:                  : Function
@@ -33,28 +33,24 @@ Parameters:
  Want All:                  : UserDefinedType
  Want All:                  : UserDefinedDataType
  Want All:                  : UserDefinedTableType
+ Want All:                  : Unknown
  Script Dir                   : D:\Dev\DbScripter\Tests\DbScripterAppTests\Exportsp_crt_pop_table
  Script File                  : D:\Dev\DbScripter\Tests\DbScripterAppTests\Exportsp_crt_pop_table\Exportsp_crt_pop_table.sql
  ScriptUseDb                  : True
  Server                       : DevI9
  AddTimestamp                 : False
- Timestamp                    : 250720-0902
+ Timestamp                    : 250724-0730
 
- RequiredSchemas : 1
-	
+ RequiredSchemas : 2
+	dbo
+	test
 
 */
 
 USE [Dorsu_dev]
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
-
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 08-JAN-2020
@@ -72,19 +68,11 @@ END
 /*
 EXEC test.sp__crt_tst_rtns 'dbo].[fnLen]', 43;
 */
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
-
 -- ==========================================================================
 -- Author:      Terry Watts
 -- Create date: 08-JAN-2020
@@ -100,31 +88,18 @@ AS
 BEGIN
    DECLARE  
        @tcs    VARCHAR(20)
-
    IF (@s IS NULL ) OR (LEN(@s) = 0)
       RETURN @s;
-
    SET @tcs = CONCAT( NCHAR(9), NCHAR(10), NCHAR(13), NCHAR(32), NCHAR(160))
-
    WHILE CHARINDEX(Right(@s, 1) , @tcs) > 0 AND dbo.fnLen(@s) > 0 -- SUBSTRING(@s,  dbo.fnLen(@s)-1, 1) or Right(@s, 1)
       SET @s = SUBSTRING(@s, 1, dbo.fnLen(@s)-1); -- SUBSTRING(@s, 1, dbo.fnLen(@s)-1) or Left(@s, dbo.fnLen(@s)-1)
-
    RETURN @s;
 END
-
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
-
 -- ================================================================
 -- Author:      Terry Watts
 -- Create date: 23-JUN-2023
@@ -141,15 +116,11 @@ AS
 BEGIN
    DECLARE  
        @tcs    VARCHAR(20)
-
    IF (@s IS NULL ) OR (dbo.fnLen(@s) = 0)
       RETURN @s;
-
    SET @tcs = CONCAT( NCHAR(9), NCHAR(10), NCHAR(13), NCHAR(32), NCHAR(160))
-
    WHILE CHARINDEX(SUBSTRING(@s, 1, 1), @tcs) > 0 AND dbo.fnLen(@s) > 0
       SET @s = SUBSTRING(@s, 2, dbo.fnLen(@s)-1);
-
    RETURN @s;
 END
 /*
@@ -158,18 +129,11 @@ PRINT CONCAT('[', fnLTrim(' '), ']')
 PRINT CONCAT('[', fnLTrim2(' ', ' '), ']')
 PRINT CONCAT('[', fnLTrim(CONCAT(0x20, 0x09, 0x0a, 0x0d, 0x20,'a', 0x20, 0x09, 0x0a, 0x0d, 0x20,' #cd# ')), ']');
 */
-
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ================================================================
 -- Author:      Terry Watts
 -- Create date: 10-OCT-2019
@@ -187,18 +151,11 @@ END
 /*
 PRINT CONCAT('[', dbo.fnTrim(CONCAT(0x20, 0x09, 0x0a, 0x0d, 0xA0, '  a  #cd# ', 0x20, 0x09, 0x0a, 0x0d, 0x0d,0xA0)), ']');
 */
-
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 --===========================================================
 -- Author:      Terry watts
 -- Create date: 18-MAY-2020
@@ -225,18 +182,11 @@ ORDER BY [schema_nm], [type], [name]
 SELECT * FROM SysRtns_vw WHERE ty_code = 'P' AND schema_nm IN ('dbo','test')
 SELECt top 500 * from sys.objects WHERE name like 'sp_%'
 */
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
-
 -- =================================================
 -- Author:      Terry Watts
 -- Create date: 24-NOV-2023
@@ -261,16 +211,11 @@ END
 /*
    EXEC test.sp_crt_tst_rtns 'dbo.fnDeSquareBracket', 69
 */
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ==============================================================================================================
 -- Author:      Terry Watts
 -- Create date: 12-NOV-2023
@@ -289,7 +234,6 @@ GO
 -- Preconditions
 -- PRE 02: if schema is not specifed in @qrn and there are more than 1 rtn with the rtn nm
 --          but differnt schema then raise div by zero exception
-
 -- Postconditions:
 -- Post 01: if schema is not specifed then get it from the sys rtns PROVIDED ONLY ONE rtn named the @rtn_nm
 -- 
@@ -315,30 +259,24 @@ BEGIN
     @n          INT
    ,@schema_nm  VARCHAR(50)
    ,@rtn_nm     VARCHAR(100)
-
    -- Remove [ ] wrappers
    SET @qrn = dbo.fnDeSquareBracket(@qrn);
-
    IF @qrn IS NOT NULL AND @qrn <> ''
    BEGIN
       SET @n = CHARINDEX('.',@qrn);
-
       -- if rtn nm not qualified then assume schema = dbo
       SET @schema_nm = iif(@n=0, 'dbo',SUBSTRING( @qrn, 1   , @n-1));
       SET @rtn_nm    = iif(@n=0,  @qrn,SUBSTRING( @qrn, @n+1, dbo.fnLen(@qrn)-@n))
-
       -- PRE 02: if schema is not specifed in @qrn and there are more than 1 rtn with the rtn nm
       --          but differnt schema then raise div by zero exception
       IF( CHARINDEX('.', @qrn) = 0)
       BEGIN
          DECLARE @cnt INT;
          SELECT @cnt = COUNT(*) FROM dbo.SysRtns_vw WHERE rtn_nm = @qrn;
-
          -- Raise div by zero exception
          IF @cnt > 1 SET @cnt = @cnt/0;
       END
    END
-
    INSERT INTO @t (schema_nm, rtn_nm)
    VALUES( @schema_nm,@rtn_nm);
    RETURN;
@@ -352,15 +290,11 @@ SELECT * FROM fnSplitQualifiedName(null)
 SELECT * FROM fnSplitQualifiedName('')
 EXEC test.sp__crt_tst_rtns '[dbo].[fnSplitQualifiedName]';
 */
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- =============================================================
 -- Author:      Terry Watts
 -- Create date: 08-FEB-2020
@@ -377,25 +311,17 @@ BEGIN
        @schema    VARCHAR(28)
       ,@table_nm  VARCHAR(60)
    ;
-
    SELECT
        @schema    = schema_nm
       ,@table_nm  = rtn_nm
    FROM fnSplitQualifiedName(@q_table_nm);
-
    RETURN iif(EXISTS (SELECT 1 FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_NAME = @table_nm AND TABLE_SCHEMA = @schema), 1, 0);
 END
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
-
 -- =============================================    
 -- Author:      Terry Watts
 -- Create date: 23-JUN-2023
@@ -413,10 +339,8 @@ BEGIN
    DECLARE 
       @ret  VARCHAR(1000)
      ,@len  INT
-
    IF @s IS null
       SET @s = '';
-
    SET @len = ut.dbo.fnLen(@s)
    RETURN LEFT( CONCAT( @s, REPLICATE( @pad, @width-@len)), @width)
 END
@@ -425,17 +349,11 @@ SELECT CONCAT('[', dbo.fnPadRight2('a very long string indeed - its about time w
 SELECT CONCAT('[', dbo.fnPadRight2('', 25, '.'), ']  ');
 SELECT CONCAT('[', dbo.fnPadRight2(NULL, 25, '.'), ']  ');
 */
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
 -- =============================================    
 -- Author:  Terry Watts
 -- Create date: 04-OCT-2019
@@ -456,18 +374,11 @@ FROM [tg].[test].[fnCrtPrmMap]( '          @table_nm                  VARCHAR(50
          ,@view_nm                   VARCHAR(50)    OUTPUT  
          ,@error_msg                 VARCHAR(200)   OUTPUT  ')
 */
-
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 25-NOV-2023
@@ -482,18 +393,11 @@ END
 /*
 EXEC test.sp_crt_tst_rtns 'dbo.fnGetLogLevelKey', 
 */
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 25-MAY-2020
@@ -515,17 +419,11 @@ END
 /*
 PRINT CONCAT('[',dbo.fnGetSessionContextAsInt(N'cor_id'),']')
 */
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 25-NOV-2023
@@ -540,16 +438,11 @@ END
 /*
 EXEC test.sp_crt_tst_rtns 'dbo.fnGetLogLevel', 80;
 */
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 CREATE TABLE [dbo].[AppLog](
 	[id] [int] IDENTITY(1,1) NOT NULL,
 	[timestamp] [varchar](30) NOT NULL,
@@ -565,23 +458,16 @@ CREATE TABLE [dbo].[AppLog](
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-
 ALTER TABLE [dbo].[AppLog] ADD  CONSTRAINT [DF_AppLog_timestamp]  DEFAULT (getdate()) FOR [timestamp]
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
 -- =========================================================================
 -- Author:      Terry Watts
 -- Create date: 22-MAR-2020
 -- Description: Logs to output and to the AppLog table
-
 -- Level: 0 DEBUG
 --        1 INFO
 --        2 NOTE
@@ -643,10 +529,8 @@ BEGIN
       ,@log_msg         VARCHAR(4000)
       ,@display_msg     VARCHAR(4000)
       ,@row_count_str   VARCHAR(30) = NULL
-
    SET NOCOUNT ON
    SET @min_log_level = COALESCE(dbo.fnGetLogLevel(), 1); -- Default: INFO
-
    SET @lvl_msg = 
    CASE
       WHEN @level = 0 THEN 'DEBUG'
@@ -656,11 +540,8 @@ BEGIN
       WHEN @level = 4 THEN 'ERROR'
       ELSE '???? '
    END;
-
    SET @fn= dbo.fnPadRight(@fn, 45);
-
    IF @row_count IS NOT NULL SET @row_count_str = CONCAT(' rowcount: ', @row_count)
-
    SET @log_msg = CONCAT
    (
        @msg00 ,@msg01 ,@msg02 ,@msg03, @msg04, @msg05, @msg06 ,@msg07 ,@msg08 ,@msg09 
@@ -690,11 +571,9 @@ BEGIN
       ,@msg240,@msg241,@msg242,@msg243,@msg244,@msg245,@msg246,@msg247,@msg248,@msg249 
       ,@row_count_str
    );
-
    -- Always log to log table
    INSERT INTO AppLog (rtn, msg, [level], row_count)
    VALUES (dbo.fnTrim(@fn), @log_msg, @level, @row_count);
-
    -- Only display if required
    IF @level >= @min_log_level
    BEGIN
@@ -702,7 +581,6 @@ BEGIN
          SET @display_msg =  CONCAT(@lvl_msg, ' ',@fn, ': ', @log_msg);
       ELSE
          SET @display_msg =  CONCAT(@lvl_msg, ' ', @log_msg);
-
       PRINT @display_msg;
    END
 END
@@ -710,16 +588,11 @@ END
 EXEC tSQLt.RunAll;
 SELECT * From AppLog
 */
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- ============================================================
 -- Author:      Terry Watts
 -- Create date: 19-JUL-2025
@@ -754,9 +627,7 @@ RETURNS VARCHAR(MAX)
 AS
 BEGIN
     DECLARE @result VARCHAR(MAX);
-
     DECLARE @msgs TABLE (txt VARCHAR(MAX));
-
     INSERT INTO @msgs (txt)
     SELECT TRIM(value)
     FROM (VALUES
@@ -766,19 +637,14 @@ BEGIN
         (@msg15), (@msg16), (@msg17), (@msg18), (@msg19)
     ) AS V(value)
     WHERE value IS NOT NULL AND LTRIM(RTRIM(value)) <> '';
-
     SELECT @result = STRING_AGG(txt, ' ') FROM @msgs;
-
     RETURN @result;
 END
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- ================================================================
 -- Author:      Terry Watts
 -- Create date: 25-MAR-2020
@@ -817,9 +683,7 @@ BEGIN
        @fnThis    VARCHAR(35) = 'sp_raise_exception'
       ,@msg       VARCHAR(max)
    ;
-
    DECLARE @msgs TABLE (txt VARCHAR(MAX));
-
    SELECT @msg =  dbo.fnAggregateMsgs
    (
        @msg0,  @msg1,  @msg2,  @msg3,  @msg4
@@ -827,10 +691,8 @@ BEGIN
       ,@msg10, @msg11, @msg12, @msg13, @msg14
       ,@msg15, @msg16, @msg17, @msg18, @msg19
    );
-
    IF @ex_num IS NULL SET @ex_num = 53000; -- default
       EXEC sp_log 4, @fnThis, '000: throwing exception ', @ex_num, ' ', @msg, ' st: 1';
-
    ------------------------------------------------------------------------------------------------
    -- Validate
    ------------------------------------------------------------------------------------------------
@@ -840,7 +702,6 @@ BEGIN
       SET @ex_num = abs(@ex_num) + 50000;
       EXEC sp_log 3, @fnThis, '010: supplied exception number is too low changing to ', @ex_num;
    END
-
    ------------------------------------------------------------------------------------------------
    -- Throw the exception
    ------------------------------------------------------------------------------------------------
@@ -849,18 +710,11 @@ END
 /*
 EXEC tSQLt.Run 'test.test_076_sp_raise_exception';
 */
-
-
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- =============================================================================
 -- Author:      Terry Watts
 -- Create Date: 14-JUN-2025
@@ -902,11 +756,9 @@ BEGIN
    ,@msg             VARCHAR(100)
    ,@nm_has_spcs     BIT
    ;
-
    SET NOCOUNT ON;
    SET @act_exists =dbo.fnTableExists(@table_nm);
    SET @nm_has_spcs = CHARINDEX(' ', @table_nm);
-
    IF @act_exists = @exp_exists
    BEGIN
       SET @msg = CONCAT('table ', iif(@nm_has_spcs=1, '[', ''), @table_nm, iif(@nm_has_spcs=1, ']', ''), iif(@exp_exists = 1, ' exists ', 'does not exist'), ' as expected');
@@ -915,7 +767,6 @@ BEGIN
    ELSE
    BEGIN -- Failed test
       SET @msg = CONCAT('table [', @table_nm, iif(@exp_exists = 1, '] does not exist but should', 'exists but should not'));
-
       EXEC sp_raise_exception
           @ex_num = 50001
          ,@msg0   = @msg
@@ -941,21 +792,16 @@ BEGIN
          ,@fn     = @fn
          ;
    END
-
    RETURN 1;
 END
 /*
 EXEC test.test_070_sp_assert_tbl_exists;
 */
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 27-MAR-2020
@@ -990,9 +836,7 @@ BEGIN
        @fnThis    VARCHAR(35) = N'sp_assert_not_null_or_empty'
       ,@valTxt    VARCHAR(20)= @val
    ;
-
    EXEC sp_log @log_level, @fnThis, '000: starting,' ,@msg1,': @val:[',@val,']';
-
    IF dbo.fnLen(@val) > 0
    BEGIN
       ----------------------------------------------------
@@ -1002,14 +846,12 @@ BEGIN
       EXEC sp_log @log_level, @fnThis, '010: OK, ASSERTION: val: [',@valTxt, '] IS NOT NULL';
       RETURN 0;
    END
-
    ----------------------------------------------------
    -- ASSERTION ERROR
    ----------------------------------------------------
    EXEC sp_log 3, @fn, '020: @val IS NULL OR EMPTY, raising exception';
    IF @ex_num IS NULL SET @ex_num = 50005;
    DECLARE @msg0 VARCHAR(20)= 'val is NULL or empty'
-
    EXEC sp_raise_exception
        @ex_num = @ex_num
       ,@msg0   = 'sp_assert_not_null_or_empty'
@@ -1042,39 +884,22 @@ EXEC sp_assert_not_null_or_empty NULL
 EXEC sp_assert_not_null_or_empty ''
 EXEC sp_assert_not_null_or_empty 'Fred'
 */
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
-
 CREATE FUNCTION [dbo].[fnMin] (@p1 INT, @p2 INT)
 RETURNS INT
 AS
 BEGIN
    RETURN CASE WHEN @p1 > @p2 THEN @p2 ELSE @p1 END;
 END
-
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
-
 -- ========================================================================================================
 -- Author:      Terry Watts
 -- Create date: 28-MAR-2020
@@ -1125,20 +950,15 @@ BEGIN
       ,@fnHdr     VARCHAR(100)
       ,@isTrans   BIT = 0
       ,@line      VARCHAR(4000)
-
    SET @ex_num = -1; -- unknown
    SET @msg    = 'UNKNOWN MESSAGE';
-
    --EXEC sp_log 4, @fnThis, '510: starting';
-
    SELECT
        @ex_num = ERROR_NUMBER()
       ,@ex_proc= ERROR_PROCEDURE()
       ,@ex_line= CAST(ERROR_LINE() AS VARCHAR(20))
       ,@ex_msg = ERROR_MESSAGE();
-
    SET @fnHdr = CONCAT(@ex_proc, '(',@ex_line,'): ')
-
    BEGIN TRY
       SET @msg =
       CONCAT
@@ -1164,9 +984,7 @@ BEGIN
          ,iif(@msg18 IS NOT NULL, CONCAT(' ', @msg18 ), '')
          ,iif(@msg19 IS NOT NULL, CONCAT(' ', @msg19 ), '')
       );
-
       SET @line = REPLICATE('*', dbo.fnMin(300, dbo.fnLen(@msg)+46));
-
       PRINT CONCAT(@nl, @line);
       EXEC sp_log 4, @fnThis, @fnHdr, @msg;
       PRINT CONCAT(@line, @nl);
@@ -1179,17 +997,11 @@ BEGIN
       SET @ex_msg ='*** system error: failed to get error msg ***';
    END CATCH
 END
-
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- ==================================================================
 -- Author:      Terry Watts
 -- Create date: 16-JUN-2025
@@ -1205,7 +1017,6 @@ BEGIN
     DECLARE @isReserved BIT = 0;
     -- We do UPPER incase we're working in a SQL 
     SET @word = UPPER(LTRIM(RTRIM(@word)));
-
     SET @isReserved = 
       CASE 
          WHEN @word IN
@@ -1249,11 +1060,9 @@ END
 /*
 EXEC test.test_071_IsReservedWord;
 */
-
-
-GO
 GO
 
+GO
 CREATE TYPE [dbo].[IdNmTbl] AS TABLE(
 	[id] [int] IDENTITY(1,1) NOT NULL,
 	[val] [varchar](4000) NULL,
@@ -1262,14 +1071,11 @@ CREATE TYPE [dbo].[IdNmTbl] AS TABLE(
 	[id] ASC
 )WITH (IGNORE_DUP_KEY = OFF)
 )
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- ===============================================
 -- Author:      Terry Watts
 -- Create date: 16-JUN-2025
@@ -1285,7 +1091,6 @@ BEGIN
    DECLARE @vals IdNmTbl
    INSERT INTO @vals (val) select value from string_split(@q_id, '.');
    UPDATE @vals SET val = iif((dbo.IsReservedWord(val)=1 OR CHARINDEX(' ', val)>0), CONCAT('[', val, ']'), val)
-
    SELECT @v = string_agg(val, '.') FROM @vals;
    RETURN @v;
 END
@@ -1294,14 +1099,11 @@ EXEC tSQLt.Run 'test.test_073_fnDeLimitIdentifier';
 EXEC tSQLt.RunAll;
 EXEC tSQLt.Run 'test.test_<fn_nm>;
 */
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- ==============================================================
 -- Author:      Terry Watts
 -- Create date: 16-JUN-2025
@@ -1325,10 +1127,8 @@ BEGIN
     ,@sql         NVARCHAR(MAX)
     ,@ret         INT
    ;
-
    BEGIN TRY
       EXEC sp_log 1, @fn, '000 dropping table [', @q_table_nm, ']';
-
       -----------------------------------------------------------------
       -- Validation
       -----------------------------------------------------------------
@@ -1336,18 +1136,14 @@ BEGIN
       EXEC sp_log 1, @fn, '010 validating checked preconditions';
       SET @q_table_nm = dbo.fnDeLimitIdentifier(@q_table_nm);
       EXEC sp_assert_not_null_or_empty @q_table_nm, '@q_table_nm must be specified', @fn=@fn;
-
       -- delimit [ brkt name if necessary
       SET @q_table_nm = dbo.fnDeLimitIdentifier(@q_table_nm);
       -- chk if the table existed initially
       SET @ret = dbo.fnTableExists(@q_table_nm);
-
       SET @sql = CONCAT('DROP table if exists ', @q_table_nm);
       EXEC sp_log 1, @fn, '030 executing the drop Table SQL:
 ',@sql;
-
       EXEC (@sql);
-
       EXEC sp_log 1, @fn, '040 checking postconditions'
       ---------------------------------------------------------
       --- ASSERTION: POST01: table does not exist
@@ -1359,23 +1155,17 @@ BEGIN
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 1, @fn, '999: successfully dropped table ', @q_table_nm;
    return @ret; -- table did exist
 END
 /*
 EXEC test.sp__crt_tst_rtns '[dbo].[sp_drop_table]';
 */
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
 -- ======================================================================
 -- Author:      Terry Watts
 -- Create Date: 06-AUG-2023
@@ -1423,30 +1213,24 @@ BEGIN
    ,@act_cnt         INT           = -1
    ,@schema_nm       VARCHAR(50)
    ;
-
    SET NOCOUNT ON;
-
    SELECT 
        @table     = rtn_nm 
       ,@schema_nm = schema_nm
    FROM dbo.fnSplitQualifiedName(@table)
    ;
-
    SET @sql = CONCAT('SELECT @act_cnt = COUNT(*) FROM [', @schema_nm, '].[', @table, ']');
    EXEC sp_executesql @sql, N'@act_cnt INT OUT', @act_cnt OUT
-
    IF @display_row_cnt = 1
    BEGIN
       EXEC sp_log 1, @fnThis, @msg0, 'table:[', @table, '] has ', @act_cnt, ' rows';
    END
-
    IF @exp_cnt IS NOT null
    BEGIN
       IF @exp_cnt <> @act_cnt
       BEGIN
          IF @ex_msg IS NULL
             SET @ex_msg = CONCAT('Table: ', @table, ' row count: exp ',@exp_cnt,'  act:', @act_cnt);
-
          EXEC sp_log 4, @fnThis ,'040: @exp_cnt (', @exp_cnt, ')<> @act_cnt (', @act_cnt, ') raising exception: ',@ex_msg;
        --EXEC sp_raise_exception @ex_num, @ex_msg, 1, @fn=@fn;
          EXEC sp_raise_exception
@@ -1481,7 +1265,6 @@ BEGIN
       BEGIN
          IF @ex_msg IS NULL
             SET @ex_msg = CONCAT('Table: ', @table, ' does not have any rows');
-
          EXEC sp_log 4, '070: table ',@table,' has no rows: ', @ex_msg;
          THROW @ex_num, @ex_msg, 1;
       END
@@ -1499,25 +1282,19 @@ END
    EXEC dbo.sp_assert_tbl_po 'AppLog'
    IF EXISTS (SELECT 1 FROM [dummytable]) PRINT '1' ELSE PRINT '0'
 */
-
-
-GO
 GO
 
+GO
 CREATE TYPE [dbo].[ChkFldsNotNullDataType] AS TABLE(
 	[ordinal] [int] NOT NULL,
 	[col] [varchar](120) NOT NULL,
 	[sql] [varchar](4000) NOT NULL
 )
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 --================================================================================================
 -- Author:        Terry Watts
 -- Create date:   15-Nov-2024
@@ -1547,22 +1324,18 @@ BEGIN
    ,@nl           NCHAR(2) = NCHAR(13) + NCHAR(10)
    ,@flds         ChkFldsNotNullDataType
     ;
-
    EXEC sp_log 1, @fn, '000: starting:
 table           :[', @table          , ']
 non_null_flds   :[', @non_null_flds  , ']
 display_results :[', @display_results, ']'
    ;
-
    IF @non_null_flds IS NULL
       RETURN;
-
    BEGIN TRY
       SET @sql = CONCAT('SELECT @max_len_fld = MAX(dbo.fnLen(column_name)) FROM list_table_columns_vw WHERE table_name = ''', @table, ''';');
       EXEC sp_log 0, @fn, '010: getting max field len: @sql:', @sql;
       EXEC sp_executesql @sql, N'@max_len_fld INT OUT', @max_len_fld OUT;
       EXEC sp_log 1, @fn, '020: @max_len_fld: ', @max_len_fld;
-
       ----------------------------------------------------------------
       -- Create script to run non null chks on a set of fields
       ----------------------------------------------------------------
@@ -1581,15 +1354,12 @@ display_results :[', @display_results, ']'
          (
             SELECT ordinal, TRIM(dbo.fnDeSquareBracket(value)) as value FROM string_split( @non_null_flds, ',', 1)
          ) X
-
       IF @display_results = 1 SELECT * FROM @flds;
       --THROW 51000, 'debug',20;
-
       ----------------------------------------------------------------
       -- Execute script: run non null chks on each required field
       ----------------------------------------------------------------
       SELECT @end = COUNT(*) FROM @flds;
-
       WHILE @ndx < = @end
       BEGIN
          SELECT 
@@ -1597,7 +1367,6 @@ display_results :[', @display_results, ']'
             ,@col = col
          FROM @flds
          WHERE ordinal = @ndx;
-
          --SET @msg = CONCAT('040: checking col: ', dbo.fnPadRight( CONCAT( '[', @col, ']'), @max_len_fld +1), ' has no NULL values');
          --SET @msg = CONCAT('050: check sql: ', @sql);
          --EXEC sp_log 1, @fn, @msg;
@@ -1610,23 +1379,17 @@ display_results :[', @display_results, ']'
       SELECT * FROM @flds;
       THROW;
    END CATCH
-
    EXEC sp_log 1, @fn, '999: there are no null values in the checked columns';
 END
 /*
 EXEC tSQLt.Run 'test.test_030_sp_chk_flds_not_null';
 SELECT * FROM @flds
 */
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 30-MAR-2020
@@ -1640,16 +1403,11 @@ BEGIN
      EXEC master.dbo.xp_fileexist @path, @result OUTPUT
      RETURN cast(@result as bit)
 END
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
 -- ===========================================================
 -- Author:      Terry watts
 -- Create date: 20-SEP-2024
@@ -1669,11 +1427,9 @@ BEGIN
    ,@cmd          VARCHAR(MAX)
    ,@msg          VARCHAR(1000)
    ;
-
    EXEC sp_log 1, @fnThis,'000: starting, deleting file:[',@file_path,']';
    DROP TABLE IF EXISTS #tmp;
    CREATE table #tmp (id INT identity(1,1), [output] NVARCHAR(4000))
-
    IF (dbo.fnFileExists(@file_path) <> 0)
    BEGIN
       --SET @cmd = CONCAT('INSERT INTO #tmp  EXEC xp_cmdshell ''del "', @file_path, '"'' ,NO_OUTPUT');
@@ -1681,43 +1437,30 @@ BEGIN
       --PRINT @cmd;
       EXEC sp_log 1, @fnThis,'010: sql:[',@cmd,']';
       EXEC (@cmd);
-
       --IF EXISTS (SELECT TOP 2 1 FROM #tmp) SELECT * FROM #tmp;
    END
    ELSE -- file does not exist
       IF (@chk_exists = 1) -- POST 01 raise exception if failed to delete the file
          EXEC sp_raise_exception 58147, ' 020: file [',@file_path,'] does not exist but chk_exists specified', @fn=@fnThis;
-
    IF dbo.fnFileExists(@file_path) <> 0
    BEGIN
       IF EXISTS (SELECT TOP 2 1 FROM #tmp)
          SELECT @msg = [output] FROM #tmp where id = 1;
-
       EXEC sp_raise_exception 63500, '030: failed to delete file [', @file_path, '], reason: ',@msg, @fn=@fnThis;
    END
-
    EXEC sp_log 0, @fnThis,'999: leaving';
 END
 /*
 EXEC sp_delete_file 'D:\Logs\a.txt';
 EXEC sp_delete_file 'non exist file';
 EXEC sp_delete_file 'D:\Logs\Farming.log';
-
 EXEC xp_cmdshell 'del "D:\Logs\Farming.log"'
-
-
 */
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
 -- =============================================
 -- Author:      Terry watts
 -- Create date: 30-MAR-2020
@@ -1753,9 +1496,7 @@ BEGIN
    DECLARE
        @fn_       VARCHAR(35)   = N'ASSERT_FILE_EXISTS'
       ,@msg       VARCHAR(MAX)
-
    EXEC sp_log @log_level, @fn_, '000: checking file [', @file, '] exists';
-
    IF dbo.fnFileExists( @file) = 1
    BEGIN
       ----------------------------------------------------
@@ -1764,13 +1505,11 @@ BEGIN
       EXEC sp_log @log_level, @fn, '010: OK,File [',@file,'] exists';
       RETURN 0;
    END
-
    ----------------------------------------------------
    -- ASSERTION ERROR
    ----------------------------------------------------
    SET @msg = CONCAT('File [',@file,'] does not exist');
    EXEC sp_log 3, @fn, '020:', @msg, ' raising exception';
-
    EXEC sp_raise_exception
        @ex_num = @ex_num
       ,@msg1   = @msg
@@ -1799,17 +1538,11 @@ END
 EXEC sp_assert_file_exists 'non existant file', ' second msg',@fn='test fn', @state=5  -- expect ex: 53200, 'the file [non existant file] does not exist', ' extra detail: none', @state=1, @fn='test fn';
 EXEC sp_assert_file_exists 'C:\bin\grep.exe'   -- expect OK
 */
-
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- ============================================================
 -- Author     : Terry Watts
 -- Create date: 12-APR-2025
@@ -1825,7 +1558,6 @@ CREATE FUNCTION [dbo].[fnCrtRemoveDoubleQuotesSql]
    ,@max_len_fld        INT
 )
 RETURNS VARCHAR(8000)
-
 AS
 BEGIN
    DECLARE
@@ -1836,11 +1568,8 @@ BEGIN
    ,@empty_str          VARCHAR(2)=''''
    ,@double_quote       VARCHAR(5)='"'
    ;
-
    SET @table_no_brkts = REPLACE(REPLACE(@table, '[',''),  ']','');
-
    --    SELECT dbo.fnPadRight(CONCAT(''['', column_name, '']''), ', @max_len_fld+2, ') AS column_name
-
 SET @sql = CONCAT
 (
 'DECLARE
@@ -1850,7 +1579,6 @@ SET @sql = CONCAT
    ,@double_quote   VARCHAR(1)=''"''
    ,@sql            VARCHAR(8000)
 ;
-
 WITH cte AS
 (
    SELECT CONCAT(''['', column_name, '']'') AS column_name
@@ -1882,7 +1610,6 @@ SELECT @sql =
 string_agg(sql, ''', @NL, ''')
 FROM cte2;'
 );
-
    RETURN @sql;
 END
 /*
@@ -1896,14 +1623,11 @@ PRINT @sql
 EXEC tSQLt.RunAll;
 EXEC tSQLt.Run 'test.test_<fn_nm>;
 */
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- =============================================================================================================
 -- Author:      Terry Watts
 -- Create date: 20-OCT-2024
@@ -1978,9 +1702,7 @@ BEGIN
    ,@ex_num             INT
    ,@ex_msg             INT
    ;
-
    --SET @row_terminator_str = iif(@row_terminator='0x0d0a', '0x0d0a',@row_terminator);
-
    EXEC sp_log 1, @fn, '000: starting:
 table           :[',@table             ,']
 file            :[',@file              ,']
@@ -1997,96 +1719,73 @@ exp_row_cnt     :[',@exp_row_cnt       ,']
 non_null_flds   :[',@non_null_flds     ,']
 display_table   :[',@display_table     ,']'
 ;
-
    BEGIN TRY
       ---------------------------------------------------
       -- Set defaults
       ---------------------------------------------------
       IF @field_terminator IS NULL SET @field_terminator = @tab;
       IF @field_terminator IN (0x09, '0x09', '\t') SET @field_terminator = @tab;
-
       --IF @field_terminator NOT IN ( @tab,',',@CR, @LF, @NL)
       --   EXEC sp_raise_exception 53051, @fn, '005: error: field terminator must be one of comma, tab, NL';
-
       IF @row_terminator   IS NULL OR @row_terminator='' SET @row_terminator = @nl;
-
       ---------------------------------------------------
       -- Validate parameters
       ---------------------------------------------------
       EXEC sp_log 1, @fn, '010: Validate parameters';
-
       -- PRE01: File must be specified
       EXEC sp_assert_not_null_or_empty @file, 50001, 'File must be specified';
       ---------------------------------------------------
       -- Set defaults
       ---------------------------------------------------
       EXEC sp_log 1, @fn, '020: Set defaults';
-
       IF @codepage IS NULL SET @codepage = 1252;
-
       SET @file_path = iif( @folder IS NOT NULL,  CONCAT(@folder, @bkslsh, @file), @file);
-
       -- sort out double \\
       SET @file_path = REPLACE(@file_path, @bkslsh+@bkslsh, @bkslsh);
-
       -- ASSERTION 
-
       -- 06-APR-2025  @table may be qualified with the schema - sort out bracketing
       SET @ndx = CHARINDEX('.', @table);
-
       IF @ndx>0
       BEGIN
          SELECT
              @schema_nm = schema_nm
             ,@table_nm  = rtn_nm
          FROM dbo.fnSplitQualifiedName(@table);
-
          SET @table = CONCAT('[',@schema_nm,'].[',@table_nm, ']');
       END
       ELSE
       BEGIN
          SET @table = CONCAT('[',@table, ']');
       END
-
       SET @table_nm_no_brkts = REPLACE(REPLACE(@table, '[', ''),']', '');
       EXEC sp_log 1, @fn, '030: table:',@table, ' @table_nm_no_brkts: ', @table_nm_no_brkts;
-
       ---------------------------------------------------
       -- Validate inputs
       ---------------------------------------------------
       EXEC sp_log 1, @fn, '040: validating inputs, @file_path: [',@file_path,']';
-
       -- PRE02: Filpath must exist : chkd
       EXEC sp_assert_file_exists @file_path
       -------------------------------------------------------------
       -- ASSERTION: @table is now like [table] or [schema].[table]
       -------------------------------------------------------------
-
       IF @table IS NULL OR @table =''
          EXEC sp_raise_exception 53050, @fn, '050: error: table must be specified';
-
       IF @first_row IS NULL OR @first_row < 1
          SET @first_row = 2;
-
       IF @last_row IS NULL OR @last_row < 1
          SET @last_row = 1000000;
-
       -- View is optional - defaults to the table stru
       IF @view IS NULL
          SET @view = @table;
-
       IF @clr_first = 1
       BEGIN
          SET @cmd = CONCAT('TRUNCATE TABLE ', @table,';');
          EXEC sp_log 1, @fn, '060: clearing table first: EXEC SQL:',@NL, @cmd;
-
          EXEC (@cmd);
       END
-
       ----------------------------------------------------------------------------------
       -- R00: delete the log files before importing if they exist
       ----------------------------------------------------------------------------------
-
       SET @error_file = CONCAT('D:',NCHAR(92),'logs',NCHAR(92),@table_nm_no_brkts,'import.log');
       SET @del_file = @error_file;
       EXEC sp_log 1, @fn, '070: deleting log file ', @del_file;
@@ -2094,11 +1793,9 @@ display_table   :[',@display_table     ,']'
       SET @del_file = CONCAT(@del_file, '.Error.Txt');
       EXEC sp_log 1, @fn, '080: deleting log file ',@del_file;
       EXEC sp_delete_file @del_file;
-
       ----------------------------------------------------------------------------------
       -- R01: Import the table from the tsv file
       ----------------------------------------------------------------------------------
-
       SET @cmd = 
          CONCAT('BULK INSERT ',@view,' FROM ''',@file_path,''' 
 WITH
@@ -2106,49 +1803,39 @@ WITH
     DATAFILETYPE    = ''Char''
    ,FIRSTROW        = ',@first_row, @nl
 );
-
       IF @last_row         IS NOT NULL 
       BEGIN
          EXEC sp_log 1, @fn, '090: @last_row is not null, =[',@last_row, ']';
          SET @cmd = CONCAT( @cmd, '   ,LASTROW        =   ', @last_row        , @nl);
       END
-
       IF @format_file      IS NOT NULL
       BEGIN
          EXEC sp_log 1, @fn, '100: @last_row is not null, =[',@last_row, ']';
          SET @cmd = CONCAT( @cmd, '   ,FORMATFILE     = ''', @format_file, '''', @nl);
       END
-
       IF @field_terminator IS NOT NULL
       BEGIN
          EXEC sp_log 1, @fn, '110: @field_terminator is not null, =[',@field_terminator, ']';
          If @field_terminator = 't' SET @field_terminator = '\t';
          SET @cmd = CONCAT( @cmd, '   ,FIELDTERMINATOR= ''', @field_terminator, '''', @nl);
       END
-
       if @row_terminator IS NOT NULL
       BEGIN
          EXEC sp_log 1, @fn, '120: @row_terminator is not null, =[',@row_terminator, ']';
          SET @cmd = CONCAT( @cmd, '   ,ROWTERMINATOR= ''', @row_terminator, '''', @nl);
       END
-
       SET @cmd = CONCAT( @cmd, '  ,ERRORFILE      = ''',@error_file,'''', @nl
          ,'  ,MAXERRORS      = 20', @nl
          ,'  ,CODEPAGE       = ',@codepage, @nl
          ,');'
       );
-
       PRINT CONCAT( @nl, @line);
       EXEC sp_log 1, @fn, '130: importing file: SQL: 
 ', @cmd;
-
       PRINT CONCAT( @line, @nl);
-
       EXEC (@cmd);
       SET @row_cnt = @@ROWCOUNT;
-
       EXEC sp_log 1, @fn, '140: imported ', @row_cnt, ' rows';
-
       ----------------------------------------------------------------------------------------------------
       -- 05-NOV-2024: optionally display imported table
       ----------------------------------------------------------------------------------------------------
@@ -2158,19 +1845,16 @@ WITH
          SET @cmd = CONCAT('SELECT * FROM ', @table,';');
          EXEC (@cmd);
       END
-
       IF @expect_rows = 1
       BEGIN
          EXEC sp_log 1, @fn, '160: checking resulting row count';
          EXEC sp_assert_tbl_pop @table;
       END
-
       IF  @exp_row_cnt IS NOT NULL
       BEGIN
          EXEC sp_log 1, @fn, '170: checking resulting row count';
          EXEC sp_assert_tbl_pop @table, @exp_cnt = @exp_row_cnt;
       END
-
       ----------------------------------------------------------------------------------------------------
       -- 31-OCT-2024: cleans each imported text field for double quotes and leading/trailing white space
       ----------------------------------------------------------------------------------------------------
@@ -2180,7 +1864,6 @@ WITH
       EXEC sp_log 1, @fn, '190: @max_len_fld: '       , @max_len_fld;
       EXEC sp_log 1, @fn, '200: @table_nm_no_brkts: ' , @table_nm_no_brkts;
       EXEC sp_log 1, @fn, '210: @table            : ' , @table ;
-
       ----------------------------------------------------------------------------------
       -- R02: Remove double quotes
       -- R03: Trim leading/trailing whitespace
@@ -2190,7 +1873,6 @@ WITH
       PRINT @sql;
       EXEC sp_log 1, @fn, '220: trim replacing double quotes, @sql:', @NL, @sql;
       EXEC (@sql);
-
      ----------------------------------------------------------------------------------------------------
       -- R05: check the list of @non_null_flds fields do not have any nulls - if @non_null_flds supplied
       ----------------------------------------------------------------------------------------------------
@@ -2202,7 +1884,6 @@ WITH
       EXEC sp_log_exception @fn;--, ' launching notepad++ to display the error files';
       THROW;
    END CATCH
-
    EXEC sp_log 1, @fn, '999: leaving, imported ',@row_cnt,' rows from: ', @file_path;
    -- POST01 ret: the count of rows imported
    RETURN @row_cnt;
@@ -2211,19 +1892,13 @@ END
 EXEC test.test_037_sp_import_txt_file;
 EXEC tSQLt.Run 'test.test_037_sp_import_txt_file';
 EXEC sp_AppLog_display
-
 EXEC tSQLt.RunAll;
 */
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- ==============================================================================================================
 -- Author:      Terry Watts
 -- Create date: 11-APR-2025
@@ -2253,24 +1928,19 @@ BEGIN
     @n   INT
    ,@a   VARCHAR(50)
    ,@b   VARCHAR(100)
-
    IF @composit IS NOT NULL AND @composit <> '' AND @sep IS NOT NULL AND @sep <> ''
    BEGIN
       SET @n = CHARINDEX(@sep, @composit);
-
       IF @n = 0
       BEGIN
          INSERT INTO @t(a) VALUES( @composit);
          RETURN;
       END
-
       SET @a = SUBSTRING( @composit, 1   , @n-1);
       SET @b = SUBSTRING( @composit, @n+1, dbo.fnLen(@composit)-@n+1);
-
       INSERT INTO @t(a, b) VALUES( @a, @b);
    END
    --ELSE INSERT INTO @t(a) VALUES( 'IF @composit: false');
-
    RETURN;
 END
 /*
@@ -2284,15 +1954,11 @@ SELECT * FROM fnSplitQualifiedName(null)
 SELECT * FROM fnSplitQualifiedName('')
 EXEC test.sp__crt_tst_rtns 'dbo].[fnSplitPair2';
 */
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 CREATE TABLE [dbo].[FieldInfo](
 	[id] [int] IDENTITY(1,1) NOT NULL,
 	[nm] [varchar](50) NULL,
@@ -2302,14 +1968,11 @@ PRIMARY KEY CLUSTERED
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- ===============================================================
 -- Author:      Terry Watts
 -- Create date: 17-JUN-2025
@@ -2331,7 +1994,6 @@ AS
 BEGIN
      DECLARE @sql NVARCHAR(4000)
      ;
-
      SET @sql =
      CONCAT
      (
@@ -2345,20 +2007,16 @@ ELSE
    SET @fld_ty = NULL
 ;'
      );
-
      RETURN @sql;
 END
 /*
 EXEC test.sp__crt_tst_rtns '[dbo].[fnCrtFldNotNullSql]'
 */
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- =============================================
 -- Author:      Terry Watts
 -- Create date: 17-JUN-2025
@@ -2386,17 +2044,14 @@ BEGIN
       ,@fld_nm       VARCHAR(50)
       ,@len          INT
   ;
-
    EXEC sp_log 1, @fn, '000: starting:
 @q_table_nm:[',@q_table_nm,']
 ';
-
    BEGIN TRY
       SELECT
           @schema = a
          ,@table_nm = b
       FROM dbo.fnSplitPair2(@q_table_nm, '.');
-
       IF @table_nm IS NULL
       BEGIN
          EXEC sp_log 1, @fn, '005: schema not specified - defaulting to dbo';
@@ -2405,75 +2060,61 @@ BEGIN
             ,@schema   = 'dbo'
          ;
       END
-
       EXEC sp_log 1, @fn, '010: starting:
    @schema:  [',@schema,']
    @table_nm:[',@table_nm,']
    ';
-
       -- Clear the field info table
       TRUNCATE TABLE FieldInfo;
-
       -- Get the field info for the table
       SET @sql = CONCAT('INSERT INTO FieldInfo(nm) SELECT COLUMN_NAME
    FROM INFORMATION_SCHEMA.COLUMNS
    WHERE TABLE_NAME = '''  , @table_nm, '''
      AND TABLE_SCHEMA = ''', @schema, ''';'
      );
-
       EXEC sp_log 1, @fn, '020: @sql:
 ', @sql;
-
       EXEC (@sql);
       EXEC sp_log 1, @fn, '030:';
       --SELECT * FROM FieldInfo;
-
       -- For each field in the staged data
       DECLARE _cursor CURSOR FOR SELECT id, nm  FROM FieldInfo;
       OPEN _cursor;
       FETCH NEXT FROM _cursor INTO @fld_id, @fld_nm;
       EXEC sp_log 1, @fn, '035:';
-
       -- For each fields
       WHILE @@FETCH_STATUS = 0
       BEGIN
          EXEC sp_log 1, @fn, '040: @fld_id: ',@fld_id, ' @fld_nm[',@fld_nm,']';
-
          -- For each field type we are interested in:
          -- Chk if all data item in that field are:
          WHILE 1=1
          BEGIN
             SET @fld_ty = NULL;
             EXEC sp_log 1, @fn, '050: trying BIT';
-
             -- Bit?	Set field type = bit
             SET @sql = dbo.fnCrtFldNotNullSql(@q_table_nm, @fld_nm, 'BIT');
             EXEC sp_executesql @sql, N'@fld_ty VARCHAR(15) OUT', @fld_ty OUT;
             IF @fld_ty IS NOT NULL BREAK;
-
             -- Int?	Set field type = int
             EXEC sp_log 1, @fn, '060: trying INT';
             SET @sql = dbo.fnCrtFldNotNullSql(@q_table_nm, @fld_nm, 'INT');
             EXEC sp_executesql @sql, N'@fld_ty VARCHAR(15) OUT', @fld_ty OUT;
             IF @fld_ty IS NOT NULL BREAK;
-
             EXEC sp_log 1, @fn, '070: trying REAL';
             SET @sql = dbo.fnCrtFldNotNullSql(@q_table_nm, @fld_nm, 'REAL');
             EXEC sp_executesql @sql, N'@fld_ty VARCHAR(15) OUT', @fld_ty OUT;
             IF @fld_ty IS NOT NULL BREAK;
-
          -- Floating point?	Set field type = double
             EXEC sp_log 1, @fn, '080: trying FLOAT';
             SET @sql = dbo.fnCrtFldNotNullSql(@q_table_nm, @fld_nm, 'FLOAT');
             EXEC sp_executesql @sql, N'@fld_ty VARCHAR(15) OUT', @fld_ty OUT;
             IF @fld_ty IS NOT NULL BREAK;
-
             -- GUID ?	Set field type = GUID
             EXEC sp_log 1, @fn, '090: trying GUID';
             SET @sql = dbo.fnCrtFldNotNullSql(@q_table_nm, @fld_nm, 'UNIQUEIDENTIFIER');
             EXEC sp_executesql @sql, N'@fld_ty VARCHAR(15) OUT', @fld_ty OUT;
             IF @fld_ty IS NOT NULL BREAK;
-
             -- Assume text field
             EXEC sp_log 1, @fn, '100: Assume text field';
             -- Set len = max len of the field
@@ -2483,7 +2124,6 @@ BEGIN
                'SELECT @len = MAX(dbo.fnLen(',@fld_nm,')) FROM 
             ', @q_table_nm, ';'
             )
-
             EXEC sp_log 1, @fn, '110:sql:
 ',@sql;
             EXEC sp_executesql @sql, N'@len INT OUT', @len OUT;
@@ -2492,17 +2132,14 @@ BEGIN
             SET @fld_ty = CONCAT('VARCHAR(', @len, ')')
             BREAK;
          END -- for each wanted field ty
-
          EXEC sp_log 1, @fn, '110: field ty is ',@fld_ty;
          -- Add the field info to the FieldInfo table
          UPDATE FieldInfo SET ty = @fld_ty WHERE id = @fld_id;
          FETCH NEXT FROM _cursor INTO @fld_id, @fld_nm;
       END -- outer while - for each row in FieldInfo
-
       CLOSE _cursor;
       DEALLOCATE _cursor;
       EXEC sp_log 1, @fn, '200: checking postconditions';
-
       -- Postconditions: POST01: pops the FieldInfo table
       EXEC sp_log 1, @fn, '210: checking POST01: pops the FieldInfo table';
       EXEC sp_assert_tbl_pop 'FieldInfo';
@@ -2510,7 +2147,6 @@ BEGIN
    END TRY
    BEGIN CATCH
       EXEC sp_log 4, @fn, '500: caught exception';
-
       IF CURSOR_STATUS('global','_cursor')>=-1 
       BEGIN
          CLOSE _cursor;
@@ -2519,24 +2155,18 @@ BEGIN
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 1, @fn, '999: leaving ok';
 END
 /*
 EXEC test.test_074_sp_infer_field_types;
 SELECT * FROM FileActivityStaging
-
 EXEC tSQLt.RunAll;
 */
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 -- =================================================
 -- Author:      Terry Watts
 -- Create date: 13-JUN-2025
@@ -2571,13 +2201,10 @@ BEGIN
       ,@tab      CHAR        = CHAR(9)
       ,@sep      CHAR        = CHAR(9)
 ;
-
    SET @sep = IIF(CHARINDEX( @tab,@fields)>0, @tab, ',');
-
    -- split the fields and add them as VARCHAR(8000)
 SELECT @snippet =string_agg(TRIM(value), @joiner)
 FROM   STRING_SPLIT(@fields, @sep);
-
    SET @sql =
    CONCAT
    ('CREATE TABLE ', dbo.fnDelimitIdentifier(@tbl_nm),'
@@ -2587,23 +2214,18 @@ FROM   STRING_SPLIT(@fields, @sep);
 , ' VARCHAR(8000)', @NL
 ,');'
 );
-
    RETURN @sql;
 END
 /*
 EXEC test.test_069_fnCrtTblSql;
 PRINT dbo.fnCrtTblSql('TestTable','id, name,description, location');
-
 EXEC tSQLt.Run 'test.test_069_fnCrtTblSql';
 */
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- ==================================================
 -- Author:      Terry Watts
 -- Create date: 24-MAR-2025
@@ -2622,40 +2244,30 @@ AS
 BEGIN
    IF @searchFor IS NULL OR @searchIn IS NULL
       RETURN 0;
-
    IF dbo.fnLen(@searchFor) = 0 OR dbo.fnLen(@searchIn) = 0
       RETURN 0;
-
    IF LEN(@searchfor) > LEN(@searchin)
       RETURN 0;
-
    DECLARE
        @r   VARCHAR(500)
       ,@rsp VARCHAR(100)
       ,@pos INT
-
    SELECT @r   = REVERSE(@searchin);
    SELECT @rsp = REVERSE(@searchfor);
    SET @pos = CHARINDEX(@rsp, @r);
-
    IF(@pos = 0)
       return 0;
-
    RETURN len(@searchin) - @pos - dbo.fnLen(@searchfor)+2;
 END
 /*
 EXEC tSQLt.Run 'test.test_065_fnFindLastIndexOf';
-
 EXEC tSQLt.RunAll;
 */
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 CREATE TABLE [dbo].[GenericStaging](
 	[staging] [varchar](8000) NULL,
 	[id] [int] IDENTITY(1,1) NOT NULL,
@@ -2664,14 +2276,11 @@ CREATE TABLE [dbo].[GenericStaging](
 	[id] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- =====================================================================================
 -- Author:      Terry Watts
 -- Create date: 12-JUN-2025
@@ -2711,7 +2320,6 @@ CREATE PROCEDURE [dbo].[sp_crt_pop_table]
    ,@display_tables  BIT         = 0AS
 BEGIN
    SET NOCOUNT ON;
-
    DECLARE
        @fn           VARCHAR(35)   = N'sp_crt_pop_table'
       ,@fields       VARCHAR(8000)
@@ -2726,30 +2334,24 @@ BEGIN
       ,@row_cnt      INT
       ,@cmd          VARCHAR(8000)
       ,@sql          VARCHAR(8000)
-
    BEGIN TRY
-
       IF @codepage IS NULL
          SET @codepage = 65001;
-
       EXEC sp_log 1, @fn, '000: starting:
 @file_path:       [',@file_path,']
 @sep:             [',@sep,']
 @codepage:        [',@codepage,']
 @display_tables:  [',@display_tables,']
 ';
-
       ---------------------------------------------------------------
       -- Setup
       ---------------------------------------------------------------
-
       IF @sep IS NULL OR @sep IN('',0x09,'0x09', '\t') SET @sep = @tab; -- default
       SET @ndx = dbo.fnFindLastIndexOf('\', @file_path);
       -- Table name = file name less the extension
       SET @file   = SUBSTRING(@file_path, @ndx+1, dbo.fnLen(@file_path)-@ndx);
       SET @folder = iif(@ndx = 0, NULL, SUBSTRING(@file_path, 1, @ndx));
       SELECT @table_nm = a FROM dbo.fnSplitPair2(@file, '.');
-
       EXEC sp_log 1, @fn, '010:
 @ndx:     [', @ndx     , ']
 @file:    [', @file    , ']
@@ -2772,17 +2374,14 @@ BEGIN
             ,@codepage        = @codepage
             ,@display_table   = 1
          ;
-
       -- Create the staging table,  columns = field names, type = text
       -- Create a staging table
       SET @stg_table_nm = CONCAT(@table_nm, 'Staging');
       EXEC sp_drop_table @stg_table_nm;
-
       -- Create a table with table name, columns = field names, type = text
       EXEC sp_log 1, @fn, '030: creating the staging table, cmd: ', @NL, @cmd;
       SELECT @fields = staging FROM GenericStaging;
       EXEC sp_log 1, @fn, '040: @fields: ', @fields, ' @stg_table_nm: ',@stg_table_nm;
-
       SET @cmd = dbo.fnCrtTblSql(@stg_table_nm, @fields); -- delimits the qualified @stg_table_nm if necessary
       EXEC sp_log 1, @fn, '050: executing @cmd: ', @cmd;
       EXEC (@cmd);
@@ -2792,11 +2391,9 @@ BEGIN
       --SET @cmd = dbo.fnCrtTblSql(@table_nm, @fields);
       --EXEC sp_log 1, @fn, '060: creating the main table, sql: ', @NL, @cmd;
       --EXEC (@cmd);
-
    -- Create and populate the table from data file : Create and populate a table from a data file_ActivityGraph
    -- Infer the field types from the staged data
    -- Merge the staging table to the main table
-
       -- Create a format file using BCP and the table
       SET @format_file = CONCAT(@folder, '\',@table_nm,'_fmt.xml');
       --SET @cmd = CONCAT('bcp ',DB_NAME(),'.dbo.',@table_nm,' format nul -c -x -f ',@format_file, ' -t, -T');
@@ -2809,14 +2406,11 @@ BEGIN
            ,' format nul -c -x -f ',@format_file
            ,iif(@sep=@tab, '', ' -t, '),' -T'
          );
-
       EXEC sp_log 1, @fn, '060: creating format file: ', @NL, @cmd;
       EXEC xp_cmdshell @cmd;
-
       -- Import the staging table data
       -- Import staging table using the table and the format file
       EXEC sp_log 1, @fn, '070: importing ', @file_path, ' to staging: ', @stg_table_nm;
-
       EXEC @row_cnt = sp_import_txt_file
           @table            = @stg_table_nm
          ,@file             = @file_path
@@ -2827,20 +2421,15 @@ BEGIN
          ,@format_file      = @format_file
          ,@display_table    = @display_tables
       ;
-
       -- Infer the field types from the staged data
       EXEC sp_log 1, @fn, '080: Infer the field types from the staged data';
-
       -- Infer field types: pops the FieldInfo table
       EXEC sp_infer_field_types @stg_table_nm;
       EXEC sp_log 1, @fn, '090: Drop the main  if it exists';
-
       -- Drop table if it exists
       EXEC sp_drop_table @table_nm;
-
       -- Create the main table with table name, columns = field names, type = inferred type
       EXEC sp_log 1, @fn, '100: Create the main table with table name, columns = field names, type = inferred type';
-
       SELECT @sql = 
       CONCAT
       (
@@ -2854,24 +2443,18 @@ BEGIN
       )
       FROM FieldInfo
       ;
-
       EXEC sp_log 1, @fn, '110: Creating the main table, sql:
 ', @sql;
-
       EXEC(@sql);
-
       -- Migrating the staging data to the main table
       SET @sql = CONCAT('INSERT INTO ', @table_nm,' SELECT * FROM ',@stg_table_nm,';')
       EXEC sp_log 1, @fn, '120: Migrating the staging data to the main table, @sql:
 ', @sql;
-
       EXEC(@sql);
-
       SELECT @table_nm as [main table];
       SET @sql = CONCAT('SELECT * FROM ',@table_nm,';')
       EXEC sp_log 1, @fn, '130: displaying the main table';
       EXEC(@sql);
-
       -- POST: chk main table has the correct row cnt
       EXEC sp_assert_tbl_pop @table_nm, @exp_cnt = @row_cnt;
    END TRY
@@ -2880,30 +2463,23 @@ BEGIN
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 1, @fn, '999: completed processing imnported ',@row_cnt, ' rows';
    RETURN @row_cnt;
 END
 /*
 EXEC sp_appLog_display 'hlpr_068_sp_crt_pop_table,sp_crt_pop_table';
 EXEC test.test_068_sp_crt_pop_table;
-
 EXEC tSQLt.Run 'test.test_068_sp_crt_pop_table';
 EXEC sp_AppLog_display 'sp_crt_pop_table';
-
 EXEC tSQLt.RunAll;
 EXEC tSQLt.Run 'test.test_<proc_nm>';
 EXEC test.sp__crt_tst_rtns 'dbo.sp_crt_pop_table'
 */
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
 CREATE VIEW [dbo].[ImportGenericStaging_vw]
 AS
 SELECT staging
@@ -2912,16 +2488,11 @@ FROM GenericStaging
 /*
 SELECT * FROM ImportExamSchedule_vw;
 */
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
 -- =====================================================================
 -- Author:      Terry Watts
 -- Create date: 31-OCT-2024
@@ -2941,20 +2512,11 @@ END
 EXEC tSQLt.RunAll;
 EXEC tSQLt.Run 'test.test_097_fnIsTextType';
 */
-
-
-
 GO
+
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
-
-
 -- =============================================================
 -- Author:      Terry Watts
 -- Create date: 06-NOV-2023
@@ -2982,6 +2544,5 @@ ORDER BY TABLE_NAME, ORDINAL_POSITION;
 /*
 SELECT column_name FROM list_table_columns_vw where table_name = 'PathogenStaging' and is_txt = 1;
 */
-
-
 GO
+

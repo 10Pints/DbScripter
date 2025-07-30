@@ -1,9 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- ================================================================================================
 -- Author:      Terry Watts
 -- Create date: 05-APR-2024
@@ -42,6 +39,5 @@ END
   PRINT dbo.fnGetFullTypeName('VARCHAR', 4000);
   PRINT dbo.fnGetFullTypeName('INT', 30);
 */
-
-
 GO
+

@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE [dbo].[MosaicVirusStaging](
 	[Species] [varchar](max) NULL,
 	[Crops] [varchar](max) NULL,
@@ -20,5 +18,5 @@ CREATE TABLE [dbo].[MosaicVirusStaging](
 	[Vector] [varchar](max) NULL,
 	[OPPO_code] [varchar](max) NULL
 ) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-
 GO
+

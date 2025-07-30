@@ -1,10 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ====================================================================
 -- Author:      Terry Watts
 -- Create date: 01-FEB-2021
@@ -25,6 +22,5 @@ END
 SELECT dbo.fnIsInt('0',0) as [fnIsInt('0', 0)], dbo.fnIsInt('05',0) as [fnIsInt(05,0)]
 SELECT dbo.fnIsInt('0',1) as [fnIsInt('0',1)], dbo.fnIsInt('05',1) as [dbo.fnIsInt('05',1)]
 */
-
-
 GO
+

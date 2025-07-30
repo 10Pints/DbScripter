@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 -- ======================================================================================================
 -- Author:      Terry Watts
 -- Create date: 14-MAR-2024
@@ -25,5 +23,5 @@ ORDER BY pcs.pathogen_nm;
 /*
 SELECT TOP 50 * FROM list_unmatched_PathogenChemicalStaging_pathogens_vw;
 */
-
 GO
+

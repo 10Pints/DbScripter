@@ -1,9 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
 -- =============================================
 -- Author:      Terry watts
 -- Create date: 21-JAN-2020
@@ -42,9 +39,7 @@ DECLARE
     @fnThis VARCHAR(35) = 'sp_assert_equal'
    ,@aTxt   VARCHAR(100)= CONVERT(VARCHAR(20), @a)
    ,@bTxt   VARCHAR(100)= CONVERT(VARCHAR(20), @b)
-
    EXEC sp_log @log_level, @fnThis, '000: starting @a:[',@aTxt, '] @b:[', @bTxt, ']';
-
    IF dbo.fnChkEquals(@a ,@b) <> 0
    BEGIN
       ----------------------------------------------------
@@ -53,12 +48,10 @@ DECLARE
       EXEC sp_log @log_level, @fnThis, '010: OK, @a:[',@aTxt, '] = @b:[', @bTxt, ']';
       RETURN 0;
    END
-
    ----------------------------------------------------
    -- ASSERTION ERROR
    ----------------------------------------------------
    EXEC sp_log 3, @fnThis, '020: @a:[',@aTxt, '] <> @b:[', @bTxt, '], raising exception';
-
    EXEC sp_raise_exception
        @msg0   = @msg0 
       ,@msg1   = @msg1 
@@ -87,7 +80,5 @@ END
    EXEC tSQLt.RunAll;
    EXEC sp_assert_equal 1, 1;
 */
-
-
-
 GO
+

@@ -1,11 +1,6 @@
 SET ANSI_NULLS ON
-
 SET QUOTED_IDENTIFIER ON
-
 GO
-
-
-
 -- ===================================================================================================
 -- Author:      Terry Watts
 -- Create date: 03-APR-2024
@@ -17,7 +12,6 @@ GO
 --
 -- Responsibilities:
 -- Main entry point for the population of the 2 rtn metadata tables: {Test.RtnDetails, Test.RtnParamDetails}
-
 -- Parameters:
 -- @q_tstd_rtn the qualified tested routine name <schema>.<routine> optionally wrapped in []
 --
@@ -84,17 +78,14 @@ display_tables:[', @display_tables,']'
          ,@ad_stp       = @ad_stp
          ,@throw_if_err = @throw_if_err
             ;
-
       --------------------------------------------------------------------------------------------------------
       -- Pop the param details
       --------------------------------------------------------------------------------------------------------
       EXEC sp_log 1, @fn, '010:  populating the ParamDetails table   '
       EXEC test.sp_pop_param_details @throw_if_err = @throw_if_err;
-
       --------------------------------------------------------------------------------------
       -- Process complete
       --------------------------------------------------------------------------------------
-
       IF @display_tables = 1
       BEGIN
          SELECT @line;
@@ -108,14 +99,12 @@ PRINT '';
          SELECT * FROM test.ParamDetails;
          SELECT @line;
       END
-
       EXEC sp_log 1, @fn, '900: Process complete';
    END TRY
    BEGIN CATCH
       EXEC sp_log_exception @fn;
       THROW;
    END CATCH
-
    EXEC sp_log 2, @fn, '999: leaving';
 END
 /*
@@ -125,7 +114,5 @@ EXEC tSQLt.Run 'test.test_034_sp_get_param_details';
 EXEC tSQLt.Run 'test.test_090_sp_get_rtn_details';
 EXEC tSQLt.RunAll;
 */
-
-
-
 GO
+

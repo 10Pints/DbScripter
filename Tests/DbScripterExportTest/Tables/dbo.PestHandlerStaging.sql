@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE [dbo].[PestHandlerStaging](
 	[id] [int] NULL,
 	[region] [varchar](50) NULL,
@@ -18,5 +16,5 @@ CREATE TABLE [dbo].[PestHandlerStaging](
 	[expiry] [varchar](50) NULL,
 	[license_num] [varchar](50) NULL
 ) ON [PRIMARY]
-
 GO
+

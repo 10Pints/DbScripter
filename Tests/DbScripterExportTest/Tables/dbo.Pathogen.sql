@@ -1,9 +1,7 @@
 SET ANSI_NULLS ON
-
-SET QUOTED_IDENTIFIER ON
-
 GO
-
+SET QUOTED_IDENTIFIER ON
+GO
 CREATE TABLE [dbo].[Pathogen](
 	[pathogen_id] [int] IDENTITY(1,1) NOT NULL,
 	[pathogen_nm] [varchar](100) NULL,
@@ -31,10 +29,10 @@ CREATE TABLE [dbo].[Pathogen](
 	[pathogen_nm] ASC
 )WITH (PAD_INDEX = OFF, STATISTICS_NORECOMPUTE = OFF, IGNORE_DUP_KEY = OFF, ALLOW_ROW_LOCKS = ON, ALLOW_PAGE_LOCKS = ON, OPTIMIZE_FOR_SEQUENTIAL_KEY = OFF) ON [PRIMARY]
 ) ON [PRIMARY]
-
+GO
 ALTER TABLE [dbo].[Pathogen]  WITH NOCHECK ADD  CONSTRAINT [FK_Pathogen_PathogenType] FOREIGN KEY([pathogenType_id])
 REFERENCES [dbo].[PathogenType] ([pathogenType_id])
-
-ALTER TABLE [dbo].[Pathogen] NOCHECK CONSTRAINT [FK_Pathogen_PathogenType]
-
 GO
+ALTER TABLE [dbo].[Pathogen] NOCHECK CONSTRAINT [FK_Pathogen_PathogenType]
+GO
+
