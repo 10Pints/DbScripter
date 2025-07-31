@@ -15,12 +15,12 @@ namespace DbScripterLibNS
    /// </summary>
    public class Params
    {
-      private static IConfigurationRoot? _config = null;
+      private /*static*/ IConfigurationRoot? _config = null;
 
       /// <summary>
       /// Main configuration - set by Program.Main()
       /// </summary>
-      public static IConfigurationRoot? Config 
+      public /*static*/ IConfigurationRoot? Config 
       { 
          get{ return _config; }
          private set { _config = value;} 
@@ -97,7 +97,7 @@ namespace DbScripterLibNS
       /// 
       /// INVARIANT: cannot be empty after init
       /// </summary>
-      private List<SqlTypeEnum> _requiredTypes = new();
+      //private List<SqlTypeEnum> _requiredTypes = new();
 
       public bool ScriptUseDb { get; private set; } = false;
       
@@ -180,7 +180,7 @@ namespace DbScripterLibNS
 ;
 
          msg = "";
-         LogN(ConvertToJObject(Params.Config)?.ToString(Formatting.Indented) ?? "");
+         LogN(ConvertToJObject(/*Params.*/Config)?.ToString(Formatting.Indented) ?? "");
 
          // Pop all types bar database
          var types = Enum.GetValues<SqlTypeEnum>().Where(e => e!=SqlTypeEnum.Database);
@@ -274,7 +274,7 @@ namespace DbScripterLibNS
       /// <param name="key"></param>
       /// <param name="_default"></param>
       /// <returns></returns>
-      static string? GetAppSettingAsString(string key, string? _default = null)
+      string? GetAppSettingAsString(string key, string? _default = null)
       {
          return Config.GetValue<string>($"appSettings:{key}");
       }
@@ -286,7 +286,7 @@ namespace DbScripterLibNS
       /// <param name="key"></param>
       /// <param name="_default"></param>
       /// <returns></returns>
-      static T? GetAppSetting<T>(string key, T? _default = default(T))
+      T? GetAppSetting<T>(string key, T? _default = default(T))
       {
          T? t =  Config.GetValue<T>($"appSettings:{key}");
 
@@ -304,7 +304,7 @@ namespace DbScripterLibNS
       {
          if(CreateMode == CreateModeEnum.Alter)
          {
-            // Remove RequiredTypes table and table type for alter
+            // Remove table and UserDefinedTable types for alter
             ClearExportType(SqlTypeEnum.Table);
             ClearExportType(SqlTypeEnum.UserDefinedTableType);
          }
@@ -329,7 +329,7 @@ namespace DbScripterLibNS
       ///   else return the DbScripter.DefaultLogFile property
       /// </summary>
       /// <returns></returns>
-      public static string GetLogFileFromConfig()
+      public string GetLogFileFromConfig()
       {
          return GetAppSetting<string>("LogFile") ?? DefaultLogFile;
       }
@@ -353,7 +353,7 @@ namespace DbScripterLibNS
       ///   else return the DbScripter.DefaultLogFile property
       /// </summary>
       /// <returns></returns>
-      public static string GetScriptDirFromConfig()
+      public string GetScriptDirFromConfig()
       {
          return GetAppSetting<string>("Script Dir") ?? DefaultLogFile;
       }
@@ -492,20 +492,6 @@ namespace DbScripterLibNS
       /// <summary>
       /// 
       /// </summary>
-      /// <param name="name"></param>
-      /// <param name="prms"></param>
-      /// <param name="serverName"></param>
-      /// <param name="instanceName"></param>
-      /// <param name="databaseName"></param>
-      /// <param name="scriptFile"></param>
-      /// <param name="requiredSchemas"></param>
-      /// <param name="requiredTypes"></param>
-      /// <param name="createMode"></param>
-      /// <param name="useDb"></param>
-      /// <param name="addTs"></param>
-      /// <param name="logFile"></param>
-      /// <param name="isXprtDta"></param>
-      /// <param name="displayScript"></param>
       public Params()
       {
       }
@@ -526,121 +512,6 @@ namespace DbScripterLibNS
          Server          = "";
          IsExportingData = false;
          ScriptUseDb     = false;
-      }
-
-      /// <summary>
-      /// Description takes a comma separated list of type codes
-      /// e.g.: F,P,TTy
-      /// 
-      ///   F : function
-      ///   P : procedure
-      ///   T : table
-      ///   V : view
-      ///   TTy: Table type
-      ///
-      /// PRECONDITIONS:
-      /// none
-      /// POSTCONDITIONS:
-      /// Returns an array of SqlTypeEnum based on  the characters in 
-      /// the supplied string.
-      /// Each characters is a key to th etype as defined in the map spec'd below
-      /// asserts that all characters in the string are legal types
-      /// </summary>
-      /// <param name="rs">like:  'FTPV'</param>
-      /// <returns></returns>
-      public List<SqlTypeEnum>? PrsReqTypes( string? requiredTypes )
-      {
-        LogS();
-
-        if(string.IsNullOrEmpty(requiredTypes))
-            return null;
-
-         requiredTypes = requiredTypes?.ToUpper();
-
-         // trim and remove surrounding {}
-         requiredTypes = requiredTypes?.Trim(new[] { ' ', '{', '}' });
-         string[] reqTypes = requiredTypes?.Split(new [] {','}, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
-         
-         // Trim each item
-         for(int i=0; i<reqTypes.Length; i++)
-            reqTypes[i] = reqTypes[i].Trim();
-
-         List<SqlTypeEnum> list = new List<SqlTypeEnum>();
-
-         // get the types, throw if not found
-         foreach (string? item in reqTypes)
-            list.Add(item.FindEnumByAliasExact<SqlTypeEnum>( true));
-
-         LogL($"Found {list.Count} items");
-         return list;
-      }
-
-      /// <summary>
-      /// Handles strings like:
-      ///   "{test, [dbo]", "dbo",  "", null}
-      ///   "   {   dbo    }   ", "" null
-      ///
-      /// PRECONDITIONS: 
-      ///   PRE 1: Server must be specified
-      ///   PRE 2: instance must be specified
-      ///
-      /// POSTCONDITIONS: 
-      ///   POST 1: returns null if rs is null, empty
-      ///   POST 2: returns null if rs contains no schemas
-      ///   POST 3: returns all the required schemas in rs in the returned collection
-      ///   POST 4: contains no empty schemas
-      ///   POST 5: *Server, Instance Database exist              removed as they involve network - better do this validation at run time
-      ///   POST 6: *required schemas do exist in the database
-      ///           AND they match the Case of the Db Schema name
-      ///
-      /// Method:
-      ///   trim
-      ///   remove surrounding {}
-      ///   split on ,
-      ///   for each schema: remove any []and trim
-      /// </summary>
-      /// <param name="rs">required_schemas</param>
-      /// <returns>string array of the unwrapped schemas in rs</returns>
-      public List<string>? PrsRegSchema( string rs )
-      {
-         List<string>? requiredSchemaList = null;
-
-         do
-         {
-            //  POST 1: returns null if rs is null, empty
-            if (string.IsNullOrEmpty(rs))
-               break;
-
-            requiredSchemaList = new List<string>();
-
-            // Trim and remove surrounding {}
-            rs = rs.Trim(new[] { ' ', '{', '}' });
-
-            // Split on ,
-            string[] rschemasNames = rs.Split(new []{ ',', '[', ']'}, StringSplitOptions.RemoveEmptyEntries) ?? new string[0];
-
-            // for each schema:  any [] and trim
-            for(int i = 0; i < rschemasNames.Length; i++)
-            {
-               var rschemaName = rschemasNames[i];
-               rschemaName = rschemaName.Trim(new[] { ' ', '[', ']' });
-            
-               if(!string.IsNullOrEmpty(rschemaName))
-                  requiredSchemaList.Add(rschemaName);
-            }
-
-            // POST 2: returns null if rs contains no schemas
-            if(requiredSchemaList.Count == 0)
-               return null;
-
-            // POST 3: returns all the required schemas in rs in the returned collection
-            // POST 4: contains no empty schemas
-            foreach (var item in requiredSchemaList)
-               Postcondition<ArgumentException>(string.IsNullOrEmpty(item) == false, "POST 4: should contain no empty schemas");
-
-         } while (false);
-
-         return requiredSchemaList;
       }
 
       /// Adds the timestamp to the file path like 
@@ -700,7 +571,7 @@ namespace DbScripterLibNS
                msg = "";
 
                // Validation
-               Params.Config = new ConfigurationBuilder()
+               /*Params.*/Config = new ConfigurationBuilder()
                      .AddJsonFile(configFile)
                      .Build();
 
@@ -756,7 +627,6 @@ namespace DbScripterLibNS
                _unwantedItemMap[SqlTypeEnum.UserDefinedTableType] = GetAppSettingsAsList("UnwantedUserDefinedTableTypes");
                _unwantedItemMap[SqlTypeEnum.UserDefinedType     ] = GetAppSettingsAsList("UnwantedUserDefinedTypes");
                _unwantedItemMap[SqlTypeEnum.View                ] = GetAppSettingsAsList("UnwantedViews");
-               //RequiredTypes   = GetRequiredTypesFromConfig() ?? new List<SqlTypeEnum>();
                IsExportingData = GetAppSetting<bool>("IsExportingData", false);
                IndividualFiles = GetAppSetting<bool>("IndividualFiles", false);
 
@@ -800,7 +670,7 @@ namespace DbScripterLibNS
          return GetAppSettingAsString(listName)?.Split(',', StringSplitOptions.RemoveEmptyEntries)?.ToList() ?? new List<string>();
       }
 
-      private static List<SqlTypeEnum>? GetRequiredTypesFromConfig()
+/*      private static List<SqlTypeEnum>? GetRequiredTypesFromConfig()
       {
          // Get the comma separated values
          string s = GetAppSetting("RequiredTypes", "") ?? "";
@@ -818,7 +688,7 @@ namespace DbScripterLibNS
          
          return types;
       }
-
+*/
       /// <summary>
       /// 
       /// </summary>

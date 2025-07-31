@@ -15,6 +15,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using System.Transactions;
 using System.Windows.Controls;
+using System.Windows.Forms;
 
 using Xunit;
 
@@ -34,11 +35,39 @@ public class DbScripterAppTests : XunitTestBase
 
 
    /// <summary>
-   /// schema  functions	procedures	tables	views
-   /// dbo     121	       83	      10	      17
-   /// test     66	       220	      11	       4
-   /// ---------------------------------------------
-   /// All     187	       303	      21	      21
+   /*
+      "Script Dir": "D:\\Dev\\DbScripter\\Tests\\DbScripterAppTests\\ExportSqlDbUtTest",
+      "Script File": "Ut.sql",
+      "RequiredAssemblies": "*",
+      "RequiredSchemas": "dbo,test",
+      "RequiredFunctions": "*",
+      "RequiredProcedures": "*",
+      "RequiredTables": "*",
+      "RequiredUserDefinedTypes": "*",
+      "RequiredUserDefinedDataTypes": "*",
+      "RequiredUserDefinedTableTypes": "*",
+      "RequiredViews": "*",
+      "UnwantedAssemblies": "Microsoft.SqlServer.Types",
+      "UnwantedSchemas": "INFORMATION_SCHEMA,sys,tSQLt,SQL#",
+      "UnwantedFunctions": "fn_diagramobjects",
+      "UnwantedProcedures": "",
+      "UnwantedTables": "sysdiagrams",
+      "UnwantedUserDefinedDataTypes": "",
+      "UnwantedUserDefinedTableTypes": "",
+      "UnwantedUserDefinedTypes": "",
+      "UnwantedViews": "",
+    */
+   /// ------------------------------------------------
+   /// EXEC test.sp_GetRoutineCounts 'dbo'
+   /// EXEC test.sp_GetRoutineCounts 'test'
+   /// ------------------------------------------------
+   /// schema functions   procedures tables   views
+   /// ------------------------------------------------
+   /// dbo    121	         83	       10       17
+   /// test    66	        220	       11        4
+   /// ------------------------------------------------
+   /// All    187	        303	       21       21
+   /// ------------------------------------------------
    /// </summary>
    [Fact]
    public void ExportSqlDbUtTest()
@@ -48,7 +77,7 @@ public class DbScripterAppTests : XunitTestBase
 
       Dictionary<string, int> expFolderCntMap = new Dictionary<string, int>()
       {
-         {"Misc",               22},
+         {"Misc",               17},
          {"StoredProcedures",  303},
          {"Functions",         187},
          {"Tables",             21},

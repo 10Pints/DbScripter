@@ -557,7 +557,7 @@ namespace DbScripterLibNS
                break;
             }
 
-            if (Params.Config == null)
+            if (P.Config == null)
             {
                msg = "Params.config not initialzed";
                break;
