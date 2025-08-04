@@ -3,6 +3,6 @@
   "diagnosticMessages": true,
   "internalDiagnosticMessages": true,
   "shadowCopy": false,
-  "parallelizeTestCollections": true,
-  "maxParallelThreads": -1
+  "parallelizeAssembly": false,
+  "parallelizeTestCollections": false  "maxParallelThreads": 1
 }

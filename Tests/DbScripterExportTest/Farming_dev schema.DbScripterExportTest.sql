@@ -46,7 +46,7 @@ Parameters:
  ScriptUseDb                  : True
  Server                       : DevI9
  AddTimestamp                 : False
- Timestamp                    : 250731-1156
+ Timestamp                    : 250731-1635
 
  RequiredSchemas : 2
 	dbo
@@ -2120,6 +2120,60 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
+-- ===========================================================
+-- Author:      Terry watts
+-- Create date: 20-SEP-2024
+-- Description: Deletes the file on disk
+--
+-- Postconditions:
+-- POST 01 raise exception if failed to delete the file
+-- ===========================================================
+CREATE PROCEDURE [dbo].[sp_delete_file]
+    @file_path    VARCHAR(500)   = NULL
+   ,@chk_exists   BIT = 0 -- chk exists in the first place
+   ,@fn           VARCHAR(35)    = N'*'
+AS
+BEGIN
+   DECLARE
+    @fnThis       VARCHAR(35)   = N'SP DELETE_FILE'
+   ,@cmd          VARCHAR(MAX)
+   ,@msg          VARCHAR(1000)
+   ;
+   EXEC sp_log 1, @fnThis,'000: starting, deleting file:[',@file_path,']';
+   DROP TABLE IF EXISTS #tmp;
+   CREATE table #tmp (id INT identity(1,1), [output] NVARCHAR(4000))
+   IF (dbo.fnFileExists(@file_path) <> 0)
+   BEGIN
+      --SET @cmd = CONCAT('INSERT INTO #tmp  EXEC xp_cmdshell ''del "', @file_path, '"'' ,NO_OUTPUT');
+      SET @cmd = CONCAT('INSERT INTO #tmp  EXEC xp_cmdshell '' del "', @file_path, '"''');
+      --PRINT @cmd;
+      EXEC sp_log 1, @fnThis,'010: sql:[',@cmd,']';
+      EXEC (@cmd);
+      --IF EXISTS (SELECT TOP 2 1 FROM #tmp) SELECT * FROM #tmp;
+   END
+   ELSE -- file does not exist
+      IF (@chk_exists = 1) -- POST 01 raise exception if failed to delete the file
+         EXEC sp_raise_exception 58147, ' 020: file [',@file_path,'] does not exist but chk_exists specified', @fn=@fnThis;
+   IF dbo.fnFileExists(@file_path) <> 0
+   BEGIN
+      IF EXISTS (SELECT TOP 2 1 FROM #tmp)
+         SELECT @msg = [output] FROM #tmp where id = 1;
+      EXEC sp_raise_exception 63500, '030: failed to delete file [', @file_path, '], reason: ',@msg, @fn=@fnThis;
+   END
+   EXEC sp_log 0, @fnThis,'999: leaving';
+END
+/*
+EXEC sp_delete_file 'D:\Logs\a.txt';
+EXEC sp_delete_file 'non exist file';
+EXEC sp_delete_file 'D:\Logs\Farming.log';
+EXEC xp_cmdshell 'del "D:\Logs\Farming.log"'
+*/
+GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
 --===========================================================
 -- Author:      Terry watts
 -- Create date: 18-MAY-2020
@@ -2304,60 +2358,6 @@ END
     
    EXEC dbo.sp_assert_tbl_po 'AppLog'
    IF EXISTS (SELECT 1 FROM [dummytable]) PRINT '1' ELSE PRINT '0'
-*/
-GO
-
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- ===========================================================
--- Author:      Terry watts
--- Create date: 20-SEP-2024
--- Description: Deletes the file on disk
---
--- Postconditions:
--- POST 01 raise exception if failed to delete the file
--- ===========================================================
-CREATE PROCEDURE [dbo].[sp_delete_file]
-    @file_path    VARCHAR(500)   = NULL
-   ,@chk_exists   BIT = 0 -- chk exists in the first place
-   ,@fn           VARCHAR(35)    = N'*'
-AS
-BEGIN
-   DECLARE
-    @fnThis       VARCHAR(35)   = N'SP DELETE_FILE'
-   ,@cmd          VARCHAR(MAX)
-   ,@msg          VARCHAR(1000)
-   ;
-   EXEC sp_log 1, @fnThis,'000: starting, deleting file:[',@file_path,']';
-   DROP TABLE IF EXISTS #tmp;
-   CREATE table #tmp (id INT identity(1,1), [output] NVARCHAR(4000))
-   IF (dbo.fnFileExists(@file_path) <> 0)
-   BEGIN
-      --SET @cmd = CONCAT('INSERT INTO #tmp  EXEC xp_cmdshell ''del "', @file_path, '"'' ,NO_OUTPUT');
-      SET @cmd = CONCAT('INSERT INTO #tmp  EXEC xp_cmdshell '' del "', @file_path, '"''');
-      --PRINT @cmd;
-      EXEC sp_log 1, @fnThis,'010: sql:[',@cmd,']';
-      EXEC (@cmd);
-      --IF EXISTS (SELECT TOP 2 1 FROM #tmp) SELECT * FROM #tmp;
-   END
-   ELSE -- file does not exist
-      IF (@chk_exists = 1) -- POST 01 raise exception if failed to delete the file
-         EXEC sp_raise_exception 58147, ' 020: file [',@file_path,'] does not exist but chk_exists specified', @fn=@fnThis;
-   IF dbo.fnFileExists(@file_path) <> 0
-   BEGIN
-      IF EXISTS (SELECT TOP 2 1 FROM #tmp)
-         SELECT @msg = [output] FROM #tmp where id = 1;
-      EXEC sp_raise_exception 63500, '030: failed to delete file [', @file_path, '], reason: ',@msg, @fn=@fnThis;
-   END
-   EXEC sp_log 0, @fnThis,'999: leaving';
-END
-/*
-EXEC sp_delete_file 'D:\Logs\a.txt';
-EXEC sp_delete_file 'non exist file';
-EXEC sp_delete_file 'D:\Logs\Farming.log';
-EXEC xp_cmdshell 'del "D:\Logs\Farming.log"'
 */
 GO
 
@@ -8862,153 +8862,6 @@ SET ANSI_NULLS ON
 GO
 SET QUOTED_IDENTIFIER ON
 GO
-CREATE TABLE [dbo].[FertHandler](
-	[region] [varchar](5) NOT NULL,
-	[company_nm] [varchar](80) NOT NULL,
-	[address] [varchar](100) NOT NULL,
-	[type] [varchar](15) NOT NULL,
-	[license] [varchar](25) NOT NULL,
-	[expiry_date] [date] NOT NULL
-) ON [PRIMARY]
-GO
-
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
-CREATE TABLE [dbo].[FertHandlerStaging](
-	[region] [varchar](max) NULL,
-	[company_nm] [varchar](max) NULL,
-	[address] [varchar](max) NULL,
-	[type] [varchar](max) NULL,
-	[license] [varchar](max) NULL,
-	[expiry_date] [varchar](max) NULL
-) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
-GO
-
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
--- ==============================================================================
--- Author:      Terry Watts
--- Create date: 05-NOV-2024
--- Description: Imports the Pg Gov Ag LRAP Fert handlers tsv file
---     into FertHandlerStaging then does fixup before copying to FertHandler.
--- PRECONDITIONS:
--- PRE01: none
---
--- POSTCONDITIONS:
--- POST01: FertHandler table must have rows
--- POST02: no double quotes exists in any column
--- POST03: no leaading/trailing wsp exists in any column
---
--- BCP create (DOS_:
--- bcp Farming_dev.dbo.cropstaging format nul -c -T -f FertHandler.fmt
---
--- TESTS:
---
--- CHANGES:
--- ==============================================================================
-CREATE PROCEDURE [dbo].[sp_import_Fert_Handlers]
-    @file           VARCHAR(500)
-   ,@folder         VARCHAR(600) = NULL
-   ,@display_tables BIT          = 0
-AS
-BEGIN
-   DECLARE
-       @fn                 VARCHAR(35)   = N'import_Fert_Handlers'
-      ,@bkslsh             CHAR(1)       = CHAR(92)
-      ,@sql                VARCHAR(MAX)
-      ,@cmd                VARCHAR(MAX)
-      ,@error_file         VARCHAR(400)  = NULL
-      ,@error_msg          VARCHAR(MAX)  = NULL
-      ,@table_nm           VARCHAR(35)   = 'Distributor'
-      ,@rc                 INT            = -1
-      ,@import_root        VARCHAR(MAX)  
-      ,@pathogen_row_cnt   INT            = -1
-      ,@update_row_cnt     INT            = -1
-      ,@null_type_row_cnt  INT            = -1
-      ;
-   SET NOCOUNT OFF
-   BEGIN TRY
-      EXEC sp_log 1, @fn, '000: starting:
-file  :[', @file  ,']
-folder:[', @folder,']
-';
-      ---------------------------------------
-      -- Validate inputs
-      ---------------------------------------
-      IF @folder IS NOT NULL
-         SET @file = CONCAT(@folder, @bkslsh, @file);
-      ---------------------------------------
-      -- Setup
-      ---------------------------------------
-      ---------------------------------------
-      -- Process
-      ---------------------------------------
-      EXEC sp_log 1, @fn, '010: calling sp_bulk_import_tsv2';
-      EXEC sp_import_txt_file
-         @table      = 'FertHandlerStaging'
-        ,@file       = @file
-        ,@clr_first  = 1
-        ;
-      ---------------------------------------
-      -- Do any fixup
-      ---------------------------------------
-      EXEC sp_log 1, @fn, '020: performing fixup = currently none';
-      ---------------------------------------
-      -- Copy to main table
-      ---------------------------------------
-      EXEC sp_log 1, @fn, '030: Clean copy to FertHandler main table';
-      DELETE FROM FertHandler;
-      INSERT INTO FertHandler
-      (
-          [region]
-         ,[company_nm]
-         ,[address]
-         ,[type]
-         ,[license]
-         ,[expiry_date]
-      )
-      SELECT 
-          [region]
-         ,[company_nm]
-         ,[address]
-         ,[type]
-         ,[license]
-         ,[expiry_date]
-      FROM FertHandlerStaging
-      ;
-      ---------------------------------------
-      -- Postcondition checks
-      ---------------------------------------
-      EXEC sp_log 1, @fn, '040: Performing postcondition checks';
-      EXEC sp_assert_tbl_pop 'FertHandler';
-      ---------------------------------------
-      -- Completed processing OK
-      ---------------------------------------
-      SET @rc = 0; -- OK
-      IF @display_tables = 1 SELECT * FROM FertHandler;
-      EXEC sp_log 1, @fn, '300:completed import and fixup'
-   END TRY
-   BEGIN CATCH
-      SET @error_msg = ERROR_MESSAGE();
-      EXEC sp_log 4, @fn, '500: Caught exception: ', @error_msg;
-      THROW;
-   END CATCH
-   EXEC sp_log 1, @fn, '996: leaving, RC: ', @rc
-   RETURN @RC;
-END
-/*
-EXEC sp_import_Fert_Handlers 'D:\Dev\Farming\Data\Fert-Handlers-20240930.txt', 1;
-*/
-GO
-
-SET ANSI_NULLS ON
-GO
-SET QUOTED_IDENTIFIER ON
-GO
 CREATE TABLE [dbo].[MosaicVirus](
 	[Species] [varchar](60) NULL,
 	[Crops] [varchar](40) NULL,
@@ -9339,6 +9192,153 @@ display_tables:[', @display_tables,']
 END
 /*
 EXEC sp_import_Pest_Handlers 'Pest-Handlers-May-10-2023.txt', 'D:\dev\farming\data';
+*/
+GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[FertHandler](
+	[region] [varchar](5) NOT NULL,
+	[company_nm] [varchar](80) NOT NULL,
+	[address] [varchar](100) NOT NULL,
+	[type] [varchar](15) NOT NULL,
+	[license] [varchar](25) NOT NULL,
+	[expiry_date] [date] NOT NULL
+) ON [PRIMARY]
+GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+CREATE TABLE [dbo].[FertHandlerStaging](
+	[region] [varchar](max) NULL,
+	[company_nm] [varchar](max) NULL,
+	[address] [varchar](max) NULL,
+	[type] [varchar](max) NULL,
+	[license] [varchar](max) NULL,
+	[expiry_date] [varchar](max) NULL
+) ON [PRIMARY] TEXTIMAGE_ON [PRIMARY]
+GO
+
+SET ANSI_NULLS ON
+GO
+SET QUOTED_IDENTIFIER ON
+GO
+-- ==============================================================================
+-- Author:      Terry Watts
+-- Create date: 05-NOV-2024
+-- Description: Imports the Pg Gov Ag LRAP Fert handlers tsv file
+--     into FertHandlerStaging then does fixup before copying to FertHandler.
+-- PRECONDITIONS:
+-- PRE01: none
+--
+-- POSTCONDITIONS:
+-- POST01: FertHandler table must have rows
+-- POST02: no double quotes exists in any column
+-- POST03: no leaading/trailing wsp exists in any column
+--
+-- BCP create (DOS_:
+-- bcp Farming_dev.dbo.cropstaging format nul -c -T -f FertHandler.fmt
+--
+-- TESTS:
+--
+-- CHANGES:
+-- ==============================================================================
+CREATE PROCEDURE [dbo].[sp_import_Fert_Handlers]
+    @file           VARCHAR(500)
+   ,@folder         VARCHAR(600) = NULL
+   ,@display_tables BIT          = 0
+AS
+BEGIN
+   DECLARE
+       @fn                 VARCHAR(35)   = N'import_Fert_Handlers'
+      ,@bkslsh             CHAR(1)       = CHAR(92)
+      ,@sql                VARCHAR(MAX)
+      ,@cmd                VARCHAR(MAX)
+      ,@error_file         VARCHAR(400)  = NULL
+      ,@error_msg          VARCHAR(MAX)  = NULL
+      ,@table_nm           VARCHAR(35)   = 'Distributor'
+      ,@rc                 INT            = -1
+      ,@import_root        VARCHAR(MAX)  
+      ,@pathogen_row_cnt   INT            = -1
+      ,@update_row_cnt     INT            = -1
+      ,@null_type_row_cnt  INT            = -1
+      ;
+   SET NOCOUNT OFF
+   BEGIN TRY
+      EXEC sp_log 1, @fn, '000: starting:
+file  :[', @file  ,']
+folder:[', @folder,']
+';
+      ---------------------------------------
+      -- Validate inputs
+      ---------------------------------------
+      IF @folder IS NOT NULL
+         SET @file = CONCAT(@folder, @bkslsh, @file);
+      ---------------------------------------
+      -- Setup
+      ---------------------------------------
+      ---------------------------------------
+      -- Process
+      ---------------------------------------
+      EXEC sp_log 1, @fn, '010: calling sp_bulk_import_tsv2';
+      EXEC sp_import_txt_file
+         @table      = 'FertHandlerStaging'
+        ,@file       = @file
+        ,@clr_first  = 1
+        ;
+      ---------------------------------------
+      -- Do any fixup
+      ---------------------------------------
+      EXEC sp_log 1, @fn, '020: performing fixup = currently none';
+      ---------------------------------------
+      -- Copy to main table
+      ---------------------------------------
+      EXEC sp_log 1, @fn, '030: Clean copy to FertHandler main table';
+      DELETE FROM FertHandler;
+      INSERT INTO FertHandler
+      (
+          [region]
+         ,[company_nm]
+         ,[address]
+         ,[type]
+         ,[license]
+         ,[expiry_date]
+      )
+      SELECT 
+          [region]
+         ,[company_nm]
+         ,[address]
+         ,[type]
+         ,[license]
+         ,[expiry_date]
+      FROM FertHandlerStaging
+      ;
+      ---------------------------------------
+      -- Postcondition checks
+      ---------------------------------------
+      EXEC sp_log 1, @fn, '040: Performing postcondition checks';
+      EXEC sp_assert_tbl_pop 'FertHandler';
+      ---------------------------------------
+      -- Completed processing OK
+      ---------------------------------------
+      SET @rc = 0; -- OK
+      IF @display_tables = 1 SELECT * FROM FertHandler;
+      EXEC sp_log 1, @fn, '300:completed import and fixup'
+   END TRY
+   BEGIN CATCH
+      SET @error_msg = ERROR_MESSAGE();
+      EXEC sp_log 4, @fn, '500: Caught exception: ', @error_msg;
+      THROW;
+   END CATCH
+   EXEC sp_log 1, @fn, '996: leaving, RC: ', @rc
+   RETURN @RC;
+END
+/*
+EXEC sp_import_Fert_Handlers 'D:\Dev\Farming\Data\Fert-Handlers-20240930.txt', 1;
 */
 GO
 
@@ -15511,11 +15511,6 @@ SELECT chemical_nm, product_nm FROM ChemicalProduct_vw WHERE product_nm liKE '%H
 SELECT chemical_nm, product_nm FROM ChemicalProduct_vw WHERE chemical_nm IN ('Chlorpyrifos','Dimethoate','Thiamethoxam','Lambda Cyhalothrin')
 SELECT * FROM Staging1 where product LIKE '%Brodan%'
 */
-GO
-
-GO
-CREATE TYPE [tSQLt].[Private]
-EXTERNAL NAME [tSQLtCLR].[tSQLtCLR.tSQLtPrivate]
 GO
 
 GO

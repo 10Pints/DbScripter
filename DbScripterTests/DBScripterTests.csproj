@@ -1,0 +1,115 @@
+﻿<Project Sdk="Microsoft.NET.Sdk">
+
+   <PropertyGroup>
+      <TargetFramework>net9.0-windows10.0.26100.0</TargetFramework>
+      <ImplicitUsings>enable</ImplicitUsings>
+      <Nullable>enable</Nullable>
+      <IsPackable>false</IsPackable>
+      <!-- Add this to ensure test discovery works -->
+      <EnableNETAnalyzers>true</EnableNETAnalyzers>
+   </PropertyGroup>
+
+   <ItemGroup>
+     <None Remove="Config\AppExport.json" />
+     <None Remove="Config\AppSettings.01.json" />
+     <None Remove="Config\AppSettings.02.json" />
+     <None Remove="Config\AppSettings.DbScripterAppTests.json" />
+     <None Remove="Config\AppSettings.GetFilterUrns_when_then_15.json" />
+     <None Remove="Config\AppSettings.GetUrnTypeTest.json" />
+     <None Remove="Config\AppSettings.Params.01.json" />
+     <None Remove="Config\AppSettings_tst1_wild.json" />
+     <None Remove="Config\AppSettings_wild.json" />
+     <None Remove="Config\CheckBasicLoggingTest.json" />
+     <None Remove="Config\DbScripterExportTest.json" />
+     <None Remove="Config\Exportsp_crt_pop_table.json" />
+     <None Remove="Config\ExportSqlDbUtTest.json" />
+     <None Remove="Config\ExportTestCrtRtns_When_Expect_45.json" />
+     <None Remove="Setup\Test01Db.sql" />
+     <None Remove="xunit.runner.json" />
+   </ItemGroup>
+
+   <ItemGroup>
+     <Content Include="Config\AppExport.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Config\AppSettings.01.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Config\AppSettings.02.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Config\AppSettings.DbScripterAppTests.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Config\AppSettings.GetFilterUrns_when_then_15.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Config\AppSettings.GetUrnTypeTest.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Config\AppSettings.Params.01.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Config\AppSettings_tst1_wild.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Config\AppSettings_wild.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Config\CheckBasicLoggingTest.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Config\DbScripterExportTest.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Config\Exportsp_crt_pop_table.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Config\ExportSqlDbUtTest.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Config\ExportTestCrtRtns_When_Expect_45.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="Setup\Test01Db.sql">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+     <Content Include="xunit.runner.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </Content>
+   </ItemGroup>
+
+   <ItemGroup>
+      <PackageReference Include="MartinCostello.Logging.XUnit" Version="0.6.0" />
+      <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.7" />
+      <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.14.1" />
+      <PackageReference Include="MSTest.TestFramework" Version="3.10.0" />
+      <PackageReference Include="Serilog.Sinks.Console" Version="6.0.0" />
+      <PackageReference Include="Serilog.Sinks.Debug" Version="3.0.0" />
+      <PackageReference Include="Serilog.Sinks.File" Version="7.0.0" />
+      <PackageReference Include="Serilog.Sinks.TestCorrelator" Version="4.0.0" />
+      <PackageReference Include="xunit" Version="2.9.3" />
+      <PackageReference Include="xunit.runner.visualstudio" Version="3.1.3">
+         <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+         <PrivateAssets>all</PrivateAssets>
+      </PackageReference>
+      <PackageReference Include="coverlet.collector" Version="6.0.4">
+        <PrivateAssets>all</PrivateAssets>
+        <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+      </PackageReference>
+
+      <PackageReference Include="FluentAssertions" Version="8.5.0" />
+   </ItemGroup>
+
+   <ItemGroup>
+     <ProjectReference Include="..\..\Common\CommonLib\CommonLib.csproj" />
+     <ProjectReference Include="..\DbScripterApp\DbScripterApp.csproj" />
+     <ProjectReference Include="..\DbScripterLib\DbScripterLib.csproj" />
+   </ItemGroup>
+
+   <ItemGroup>
+     <None Update="AppSettings - Copy.DbScripterAppTests.json">
+       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+     </None>
+   </ItemGroup>
+</Project>

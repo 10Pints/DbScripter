@@ -1,0 +1,33 @@
+name: CI
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+jobs:
+  test:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '9.0.302' # Adjust to your .NET version
+      - name: Restore Dependencies
+        run: dotnet restore SmoTests/SmoTests.csproj
+      - name: Build
+        run: dotnet build SmoTests/SmoTests.csproj --no-restore
+      - name: Setup SQL Server
+        run: |
+          # Install SQL Server LocalDB (preinstalled on windows-latest)
+          sqllocaldb create "MSSQLLocalDB" -s
+      - name: Run Tests
+        run: dotnet test SmoTests/SmoTests.csproj --no-build --verbosity detailed --logger "trx;LogFileName=test-results.trx"
+      - name: Publish Test Results
+        if: always()
+        uses: dorny/test-reporter@v1
+        with:
+          name: xUnit Test Results
+          path: "**/test-results.trx"
+          reporter: dotnet-trx
+          fail-on-error: true
