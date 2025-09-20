@@ -12,18 +12,18 @@ namespace DbScripterTests;
 // Custom sink for xUnit test output
 public class XunitTestBase : IDisposable
 {
-   protected readonly ITestOutputHelper OutputHelper;
+   protected readonly ITestOutputHelper Output;//OutputHelper;
    protected readonly Logger SerilogLogger;
 
    public XunitTestBase(ITestOutputHelper outputHelper)
    {
-      OutputHelper = outputHelper;
+      Output = outputHelper;
 
       // Redirect Console to Debug and Test output
       Console.SetOut(new DebugTextWriter(outputHelper));
 
       // Enable SelfLog for diagnostics
-      SelfLog.Enable(msg => OutputHelper.WriteLine($"[SELFLOG] {msg}"));
+      SelfLog.Enable(msg => Output.WriteLine($"[SELFLOG] {msg}"));
 
       // Load configuration
       var config = new ConfigurationBuilder()

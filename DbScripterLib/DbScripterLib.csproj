@@ -7,14 +7,6 @@
     <Nullable>enable</Nullable>
    </PropertyGroup>
 
-  <ItemGroup>
-    <Compile Remove="CodeFile1.cs" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <None Include="CodeFile1.cs" />
-  </ItemGroup>
-
    <ItemGroup>
       <PackageReference Include="Microsoft.Extensions.Configuration" Version="9.0.7" />
       <PackageReference Include="Microsoft.Extensions.Configuration.Json" Version="9.0.7" />

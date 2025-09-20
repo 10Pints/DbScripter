@@ -13,7 +13,8 @@ namespace DbScripterTests;
 //[Collection("SMOSequential")]
 public partial class SMOScriptingTests
 {
-/*   public ParamsTests(ITestOutputHelper _output)
+   /*
+public SMOScriptingTests(ITestOutputHelper _output)
       : base(_output)
    {
       if(!CommonLib.Logger.IsInitialized())

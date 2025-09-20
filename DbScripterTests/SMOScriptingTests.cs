@@ -1,39 +1,62 @@
-﻿
-using CommonLib;
+﻿using CommonLib;
 using Microsoft.SqlServer.Management.Smo;
+using Serilog;
 using System.Text.Json;
 using System.Text.RegularExpressions;
+//using Xunit; -- not using xunit it seems!?
+//using Xunit.Abstractions; -- not using xunit it seems!?
+
 using Assert = Xunit.Assert;
 
 namespace DbScripterTests;
 
-public partial class SMOScriptingTests : XunitTestBase, IClassFixture<SmoTestFixture>
+[TestClass]
+public partial class SMOScriptingTests : /*XunitTestBase,*/ IClassFixture<SmoTestFixture>
 {
-   private readonly Server?   _server;
+   private readonly SmoTestFixture _fixture;
+   private readonly Server? _server;
    private readonly Database? _testDb;
-   private readonly dynamic   _config;
+   private readonly dynamic _config;
 
-
-   public SMOScriptingTests(ITestOutputHelper output)
-   :  base(output)
+   /// <summary>
+   /// Specialized constructor  -- may be this for xUnit with fixture and output ?? may be I need to use XUnit
+   /// </summary>
+   /// <param name="fixture"></param>
+   /// <param name="output"></param>
+   public SMOScriptingTests(SmoTestFixture fixture, ITestOutputHelper output)
+: base(output)
    {
-      _server = SmoTestFixture.Server;
-      _testDb = SmoTestFixture.TestDb;
+      _fixture = fixture;
+      _server = fixture.Server;
+      _testDb = fixture.TestDb;
       _server?.Databases.Refresh(); // Prevent SMO caching
       _config = LoadJsonConfig();
    }
+
+   [TestInitialize]
+   public void Setup()
+   {
+      // Comment out any DB setup code to test
+      // using var conn = new SqlConnection(ConnectionString);
+      // conn.Open();
+   }
+
    private dynamic LoadJsonConfig()
    {
-      string path = "config.json";
-      string fileContent = System.IO.File.ReadAllText(path);
+      string path = Path.Combine(AppContext.BaseDirectory, "Config", "config.json");
+      Log.Information("Loading config from {Path}", path);
+      Output.WriteLine($"Loading config from {path}");
+      string fileContent = File.ReadAllText(path);
       return Newtonsoft.Json.JsonConvert.DeserializeObject(fileContent) ?? throw new InvalidOperationException("Failed to deserialize JSON content.");
    }
 
    [Fact]
    public void CreateEntityNameTest()
    {
+      Log.Information("Starting CreateEntityNameTest...");
+      Output.WriteLine("Starting CreateEntityNameTest...");
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
+      bool ret = scripter.Init(Path.Combine(AppContext.BaseDirectory, "Config", "AppSettings.01.json"), out string msg);
       string? x;
       x = scripter.Database.Schemas["dbo"].Urn.ToString();                // Server[@Name='DevI9']/Database[@Name='Farming_dev']/Schema[@Name='dbo']
       x = scripter.Database.Assemblies[0].Urn.ToString();                // Server[@Name='DevI9']/Database[@Name='Farming_dev']/SqlAssembly[@Name='Microsoft.SqlServer.Types']
@@ -47,16 +70,16 @@ public partial class SMOScriptingTests : XunitTestBase, IClassFixture<SmoTestFix
       x = scripter.Database.UserDefinedTableTypes[0].Urn.ToString();     // Server[@Name='DevI9']/Database[@Name='Farming_dev']/UserDefinedTableType[@Name='ChkFldsNotNullDataType' and @Schema='dbo']
       x = scripter.Database.Views[0].Urn.ToString();                     // Server[@Name='DevI9']/Database[@Name='Farming_dev']/View[@Name='all_vw' and @Schema='dbo']
 
-      Assert.Equal("dbo"                           , scripter.CreateEntityName(SqlTypeEnum.Schema, "sch", "dbo"));
-      Assert.Equal("SQLRegEx"                      , scripter.CreateEntityName(SqlTypeEnum.Assembly, "sch", "SQLRegEx"));
-      Assert.Equal("dbo.fnCompareStrings"          , scripter.CreateEntityName(SqlTypeEnum.Function, "dbo", "fnCompareStrings"));
-      Assert.Equal("test.Results"                  , scripter.CreateEntityName(SqlTypeEnum.Table, "test", "Results"));
-      Assert.Equal("dbo.SetCtxFixupRepCls"         , scripter.CreateEntityName(SqlTypeEnum.StoredProcedure, "dbo", "SetCtxFixupRepCls"));
-      Assert.Equal("Farming_Dev"                   , scripter.CreateEntityName(SqlTypeEnum.Database, "sch", "Farming_Dev"));
-      Assert.Equal("dbo.MyDataType"                , scripter.CreateEntityName(SqlTypeEnum.UserDefinedDataType, "dbo", "MyDataType"));
+      Assert.Equal("dbo", scripter.CreateEntityName(SqlTypeEnum.Schema, "sch", "dbo"));
+      Assert.Equal("SQLRegEx", scripter.CreateEntityName(SqlTypeEnum.Assembly, "sch", "SQLRegEx"));
+      Assert.Equal("dbo.fnCompareStrings", scripter.CreateEntityName(SqlTypeEnum.Function, "dbo", "fnCompareStrings"));
+      Assert.Equal("test.Results", scripter.CreateEntityName(SqlTypeEnum.Table, "test", "Results"));
+      Assert.Equal("dbo.SetCtxFixupRepCls", scripter.CreateEntityName(SqlTypeEnum.StoredProcedure, "dbo", "SetCtxFixupRepCls"));
+      Assert.Equal("Farming_Dev", scripter.CreateEntityName(SqlTypeEnum.Database, "sch", "Farming_Dev"));
+      Assert.Equal("dbo.MyDataType", scripter.CreateEntityName(SqlTypeEnum.UserDefinedDataType, "dbo", "MyDataType"));
       Assert.Equal("tSQLtCLR.tSQLtCLR.tSQLtPrivate", scripter.CreateEntityName(SqlTypeEnum.UserDefinedType, "tSQLtCLR", "tSQLtCLR.tSQLtPrivate"));
-      Assert.Equal("dbo.ChkFldsNotNullDataType"    , scripter.CreateEntityName(SqlTypeEnum.UserDefinedTableType, "dbo", "ChkFldsNotNullDataType"));
-      Assert.Equal("dbo.applog_vw_asc"             , scripter.CreateEntityName(SqlTypeEnum.View, "dbo", "applog_vw_asc"));
+      Assert.Equal("dbo.ChkFldsNotNullDataType", scripter.CreateEntityName(SqlTypeEnum.UserDefinedTableType, "dbo", "ChkFldsNotNullDataType"));
+      Assert.Equal("dbo.applog_vw_asc", scripter.CreateEntityName(SqlTypeEnum.View, "dbo", "applog_vw_asc"));
    }
 
    /*
@@ -101,30 +124,36 @@ public partial class SMOScriptingTests : XunitTestBase, IClassFixture<SmoTestFix
    [Fact]
    public void DbScripterInitTest()
    {
+      Log.Information("Starting DbScripterInitTest...");
+      Output.WriteLine("Starting DbScripterInitTest...");
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
+      bool ret = scripter.Init(Path.Combine(AppContext.BaseDirectory, "Config", "AppSettings.01.json"), out string msg);
       Assert.True(ret, msg);
-      Assert.Equal("", msg);//, "scripter.Init msg");
+      Assert.Equal("", msg);
    }
 
    [Fact]
    public void DbScripterExportTest()
    {
+      Log.Information("Starting DbScripterExportTest...");
+      Output.WriteLine("Starting DbScripterExportTest...");
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("./Config/DbScripterExportTest.json", out string msg);
+      bool ret = scripter.Init(Path.Combine(AppContext.BaseDirectory, "Config", "DbScripterExportTest.json"), out string msg);
       Assert.True(ret, msg);
-      Assert.Equal("", msg);//, "scripter.Init msg");
+      Assert.Equal("", msg);
 
       ret = scripter.Export(out msg);
       Assert.True(ret, msg);
-      Assert.Equal("", msg);//, "scripter.Export msg");
+      Assert.Equal("", msg);
    }
 
    [Fact]
    public void CreateUrnTest_when_schema_then_ok()
    {
+      Log.Information("Starting CreateUrnTest_when_schema_then_ok...");
+      Output.WriteLine("Starting CreateUrnTest_when_schema_then_ok...");
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
+      bool ret = scripter.Init(Path.Combine(AppContext.BaseDirectory, "Config", "AppSettings.01.json"), out string msg);
       Assert.True(ret, msg);
 
       var urnStr = DbScripter.CreateUrn
@@ -145,8 +174,10 @@ public partial class SMOScriptingTests : XunitTestBase, IClassFixture<SmoTestFix
    [Fact]
    public void CreateUrnTest_when_procedure_then_ok()
    {
+      Log.Information("Starting CreateUrnTest_when_procedure_then_ok...");
+      Output.WriteLine("Starting CreateUrnTest_when_procedure_then_ok...");
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
+      bool ret = scripter.Init(Path.Combine(AppContext.BaseDirectory, "Config", "AppSettings.01.json"), out string msg);
       Assert.True(ret, msg);
 
       var urnStr = DbScripter.CreateUrn
@@ -168,8 +199,10 @@ public partial class SMOScriptingTests : XunitTestBase, IClassFixture<SmoTestFix
    [Fact]
    public void CreateUrnTest_when_function_then_ok()
    {
+      Log.Information("Starting CreateUrnTest_when_function_then_ok...");
+      Output.WriteLine("Starting CreateUrnTest_when_function_then_ok...");
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
+      bool ret = scripter.Init(Path.Combine(AppContext.BaseDirectory, "Config", "AppSettings.01.json"), out string msg);
       Assert.True(ret, msg);
 
       var urnStr = DbScripter.CreateUrn
@@ -191,8 +224,10 @@ public partial class SMOScriptingTests : XunitTestBase, IClassFixture<SmoTestFix
    [Fact]
    public void CreateUrnTest_when_table_then_ok()
    {
+      Log.Information("Starting CreateUrnTest_when_table_then_ok...");
+      Output.WriteLine("Starting CreateUrnTest_when_table_then_ok...");
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
+      bool ret = scripter.Init(Path.Combine(AppContext.BaseDirectory, "Config", "AppSettings.01.json"), out string msg);
       Assert.True(ret, msg);
 
       var urnStr = DbScripter.CreateUrn
@@ -214,8 +249,10 @@ public partial class SMOScriptingTests : XunitTestBase, IClassFixture<SmoTestFix
    [Fact]
    public void CreateUrnTest_when_view_then_ok()
    {
+      Log.Information("Starting CreateUrnTest_when_view_then_ok...");
+      Output.WriteLine("Starting CreateUrnTest_when_view_then_ok...");
       DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("./Config/AppSettings.01.json", out string msg);
+      bool ret = scripter.Init(Path.Combine(AppContext.BaseDirectory, "Config", "AppSettings.01.json"), out string msg);
       Assert.True(ret, msg);
 
       var urnStr = DbScripter.CreateUrn
@@ -233,29 +270,32 @@ public partial class SMOScriptingTests : XunitTestBase, IClassFixture<SmoTestFix
       Assert.NotNull(obj);
       Assert.Equal("audit_vw", obj?.Name);
    }
-/*
-   [Fact]
-   public void GetFilterUrns_when_then_15()
-   {
-      DbScripter scripter = new DbScripter();
-      bool ret = scripter.Init("AppSettings.GetFilterUrns_when_then_15.json", out string msg);
-      Assert.True(ret, msg);
-      Dictionary<SqlTypeEnum, List<Urn>> urn_map = scripter.GetFilterUrns();
-      Assert.Equal(8, urn_map.Count);
-      int cnt = 0;
+   /*
+      [Fact]
+      public void GetFilterUrns_when_then_15()
+      {
+         DbScripter scripter = new DbScripter();
+         bool ret = scripter.Init("AppSettings.GetFilterUrns_when_then_15.json", out string msg);
+         Assert.True(ret, msg);
+         Dictionary<SqlTypeEnum, List<Urn>> urn_map = scripter.GetFilterUrns();
+         Assert.Equal(8, urn_map.Count);
+         int cnt = 0;
 
-      foreach (var list in urn_map.Values)
-         cnt += list.Count;
+         foreach (var list in urn_map.Values)
+            cnt += list.Count;
 
-      Assert.Equal(20, cnt);
-   }
-*/
+         Assert.Equal(20, cnt);
+      }
+   */
 
    [Fact]
    public void GetUrnTypeTest()
    {
+      Log.Information("Starting GetUrnTypeTest...");
+      Output.WriteLine("Starting GetUrnTypeTest...");
       DbScripter sc = new DbScripter();
-      bool ret = sc.Init("./Config/AppSettings.GetUrnTypeTest.json", out string msg);
+      bool ret = sc.Init(Path.Combine(AppContext.BaseDirectory, "Config", "AppSettings.GetUrnTypeTest.json"), out string msg);
+      Assert.True(ret, msg);
       Assert.True(GetUrnTypeHlpr(sc.Database.Assemblies, SqlTypeEnum.Assembly));
       Assert.True(GetUrnTypeHlpr(sc.Server.Databases, SqlTypeEnum.Database));
       Assert.True(GetUrnTypeHlpr(sc.Database.UserDefinedFunctions, SqlTypeEnum.Function));
@@ -305,6 +345,8 @@ public partial class SMOScriptingTests : XunitTestBase, IClassFixture<SmoTestFix
    [Fact]
    public void ExportSqlDbUtTest()
    {
+      Log.Information("Starting ExportSqlDbUtTest...");
+      Output.WriteLine("Starting ExportSqlDbUtTest...");
       string testOutputFolder = "D:/Dev/DbScripter/Tests/DbScripterAppTests/ExportSqlDbUtTest";
 
       Dictionary<string, int> expFolderCntMap = new Dictionary<string, int>()
@@ -317,7 +359,7 @@ public partial class SMOScriptingTests : XunitTestBase, IClassFixture<SmoTestFix
          {"Views",              21}
       };
 
-      int ret = ret = DbScripterApp.Program.Main(new[] { "./Config/ExportSqlDbUtTest.json" });
+      int ret = DbScripterApp.Program.Main(new[] { Path.Combine(AppContext.BaseDirectory, "Config", "ExportSqlDbUtTest.json") });
       Assert.True(ret == 0, $"Program.Main ret: {ret}");
       Assert.True(Directory.Exists(testOutputFolder));
 
@@ -487,8 +529,10 @@ It only does it for this function??
    [Fact]
    public void AppExportTest()
    {
+      Log.Information("Starting AppExportTest...");
+      Output.WriteLine("Starting AppExportTest...");
       string path = @"D:/Dev/DbScripter/Tests/DbScripterTests/AppExportTest";
-      string config_file = @".\Config\AppExport.json";
+      string config_file = Path.Combine(AppContext.BaseDirectory, "Config", "AppExport.json");
       string[] args = new[] { config_file };
       var ret = DbScripterApp.Program.Main(args);
       Assert.Equal(0, ret);
@@ -502,7 +546,7 @@ It only does it for this function??
       string? scriptDir = appSettings.GetProperty("Script Dir").GetString();
       Assert.True(scriptDir != null, "scriptDir should not be null");
       string? scriptFile = appSettings.GetProperty("Script File").GetString();
-      Assert.True(scriptDir != null, "scriptFile should not be null");
+      Assert.True(scriptFile != null, "scriptFile should not be null");
 
       // 4. Process the found item
       string? outputFile = Path.Combine(scriptDir, scriptFile);
@@ -535,6 +579,26 @@ It only does it for this function??
       Assert.True(Directory.Exists(path));
 
       CheckScriptOutputFoldersHelper(path, expFolderCntMap);
+   }
+
+   [Fact]
+   public void ExportTestCrtRtns_When_Expect_45()
+   {
+      Log.Information("Starting ExportTestCrtRtns_When_Expect_45...");
+      Output.WriteLine("Starting ExportTestCrtRtns_When_Expect_45...");
+      string[] args = new[] { Path.Combine(AppContext.BaseDirectory, "Config", "ExportTestCrtRtns_When_Expect_45.json") };
+      var ret = DbScripterApp.Program.Main(args);
+      Assert.True(ret == 0, $"Program.Main ret: {ret}");
+   }
+
+   [Fact]
+   public void Exportsp_crt_pop_table()
+   {
+      Log.Information("Starting Exportsp_crt_pop_table...");
+      Output.WriteLine("Starting Exportsp_crt_pop_table...");
+      string[] args = new[] { Path.Combine(AppContext.BaseDirectory, "Config", "Exportsp_crt_pop_table.json") };
+      var ret = DbScripterApp.Program.Main(args);
+      Assert.True(ret == 0, $"Program.Main ret: {ret}");
    }
 
    /// <summary>
@@ -617,22 +681,6 @@ It only does it for this function??
       return ret;
    }
 
-   [Fact]
-   public void ExportTestCrtRtns_When_Expect_45()
-   {
-      string[] args = new[] { "./Config/ExportTestCrtRtns_When_Expect_45.json" };
-      var ret = DbScripterApp.Program.Main(args);
-
-      Assert.True(ret == 0, $"Program.Main ret: {ret}");
-   }
-
-   [Fact]
-   public void Exportsp_crt_pop_table()
-   {
-      string[] args = new[] { "./Config/Exportsp_crt_pop_table.json" };
-      var ret = DbScripterApp.Program.Main(args);
-      Assert.True(ret == 0, $"Program.Main ret: {ret}");
-   }
 
    private static bool GetUrnTypeHlpr(dynamic dbColl, SqlTypeEnum exp_ty)
    {

@@ -36,7 +36,7 @@ public partial class SMOScriptingTests
       // Configure Serilog with XUnitOutputSink
       var serilogger = new LoggerConfiguration()
           .MinimumLevel.Verbose()
-          .WriteTo.Sink(new XUnitOutputSink(OutputHelper))
+          .WriteTo.Sink(new XUnitOutputSink(Output))
           .WriteTo.File("d:/logs/log.txt", rollingInterval: RollingInterval.Day, restrictedToMinimumLevel: LogEventLevel.Verbose)
           .ReadFrom.Configuration(config)
           .CreateLogger();

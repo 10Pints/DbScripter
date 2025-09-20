@@ -1,10 +1,36 @@
-﻿################################################################################
-# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
-################################################################################
+﻿# Visual Studio
+*.suo
+*.user
+.vs/
+bin/
+obj/
+*.csproj.user
+*.sln.docstates
 
-/.vs
-/DbScripterApp/bin
-/DbScripterApp/obj
-/DbScripterLib/bin
-/DbScripterLib/obj
-/Tests/Safe
+# SSDT
+*.dacpac
+*.publish.xml
+*.sqlproj.user
+*.dbmdl
+*.jfm
+sql/
+
+# Test Output
+*.trx
+TestResults/
+
+# Logs
+d:/logs/
+
+# NuGet
+packages/
+*.nupkg
+
+# Config (optional, if you want to exclude)
+# Config/*.json
+
+# Miscellaneous
+*.cache
+*.log
+*.bak
+*.tmp
